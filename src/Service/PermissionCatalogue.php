@@ -19,7 +19,7 @@ use Uhifadhi\Team\Model\Permission;
 
 /**
  * THE SINGLE CATALOGUE OF EVERY PERMISSION THAT EXISTS IN THIS DEPLOYMENT:
- * the seven this bundle owns ({@see PermissionEnum}), plus whatever the
+ * the six this module owns ({@see PermissionEnum}), plus whatever the
  * installed modules DECLARE through {@see ModuleProviderInterface::permissions()}.
  *
  * Declaring makes a permission assignable — it appears in the matrix and the
@@ -28,8 +28,8 @@ use Uhifadhi\Team\Model\Permission;
  * its provider and its permissions vanish from the catalogue with it, on the
  * next request rather than the next deploy.
  *
- * CORE ALWAYS WINS. A module redeclaring one of the seven is ignored, so no
- * module can relabel or shadow a permission this bundle owns; between two
+ * CORE ALWAYS WINS. A module redeclaring one of the six is ignored, so no
+ * module can relabel or shadow a permission this module owns; between two
  * modules colliding on a value the earlier registration holds. Never a merge,
  * never a fatal at boot — a third-party module must not be able to take an
  * installation down by picking a string.

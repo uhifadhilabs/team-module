@@ -15,12 +15,18 @@ namespace Uhifadhi\Team\Enum;
 
 /**
  * The fixed catalogue of granular permissions a {@see \Uhifadhi\Team\Entity\Position} can grant.
- * Each belongs to an umbrella (Areas, Ingestion, …) with a specific action (View, Create, …)
- * and implies a coarse umbrella *capability role* used by security.yaml's access_control — so a
- * position holding any permission in an umbrella opens that whole area, while the granular
+ * Each belongs to an umbrella (Areas, Modules) with a specific action (View, Create, …) and
+ * implies a coarse umbrella *capability role* an installation's access_control can name — so a
+ * position holding any permission in an umbrella opens that whole region, while the granular
  * permission itself is checked by {@see \Uhifadhi\Team\Security\PermissionVoter}.
  *
- * Single-org: no party axis (uhifadhi is one authority, unlike vivutio's operator/supplier split).
+ * SIX, AND THERE IS NO INGESTION. A seventh case, `ingestion.run` under a `ROLE_INGESTION`
+ * umbrella, existed here and is gone: this platform has no ingestion capability, and a
+ * permission that guards nothing is a power an admin can assign over code that does not
+ * exist. Nothing else moved with it — the two remaining umbrellas kept their values, their
+ * roles and their order, so a position holding `area.edit` holds exactly what it held before.
+ *
+ * Single-org: there is no party axis. An installation is one authority.
  */
 enum PermissionEnum: string
 {
@@ -29,8 +35,6 @@ enum PermissionEnum: string
     case AreaCreate = 'area.create';
     case AreaEdit = 'area.edit';
     case AreaDelete = 'area.delete';
-    // Ingestion → ROLE_INGESTION
-    case IngestionRun = 'ingestion.run';
     // Modules → ROLE_MODULES
     case ModuleView = 'module.view';
     case ModuleCreate = 'module.create';   // configure a module: settings + visualizations (composition is Admin-tier)
@@ -76,7 +80,6 @@ enum PermissionEnum: string
             self::AreaCreate => ['Areas', 'Create', 'ROLE_AREAS'],
             self::AreaEdit => ['Areas', 'Edit', 'ROLE_AREAS'],
             self::AreaDelete => ['Areas', 'Delete', 'ROLE_AREAS'],
-            self::IngestionRun => ['Ingestion', 'Run', 'ROLE_INGESTION'],
             self::ModuleView => ['Modules', 'View', 'ROLE_MODULES'],
             self::ModuleCreate => ['Modules', 'Add', 'ROLE_MODULES'],
         };

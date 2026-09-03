@@ -77,7 +77,7 @@ final class PermissionVoterTest extends IntegrationTestCase
 
         self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($this->staffWith($position), ['area.view']));
         self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($this->staffWith($position), ['surveys.record']));
-        self::assertSame(VoterInterface::ACCESS_DENIED, $this->vote($this->staffWith($position), ['ingestion.run']));
+        self::assertSame(VoterInterface::ACCESS_DENIED, $this->vote($this->staffWith($position), ['module.create']));
     }
 
     public function testStaffWithNoPositionHoldNothing(): void

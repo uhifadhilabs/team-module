@@ -110,7 +110,7 @@ final class TestKernel extends Kernel
                 ],
             ],
             'role_hierarchy' => [
-                'ROLE_ADMIN' => ['ROLE_MANAGER', 'ROLE_AREAS', 'ROLE_INGESTION', 'ROLE_MODULES'],
+                'ROLE_ADMIN' => ['ROLE_MANAGER', 'ROLE_AREAS', 'ROLE_MODULES'],
                 'ROLE_SUPER_ADMIN' => ['ROLE_ADMIN', 'ROLE_ALLOWED_TO_SWITCH'],
             ],
             'access_control' => [

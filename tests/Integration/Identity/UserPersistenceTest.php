@@ -86,7 +86,7 @@ final class UserPersistenceTest extends IntegrationTestCase
     public function testRolesAreTheTiersPlusThePositionsCapabilityRoles(): void
     {
         $position = (new Position())->setName('Analyst')
-            ->setPermissions([PermissionEnum::AreaView, PermissionEnum::IngestionRun]);
+            ->setPermissions([PermissionEnum::AreaView, PermissionEnum::ModuleView]);
 
         $staff = (new User())->setEmail('staff@example.test')->setFirstName('S')->setLastName('T')
             ->setPassword('x')->setTeamRole(TeamRoleEnum::Staff)->setPosition($position);
@@ -103,10 +103,10 @@ final class UserPersistenceTest extends IntegrationTestCase
         $roles = $stored->getRoles();
         self::assertContains('ROLE_USER', $roles);
         self::assertContains('ROLE_AREAS', $roles);
-        self::assertContains('ROLE_INGESTION', $roles);
+        self::assertContains('ROLE_MODULES', $roles);
         // Staff hold nothing by tier.
         self::assertNotContains('ROLE_ADMIN', $roles);
-        self::assertNotContains('ROLE_MODULES', $roles);
+        self::assertNotContains('ROLE_SUPER_ADMIN', $roles);
     }
 
     public function testASuperAdminHoldsTheTierRolesWithoutAPosition(): void

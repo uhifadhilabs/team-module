@@ -7,7 +7,7 @@ A [uhifadhi](https://github.com/uhifadhilabs) platform bundle.
 
 > Installs with `composer require uhifadhi/team-module`, registers via Flex, and
 > provides two tables (`team_user`, `team_position`), two routes (`/login`,
-> `/logout`), a seven-entry permission catalogue that installed modules extend,
+> `/logout`), a six-entry permission catalogue that installed modules extend,
 > a voter that decides it, and a sign-in screen rendered through the shell's
 > document. Its recipe writes the firewall that uses all of it. Needs a database
 > and `uhifadhi/shell-module`.
@@ -20,7 +20,7 @@ A [uhifadhi](https://github.com/uhifadhilabs) platform bundle.
   - [The file is `team_security.yaml`](#the-file-is-team_securityyaml-not-securityyaml)
 - [The authorization model](#the-authorization-model)
   - [Two axes: tier and position](#two-axes-tier-and-position)
-  - [The seven permissions](#the-seven-permissions)
+  - [The six permissions](#the-six-permissions)
   - [What a module adds](#what-a-module-adds)
   - [The voter](#the-voter)
 - [The sign-in screen](#the-sign-in-screen)
@@ -54,7 +54,7 @@ you see — and this is **who is looking**.
   worker types into a phone.
 - **The position** — `Uhifadhi\Team\Entity\Position`, a named bundle of granular
   permissions. Every user assigned a position inherits exactly its permissions.
-- **The catalogue** — the seven permissions this module owns plus whatever the
+- **The catalogue** — the six permissions this module owns plus whatever the
   installed modules declared, read live from the container.
 - **The voter** — the thing that answers `is_granted('area.create')`.
 - **The screen** — `/login` and `/logout`, rendered through the shell's
@@ -113,7 +113,7 @@ stops there; what a Manager can *do* comes from their position, exactly as a
 Staff user's does. That is deliberate — a tier that quietly granted everything
 would make the position matrix decorative for half the people in it.
 
-### The seven permissions
+### The six permissions
 
 `PermissionEnum`, in catalogue order:
 
@@ -123,7 +123,6 @@ would make the position matrix decorative for half the people in it.
 | `area.create` | Areas | Create | `ROLE_AREAS` |
 | `area.edit` | Areas | Edit | `ROLE_AREAS` |
 | `area.delete` | Areas | Delete | `ROLE_AREAS` |
-| `ingestion.run` | Ingestion | Run | `ROLE_INGESTION` |
 | `module.view` | Modules | View | `ROLE_MODULES` |
 | `module.create` | Modules | Add | `ROLE_MODULES` |
 
@@ -143,7 +142,7 @@ recognises it — and that is the whole of it:
 - **no capability role.** A module can never mint an umbrella.
 - **no default holders.** Installing a module must never hand an existing user a
   new power.
-- **core always wins.** A module redeclaring one of the seven is ignored.
+- **core always wins.** A module redeclaring one of the six is ignored.
 - **it dies with the module.** Uninstall the module and the permission is gone
   from the catalogue on the next request.
 

@@ -18,7 +18,7 @@ use Uhifadhi\Team\Service\PermissionCatalogue;
 use Uhifadhi\Team\Tests\Integration\IntegrationTestCase;
 
 /**
- * ONE CATALOGUE, TWO SOURCES. The seven permissions this module owns, then
+ * ONE CATALOGUE, TWO SOURCES. The six permissions this module owns, then
  * whatever the installed modules declared through the seam's tag — in that
  * order, because core always precedes and a module may never shadow it.
  */
@@ -29,7 +29,7 @@ final class PermissionCatalogueTest extends IntegrationTestCase
         return $this->service(PermissionCatalogue::class);
     }
 
-    public function testTheCoreSevenComeFirstInEnumOrder(): void
+    public function testTheCoreSixComeFirstInEnumOrder(): void
     {
         $values = array_map(
             static fn (Permission $p): string => $p->value,
@@ -38,15 +38,15 @@ final class PermissionCatalogueTest extends IntegrationTestCase
 
         self::assertSame([
             'area.view', 'area.create', 'area.edit', 'area.delete',
-            'ingestion.run', 'module.view', 'module.create',
-        ], \array_slice($values, 0, 7));
+            'module.view', 'module.create',
+        ], \array_slice($values, 0, 6));
     }
 
     public function testAModulesDeclarationJoinsTheCatalogue(): void
     {
         // The kernel registers one module bundle declaring "surveys.record".
         self::assertTrue($this->catalogue()->has('surveys.record'));
-        self::assertCount(8, $this->catalogue()->all());
+        self::assertCount(7, $this->catalogue()->all());
     }
 
     public function testAModuleDeclarationNeverCarriesACapabilityRole(): void
@@ -67,7 +67,7 @@ final class PermissionCatalogueTest extends IntegrationTestCase
     {
         $grouped = $this->catalogue()->groupedByUmbrella();
 
-        self::assertSame(['Areas', 'Ingestion', 'Modules', 'Surveys'], array_keys($grouped));
+        self::assertSame(['Areas', 'Modules', 'Surveys'], array_keys($grouped));
         self::assertCount(4, $grouped['Areas']);
     }
 
