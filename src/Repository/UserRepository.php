@@ -18,6 +18,7 @@ use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\Uuid;
+use Uhifadhi\Team\Entity\Position;
 use Uhifadhi\Team\Entity\User;
 use Uhifadhi\Team\Enum\RosterStateEnum;
 use Uhifadhi\Team\Enum\TeamRoleEnum;
@@ -177,6 +178,129 @@ final class UserRepository extends ServiceEntityRepository
         }
 
         return $counts;
+    }
+
+    /** Everybody, deactivated included — the roster does not hide the people who left. */
+    public function countAll(): int
+    {
+        return (int) $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function countActive(): int
+    {
+        return (int) $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->andWhere('u.isActive = true')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /** Active accounts in any of the given tiers — the administrators-by-tier count. */
+    public function countActiveInTiers(TeamRoleEnum ...$tiers): int
+    {
+        return (int) $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->andWhere('u.isActive = true')
+            ->andWhere('u.teamRole IN (:tiers)')
+            ->setParameter('tiers', array_map(static fn (TeamRoleEnum $t): string => $t->value, $tiers))
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * How many active people hold one of these positions — the
+     * administrators-by-permission count, once the caller has worked out which
+     * positions grant it.
+     *
+     * @param list<Position> $positions
+     */
+    public function countActiveHoldingAnyPosition(array $positions): int
+    {
+        if ([] === $positions) {
+            return 0;
+        }
+
+        return (int) $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->andWhere('u.isActive = true')
+            ->andWhere('u.position IN (:positions)')
+            ->setParameter('positions', $positions)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * The attention pane's first row: ACTIVE accounts that have never signed in.
+     *
+     * Active only, and that is the rule rather than an optimisation.
+     * Deactivating somebody RESOLVES their never-signed-in nag — the decision
+     * the row asks for has already been taken about them — and a pane that kept
+     * chasing a switched-off account is a pane nobody trusts.
+     *
+     * @return list<User>
+     */
+    public function findActiveNeverSignedIn(): array
+    {
+        /** @var list<User> $users */
+        $users = $this->createQueryBuilder('u')
+            ->andWhere('u.isActive = true')
+            ->andWhere('u.isVerified = false')
+            ->orderBy('u.firstName', 'ASC')
+            ->addOrderBy('u.lastName', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $users;
+    }
+
+    /**
+     * The model's zero: active STAFF with no position, who can sign in and do
+     * nothing at all.
+     *
+     * Staff only. A Super Admin or an Admin with no position holds EVERYTHING by
+     * tier, and listing them here would make the pane's most alarming row its
+     * least accurate one.
+     *
+     * @return list<User>
+     */
+    public function findActiveWithoutPosition(): array
+    {
+        /** @var list<User> $users */
+        $users = $this->createQueryBuilder('u')
+            ->andWhere('u.isActive = true')
+            ->andWhere('u.position IS NULL')
+            ->andWhere('u.teamRole = :staff')
+            ->setParameter('staff', TeamRoleEnum::Staff->value)
+            ->orderBy('u.firstName', 'ASC')
+            ->addOrderBy('u.lastName', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $users;
+    }
+
+    /** The one the standing-risk row names, when there is exactly one. */
+    public function findFirstActiveSuperAdmin(): ?User
+    {
+        /** @var User|null $user */
+        $user = $this->createQueryBuilder('u')
+            ->andWhere('u.isActive = true')
+            ->andWhere('u.teamRole = :tier')
+            ->setParameter('tier', TeamRoleEnum::SuperAdmin->value)
+            ->orderBy('u.id', 'ASC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return $user;
+    }
+
+    public function findOneByUuid(Uuid $uuid): ?User
+    {
+        return $this->findOneBy(['uuid' => $uuid]);
     }
 
     /**

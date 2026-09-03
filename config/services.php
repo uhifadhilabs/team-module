@@ -22,6 +22,10 @@ use Uhifadhi\Team\Security\ActiveUserChecker;
 use Uhifadhi\Team\Security\PermissionVoter;
 use Uhifadhi\Team\Service\PermissionCatalogue;
 use Uhifadhi\Team\Service\SuperAdminInvariant;
+use Uhifadhi\Team\Service\TeamOverview;
+use Uhifadhi\Team\Widget\PositionWidgets;
+use Uhifadhi\Team\Widget\TeamWidgets;
+use Uhifadhi\Widget\Registry\WidgetSurfaceInterface;
 
 /*
  * The bundle's static service wiring.
@@ -46,6 +50,8 @@ use Uhifadhi\Team\Service\SuperAdminInvariant;
  *   team.permission_voter       who holds which of them
  *   team.super_admin_invariant  the refusal that keeps one active Super Admin
  *   team.user_checker           the sign-in refusal for a deactivated account
+ *   team.overview               the roster's counts and its attention rows
+ *   team.widget_surface.*       the roster and the matrix, as dashboard surfaces
  *   team.command.create_user    the bootstrap console command
  *   team.controller.security    the sign-in screen
  *
@@ -114,6 +120,36 @@ return static function (ContainerConfigurator $container): void {
      * a firewall's shape for every installation that has one.
      */
     $services->set('team.user_checker', ActiveUserChecker::class)->public();
+
+    /*
+     * WHAT THE TEAM PAGE KNOWS BEFORE IT DRAWS A ROW — the counts and the
+     * decisions waiting on a person, asked once for the whole surface rather
+     * than once per widget.
+     */
+    $services->set('team.overview', TeamOverview::class)
+        ->args([
+            service(UserRepository::class),
+            service(PositionRepository::class),
+            service(DepartmentRepository::class),
+        ]);
+
+    /*
+     * THE TWO DASHBOARD SURFACES. Both team screens ride the widget framework
+     * rather than a copy of it, which is why uhifadhi/widget-module is a hard
+     * requirement of this module and not a suggestion: the roster and the matrix
+     * are widget surfaces, and a surface with no framework under it is a page
+     * whose six drawn directions can never be adopted.
+     *
+     * The tag goes on BY HAND. A reusable bundle is not autoconfigured, and a
+     * surface that missed the tag has a working dashboard and an unreachable
+     * registry entry — nothing renders differently until the day somebody runs
+     * `widget:prune` and it reads their stored layouts as orphans.
+     */
+    $services->set('team.widget_surface.roster', TeamWidgets::class)
+        ->tag(WidgetSurfaceInterface::TAG);
+
+    $services->set('team.widget_surface.positions', PositionWidgets::class)
+        ->tag(WidgetSurfaceInterface::TAG);
 
     /*
      * THE BOOTSTRAP COMMAND — how the first administrator of a fresh

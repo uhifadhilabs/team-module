@@ -124,3 +124,2186 @@
     align-items: center;
     gap: 8px;
 }
+
+/* ============================================================================
+ * WHAT FOLLOWS IS THE TEAM SURFACES' OWN VOCABULARY.
+ * ----------------------------------------------------------------------------
+ * Ported from the design workspace (~/DesignsProjects/team-module), which is
+ * the specification for every screen this module draws. Each block below keeps
+ * the sheet it came from as its heading so a rule can be traced back to the
+ * page that argued for it.
+ *
+ * IT SHIPS HERE AND NOT IN THE HOST'S app.css, and that is the whole reason the
+ * file is this long. A host carrying the permission matrix's CSS would be a
+ * host that knows what a position is — and a module whose screens only render
+ * correctly once the application pastes a stylesheet in is a module that does
+ * not install.
+ *
+ * EVERY COLOUR IS A SHELL TOKEN, exactly as the sign-in card above spends them.
+ * Nothing below names an rgb value, which is what makes all of it correct in
+ * both palettes without a single dark-mode rule.
+ * ========================================================================== */
+
+
+/* ==========================================================================
+   TEAM · POSITIONS — the qualified name, the department marks
+   Ported from vendor/positions.css.
+   ========================================================================== */
+
+/* ---- shared team vocabulary (matches the shipped /team page) ------------- */
+.who { display: flex; align-items: center; gap: 9px; }
+.who b { font-weight: 600; }
+.avatar.sm { width: 24px; height: 24px; border-radius: 7px; font-size: 9px; }
+.tier {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9.5px; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase; border: 1px solid var(--c-ln2); border-radius: 999px;
+    padding: 4px 9px 3px; color: rgb(var(--c-fog)); display: inline-block; line-height: 1;
+}
+.tier.t-admin { color: rgb(var(--c-acc)); border-color: color-mix(in srgb, rgb(var(--c-acc)) 45%, transparent); }
+.tier.t-manager { color: rgb(var(--c-warn)); border-color: color-mix(in srgb, rgb(var(--c-warn)) 40%, transparent); }
+/* A permission is a machine name — never a sentence, never translated. */
+.perm {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9.5px; color: rgb(var(--c-fog));
+    border: 1px solid var(--c-ln); border-radius: 6px; padding: 3px 7px 2px; display: inline-block;
+    line-height: 1; margin: 1px 2px 1px 0; white-space: nowrap;
+}
+.permrow { display: flex; flex-wrap: wrap; gap: 3px 2px; align-items: center; }
+.softbtn {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgb(var(--c-fog));
+    border: 1px solid var(--c-ln2); border-radius: 8px; padding: 6px 11px 5px; text-decoration: none;
+    background: none; cursor: pointer; line-height: 1; height: 24px; box-sizing: border-box;
+}
+.softbtn:hover { color: rgb(var(--c-tx)); border-color: rgb(var(--c-fog)); }
+.softbtn svg { height: 12px; width: 12px; flex: none; }
+.softbtn.acc { color: rgb(var(--c-acc)); border-color: color-mix(in srgb, rgb(var(--c-acc)) 50%, transparent); }
+.softbtn.acc:hover { background: rgb(var(--c-acc)); color: rgb(var(--c-accT)); border-color: rgb(var(--c-acc)); }
+.softbtn.dash { border-style: dashed; }
+.softbtn[disabled] { opacity: .45; cursor: not-allowed; border-style: dashed; }
+.lbl {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9px; font-weight: 600;
+    letter-spacing: .16em; text-transform: uppercase; color: rgb(var(--c-dim)); display: block; margin: 0 0 7px;
+}
+.sel {
+    background: rgb(var(--c-raised)); border: 1px solid var(--c-ln2); border-radius: 8px; color: rgb(var(--c-tx));
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; padding: 5px 9px;
+    height: 26px; box-sizing: border-box; max-width: 100%;
+}
+/* The one-control assign form in a table CELL: select + its Set button.
+   Scoped to the People widget on purpose — the page header's own .assign form
+   is laid out by .pghead/.pgact in nav.css, and must not be touched from here. */
+/* One row, never two: a select that wraps its own button onto the next line
+   turns a table cell into a little stack, and the column stops reading as a
+   column. The select shrinks instead, and both controls share one height so the
+   pair sits on the row's baseline. */
+[data-people] .assign { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
+[data-people] .assign .sel {
+    flex: 1 1 auto; min-width: 0; max-width: 190px;
+    height: 28px; box-sizing: border-box; padding: 0 8px; font-size: 11.5px;
+}
+[data-people] .assign .open-btn {
+    flex: none; height: 28px; box-sizing: border-box; align-items: center;
+}
+.newrow .inl { width: 272px; max-width: none; }
+.posact { display: flex; gap: 6px; justify-content: flex-end; }
+table.tbl th { white-space: nowrap; }
+/* #fff, not a token: this is text on a saturated red fill, which is the same
+   red in both themes — a token that flips would put dark text on it. */
+.open-btn.danger:hover { background: rgb(var(--c-fail)) !important; border-color: rgb(var(--c-fail)) !important; color: #fff !important; }
+/* A position row navigates (its name and its Edit button open the position), so
+   the whole row says so. Create rows and band headers are not rows of data. */
+[data-positions] table.tbl tbody tr:not(.newrow):not(.gh) { cursor: pointer; }
+
+/* ---- the department identity mark: a colour AND a name, never one alone --- */
+.dot {
+    width: 8px; height: 8px; border-radius: 50%; flex: none; display: inline-block;
+    background: rgb(var(--c-fog)); box-sizing: border-box;
+}
+.dot.ec { background: rgb(var(--c-ok)); }
+.dot.ps { background: rgb(var(--c-warn)); }
+.dot.un { background: none; border: 1.5px dashed rgb(var(--c-dim)); }
+.dtag {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 10px; font-weight: 700; letter-spacing: .05em; border: 1px solid var(--c-ln2); border-radius: 999px;
+    padding: 5px 11px 4px; color: rgb(var(--c-tx)); background: color-mix(in srgb, rgb(var(--c-fog)) 6%, transparent);
+    line-height: 1; text-decoration: none; height: 23px; box-sizing: border-box; white-space: nowrap;
+}
+.dtag.ec { border-color: color-mix(in srgb, rgb(var(--c-ok)) 42%, transparent); background: color-mix(in srgb, rgb(var(--c-ok)) 9%, transparent); }
+.dtag.ps { border-color: color-mix(in srgb, rgb(var(--c-warn)) 42%, transparent); background: color-mix(in srgb, rgb(var(--c-warn)) 9%, transparent); }
+.dtag.un { border-style: dashed; border-color: var(--c-ln2); background: none; color: rgb(var(--c-dim)); }
+a.dtag:hover { border-color: rgb(var(--c-fog)); }
+
+/* ---- the cross-cutting rule: a position is always department-qualified ---- */
+/* "Ecology / Analyst" — never a bare "Analyst", here, in People, in the assign
+   dropdown, in an audit line. */
+.qual { display: inline-flex; align-items: baseline; gap: 0; text-decoration: none; white-space: nowrap; }
+.qual .q { color: rgb(var(--c-fog)); font-weight: 600; font-size: 12.5px; }
+.qual .sep { color: rgb(var(--c-dim)); margin: 0 6px; font-weight: 400; }
+.qual .n { font-weight: 600; }
+.qual.un .q { color: rgb(var(--c-dim)); font-style: italic; }
+
+/* ---- the twin-name flag: "there is another one, and it is NOT this one" --- */
+.dupflag {
+    font: 700 8.5px "JetBrains Mono", ui-monospace, monospace; letter-spacing: .1em;
+    text-transform: uppercase; color: rgb(var(--c-warn));
+    border: 1px dashed color-mix(in srgb, rgb(var(--c-warn)) 45%, transparent);
+    border-radius: 5px; padding: 3px 6px 2px; margin-left: 9px; display: inline-block; line-height: 1;
+    cursor: help; vertical-align: 1px; white-space: nowrap;
+}
+tr.dup-lit td { background: color-mix(in srgb, rgb(var(--c-warn)) 9%, transparent) !important; }
+.dup-lit { box-shadow: 0 0 0 1px color-mix(in srgb, rgb(var(--c-warn)) 50%, transparent); }
+tr.dup-lit { box-shadow: none; }
+
+/* ---- A · grouped table --------------------------------------------------- */
+/* One table, banded by department; a position is never shown outside its band. */
+tr.gh td {
+    border-bottom: 1px solid var(--c-ln2); background: color-mix(in srgb, rgb(var(--c-fog)) 7%, transparent);
+    padding: 11px 10px 9px;
+}
+tr.gh:hover td { background: color-mix(in srgb, rgb(var(--c-fog)) 7%, transparent); }
+tr.gh.unf td { background: none; border-bottom: 1px dashed var(--c-ln2); }
+.ghead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ghead b { font-size: 14px; font-weight: 700; letter-spacing: -.01em; }
+.ghead a { text-decoration: none; color: inherit; }
+.ghead a:hover { color: rgb(var(--c-acc)); }
+.gmeta {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px; letter-spacing: .08em;
+    color: rgb(var(--c-dim)); text-transform: uppercase;
+}
+.gnote { font-size: 11.5px; color: rgb(var(--c-dim)); font-style: italic; }
+tr.gh.unf .ghead b { color: rgb(var(--c-dim)); }
+/* every position row is visually INSIDE its department band */
+td.pname { padding-left: 26px !important; position: relative; }
+tr.prow td.pname::before, tr.newrow td.pname::before {
+    content: ""; position: absolute; left: 10px; top: 0; bottom: 0;
+    width: 2px; background: color-mix(in srgb, rgb(var(--c-fog)) 30%, transparent);
+}
+tr.unfrow td.pname::before { background: none; border-left: 2px dashed color-mix(in srgb, rgb(var(--c-fog)) 34%, transparent); }
+table.tbl tr.gh + tr.prow td { padding-top: 12px; }
+
+/* ---- B · department filter chips ----------------------------------------- */
+/* The chip scopes the table; the scope bar always states which list you are in. */
+.fbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 16px; }
+.fchip {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 10.5px; font-weight: 700; letter-spacing: .05em; border: 1px solid var(--c-ln2); border-radius: 999px;
+    padding: 0 13px; color: rgb(var(--c-fog)); background: none; cursor: pointer; height: 28px; box-sizing: border-box;
+    line-height: 1;
+}
+.fchip:hover { color: rgb(var(--c-tx)); border-color: rgb(var(--c-fog)); }
+.fchip .n { color: rgb(var(--c-dim)); font-weight: 600; }
+.fchip.on { color: rgb(var(--c-tx)); border-color: rgb(var(--c-fog)); background: color-mix(in srgb, rgb(var(--c-fog)) 10%, transparent); }
+.fchip.ec.on { border-color: color-mix(in srgb, rgb(var(--c-ok)) 55%, transparent); background: color-mix(in srgb, rgb(var(--c-ok)) 11%, transparent); }
+.fchip.ps.on { border-color: color-mix(in srgb, rgb(var(--c-warn)) 55%, transparent); background: color-mix(in srgb, rgb(var(--c-warn)) 11%, transparent); }
+.fchip.un { border-style: dashed; }
+.scopebar {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+    border: 1px solid var(--c-ln); border-radius: 10px; padding: 11px 14px; margin: 0 0 14px;
+    background: color-mix(in srgb, rgb(var(--c-fog)) 4%, transparent);
+}
+.scopebar .txt { font-size: 12.5px; color: rgb(var(--c-fog)); line-height: 1.5; }
+.scopebar .txt b { color: rgb(var(--c-tx)); }
+/* The scope lives on the WIDGET, not on <body> — five positions widgets can be
+   on one dashboard at once, and each keeps its own scope.
+   (Archive wrote body[data-f]; rescoped here.) */
+[data-positions="b"][data-f="all"] .scopebar.one { display: none; }
+[data-positions="b"]:not([data-f="all"]) .scopebar.all { display: none; }
+/* Inside one department the qualifier is carried by the scope bar, so the row
+   drops it; in All every name is written department-first. */
+[data-positions="b"]:not([data-f="all"]) .qpart { display: none; }
+
+/* ---- C · department cards ------------------------------------------------ */
+/* The card boundary is the point: two cards, two Analysts, nothing to merge. */
+.dcard {
+    border: 1px solid var(--c-ln2); border-radius: 13px; padding: 0; overflow: hidden;
+    background: color-mix(in srgb, rgb(var(--c-fog)) 3%, transparent); display: flex; flex-direction: column;
+}
+.dcard.ec { border-color: color-mix(in srgb, rgb(var(--c-ok)) 34%, transparent); }
+.dcard.ps { border-color: color-mix(in srgb, rgb(var(--c-warn)) 34%, transparent); }
+.dcard.un { border-style: dashed; border-color: var(--c-ln2); background: none; }
+.dhead {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+    padding: 13px 15px; border-bottom: 1px solid var(--c-ln);
+}
+.dcard.ec .dhead { background: color-mix(in srgb, rgb(var(--c-ok)) 7%, transparent); }
+.dcard.ps .dhead { background: color-mix(in srgb, rgb(var(--c-warn)) 7%, transparent); }
+.dcard.un .dhead { border-bottom-style: dashed; }
+.dh-l { display: flex; align-items: center; gap: 10px; }
+.dh-l b { font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+.dh-l a { text-decoration: none; color: inherit; }
+.dh-l a:hover { color: rgb(var(--c-acc)); }
+.dcard.un .dh-l b { color: rgb(var(--c-dim)); }
+.dh-r { display: flex; align-items: center; gap: 12px; }
+.dmeta {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px; letter-spacing: .08em;
+    color: rgb(var(--c-dim)); text-transform: uppercase;
+}
+.dnote { font-size: 12px; color: rgb(var(--c-dim)); line-height: 1.55; margin: 0; padding: 11px 15px 0; font-style: italic; }
+.plist { padding: 4px 15px; flex: 1; }
+.pitem {
+    padding: 12px 0; border-bottom: 1px dashed color-mix(in srgb, rgb(var(--c-fog)) 18%, transparent);
+    display: flex; flex-direction: column; gap: 7px; cursor: pointer;
+}
+.pitem:last-child { border-bottom: 0; }
+.pline { display: flex; align-items: center; gap: 0; flex-wrap: wrap; }
+.pn { font-size: 14px; font-weight: 600; color: rgb(var(--c-tx)); }
+.pn a { color: inherit; text-decoration: none; }
+.pn a:hover { color: rgb(var(--c-acc)); }
+.held {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px; letter-spacing: .07em;
+    color: rgb(var(--c-dim)); text-transform: uppercase; margin-left: auto; padding-left: 12px;
+}
+/* The archive revealed these on hover; a row that navigates must show its action
+   without being hovered, so they sit in the flow, always visible. */
+.pacts { display: flex; gap: 6px; justify-content: flex-end; }
+.addpos {
+    display: flex; align-items: center; gap: 8px; width: 100%; background: none; cursor: pointer;
+    border: 0; border-top: 1px dashed var(--c-ln2); padding: 12px 15px; color: rgb(var(--c-acc));
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10.5px; font-weight: 700;
+    letter-spacing: .06em; text-align: left;
+}
+.addpos b { color: rgb(var(--c-tx)); font-weight: 700; }
+.addpos:hover { background: color-mix(in srgb, rgb(var(--c-acc)) 7%, transparent); }
+.addpos svg { flex: none; }
+
+/* ---- D · qualified names ------------------------------------------------- */
+/* Department is the first identity column and the name carries it too, so the
+   name survives copy/paste, search and an audit line. */
+td.dcell { width: 1%; white-space: nowrap; }
+table.tbl th.dcol { width: 1%; }
+td.dcell + td { white-space: nowrap; }
+/* The create form: department is field one, and it is required. */
+.cform {
+    border: 1px solid color-mix(in srgb, rgb(var(--c-acc)) 32%, transparent); border-radius: 13px;
+    padding: 16px 17px 17px; margin-top: 18px;
+    background: color-mix(in srgb, rgb(var(--c-acc)) 4%, transparent);
+}
+.crow { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-end; }
+.cfield { display: flex; flex-direction: column; gap: 0; }
+.cfield .sel, .cfield .inl { height: 30px; max-width: 250px; }
+.req { color: rgb(var(--c-acc)); margin-left: 5px; }
+.step {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9px; font-weight: 700;
+    color: rgb(var(--c-accT)); background: rgb(var(--c-acc)); border-radius: 4px; padding: 2px 5px 1px; margin-right: 7px;
+    letter-spacing: .06em;
+}
+.pbox {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 9.5px; color: rgb(var(--c-fog)); border: 1px solid var(--c-ln); border-radius: 6px; padding: 4px 8px 3px;
+    cursor: pointer; line-height: 1; user-select: none;
+}
+.pbox.on { color: rgb(var(--c-acc)); border-color: color-mix(in srgb, rgb(var(--c-acc)) 45%, transparent); }
+.pbox input { accent-color: rgb(var(--c-acc)); width: 11px; height: 11px; margin: 0; }
+.okline {
+    display: flex; align-items: flex-start; gap: 9px; margin-top: 15px; font-size: 12.5px; color: rgb(var(--c-fog));
+    line-height: 1.55; border-top: 1px dashed var(--c-ln2); padding-top: 13px;
+}
+.okline svg { flex: none; color: rgb(var(--c-ok)); margin-top: 1px; }
+.okline b { color: rgb(var(--c-tx)); }
+.okline code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: rgb(var(--c-tx)); }
+
+/* ---- E · split manager --------------------------------------------------- */
+/* A department rail and one department's positions — you are always inside
+   exactly one department, and the pane says which. */
+.split {
+    display: grid; grid-template-columns: 238px 1fr; gap: 0; margin-top: 16px;
+    border: 1px solid var(--c-ln); border-radius: 13px; overflow: hidden;
+}
+.dept-rail {
+    border-right: 1px solid var(--c-ln); padding: 11px; display: flex; flex-direction: column; gap: 5px;
+    background: color-mix(in srgb, rgb(var(--c-fog)) 4%, transparent);
+}
+.rail-item {
+    display: grid; grid-template-columns: 8px 1fr auto; gap: 0 10px; align-items: center;
+    background: none; border: 1px solid transparent; border-radius: 9px; padding: 9px 11px; cursor: pointer;
+    text-align: left; color: rgb(var(--c-fog)); width: 100%;
+}
+.rail-item:hover { border-color: var(--c-ln2); color: rgb(var(--c-tx)); }
+.rail-item.on { background: rgb(var(--c-raised)); border-color: var(--c-ln2); color: rgb(var(--c-tx)); }
+.rail-item.ec.on { border-color: color-mix(in srgb, rgb(var(--c-ok)) 42%, transparent); }
+.rail-item.ps.on { border-color: color-mix(in srgb, rgb(var(--c-warn)) 42%, transparent); }
+.rail-item .rn { font-size: 13px; font-weight: 600; }
+.rail-item .rc { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: rgb(var(--c-dim)); }
+.rail-item .rh {
+    grid-column: 2/4; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9px;
+    letter-spacing: .1em; text-transform: uppercase; color: rgb(var(--c-dim)); margin-top: 3px;
+}
+.rail-item.on .rc { color: rgb(var(--c-tx)); }
+.railsplit { margin: 9px 2px 5px; border-top: 1px dashed var(--c-ln2); padding-top: 11px; }
+.railsplit .lbl { margin-bottom: 6px; }
+.rail-item.unf { border-style: dashed; border-color: var(--c-ln2); }
+.rail-item.unf .rn { color: rgb(var(--c-dim)); font-style: italic; }
+.rail-item.unf.on { background: none; border-color: rgb(var(--c-fog)); }
+.rail-item.unf.on .rn { color: rgb(var(--c-tx)); }
+.railnew { margin-top: auto; padding-top: 11px; }
+.panes { padding: 16px 18px 18px; min-width: 0; }
+.pane { display: none; }
+.pane.on { display: block; }
+.phead {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+    padding: 0 0 13px; border-bottom: 1px solid var(--c-ln); margin-bottom: 6px;
+}
+.ph-l { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ph-l b { font-size: 16px; font-weight: 700; letter-spacing: -.015em; }
+.ph-l a { text-decoration: none; color: inherit; }
+.ph-l a:hover { color: rgb(var(--c-acc)); }
+.pscope { font-size: 11.5px; color: rgb(var(--c-dim)); font-style: italic; }
+.pscope b { font-style: normal; font-weight: 600; color: rgb(var(--c-fog)); font-size: 11.5px; }
+.thd {
+    color: rgb(var(--c-tx)); text-transform: none; letter-spacing: 0; font-family: "Archivo", system-ui, sans-serif;
+    font-size: 11px; font-weight: 700;
+}
+@media (max-width: 900px) {
+    .split { grid-template-columns: 1fr; }
+    .dept-rail { border-right: 0; border-bottom: 1px solid var(--c-ln); }
+}
+
+/* ---- widget-preview safety ----------------------------------------------- */
+/* Half-width cells and the library's preview column are narrower than a page:
+   a wide positions table scrolls inside its own widget rather than pushing the
+   page sideways. */
+[data-positions] table.tbl { width: 100%; }
+[data-positions] .w-scroll, .w-inner [data-positions] { min-width: 0; }
+
+/* ==========================================================================
+   TEAM · PERMISSIONS — the matrix: provenance, grid, checklist, packs, ledger
+   Ported from permissions.css.
+   ========================================================================== */
+
+/* ==================== PROVENANCE — who declared this permission ==========
+   THE POINT OF THE WHOLE SURFACE. Six permissions are the host's and will
+   always be there; every other row in the matrix arrived because a bundle is
+   installed, and will leave when it is uninstalled. A matrix that drew the two
+   alike would be a matrix that lies about what happens on `composer remove`.
+   ======================================================================== */
+
+.pm-by {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 8.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    color: rgb(var(--c-dim)); border: 1px solid var(--c-ln2); border-radius: 999px;
+    padding: 3px 8px 2px; line-height: 1; white-space: nowrap; flex: none;
+}
+.pm-by i { width: 6px; height: 6px; border-radius: 2px; font-style: normal; flex: none; background: rgb(var(--c-fog)); }
+.pm-by.core i { background: rgb(var(--c-fog)); }
+/* The module colours, matched to nav.css and area-overview.css exactly. */
+.pm-by.patrols i { background: rgb(var(--c-acc)); }
+.pm-by.incidents i { background: var(--i-poach, #E05B41); }
+/* Roster blue, legible on both grounds. The shell ships light as the bare
+   :root and dark as html.dark, so the darker blue is the default here and the
+   lighter one is the dark-mode override — the design system spelled it the
+   other way round because its own default was dark. */
+.pm-by.roster i { background: #3457B5; }
+html.dark .pm-by.roster i { background: #7FA6F0; }
+.pm-by.surveys i { background: rgb(var(--c-warn)); }
+/* A permission from a bundle that is NOT installed here — drawn dashed and
+   hollow, the same grammar the area overview's honest not-installed slot uses. */
+.pm-by.next { border-style: dashed; }
+.pm-by.next i { background: none; border: 1px solid rgb(var(--c-dim)); }
+
+/* The umbrella band that opens each group of the matrix. It carries the
+   umbrella's name, its provenance and its count — never the name alone, because
+   "Incidents" is a word the host also uses. */
+.pm-umb {
+    display: flex; align-items: center; gap: 11px; flex-wrap: wrap;
+    padding: 11px 12px 9px; background: color-mix(in srgb, rgb(var(--c-fog)) 7%, transparent);
+    border-bottom: 1px solid var(--c-ln2);
+}
+.pm-umb b { font-size: 13.5px; font-weight: 700; letter-spacing: -.01em; color: rgb(var(--c-tx)); }
+.pm-umb .n {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px;
+    letter-spacing: .08em; text-transform: uppercase; color: rgb(var(--c-dim));
+}
+.pm-umb .pkg {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px; color: rgb(var(--c-dim));
+    margin-left: auto; white-space: nowrap;
+}
+/* A module umbrella is tinted by its own colour, faintly, so a screenshot of
+   the matrix still says which rows are contributed. */
+.pm-umb.pm-mod { background: color-mix(in srgb, rgb(var(--c-acc)) 6%, transparent); }
+.pm-umb.pm-mod-incidents { background: color-mix(in srgb, var(--i-poach, #E05B41) 7%, transparent); }
+.pm-umb.pm-mod-roster { background: color-mix(in srgb, #7FA6F0 9%, transparent); }
+.pm-umb.pm-mod-surveys { background: color-mix(in srgb, rgb(var(--c-warn)) 7%, transparent); }
+
+/* ==================== A · THE GRID =======================================
+   Positions across, permissions down, a box at every intersection. The only
+   direction in which "who may delete an area" is one row read left to right.
+   ======================================================================== */
+
+.pm-scroll { overflow-x: auto; border: 1px solid var(--c-ln); border-radius: 13px; }
+.pm-scroll table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 720px; }
+
+/* The permission column is the reading anchor, so it is pinned: scrolling the
+   positions sideways must never take the row's name away with them. */
+.pm-grid th.pm-rowh, .pm-grid td.pm-rowh {
+    position: sticky; left: 0; z-index: 2; background: rgb(var(--c-p1));
+    border-right: 1px solid var(--c-ln2); min-width: 232px; text-align: left;
+}
+.pm-grid thead th {
+    position: sticky; top: 0; z-index: 3; background: rgb(var(--c-p1));
+    border-bottom: 1px solid var(--c-ln2); padding: 0; vertical-align: bottom;
+}
+.pm-grid thead th.pm-rowh { z-index: 4; padding: 12px; }
+
+/* A COLUMN HEAD IS UPRIGHT TEXT, NOT ROTATED. Rotated headers save width and
+   cost legibility, and this table's whole job is being read accurately; the
+   name wraps in a narrow column instead. */
+.pm-colh {
+    display: flex; flex-direction: column; gap: 5px; align-items: flex-start;
+    padding: 12px 10px; min-width: 96px; max-width: 132px;
+}
+.pm-colh b { font-size: 12px; font-weight: 600; line-height: 1.3; color: rgb(var(--c-tx)); }
+.pm-colh .held {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9px;
+    letter-spacing: .08em; text-transform: uppercase; color: rgb(var(--c-dim));
+}
+.pm-grid td { border-bottom: 1px solid var(--c-ln); padding: 0; }
+.pm-grid tbody tr:last-child td { border-bottom: 0; }
+.pm-grid tbody tr:hover td { background: color-mix(in srgb, rgb(var(--c-fog)) 5%, transparent); }
+.pm-grid tbody tr:hover td.pm-rowh { background: color-mix(in srgb, rgb(var(--c-fog)) 8%, transparent); }
+.pm-grid td.pm-rowh { padding: 10px 12px; }
+.pm-grid tr.pm-umbrow td { padding: 0; background: none !important; }
+
+/* The permission's two names, always both: the human label the catalogue
+   composes (`Areas · View`) and the machine value that is actually stored in
+   the JSON column and actually checked by the voter. */
+.pm-name { display: flex; flex-direction: column; gap: 4px; }
+.pm-name b { font-size: 12.5px; font-weight: 600; color: rgb(var(--c-tx)); }
+.pm-name .perm { margin: 0; align-self: flex-start; }
+
+/* THE INTERSECTION. A whole-cell hit target, because a 13px checkbox in a wide
+   cell is a mis-click waiting to happen in a table that grants authority. It is
+   a <button>, so the user agent's border, background and font are cleared. */
+.pm-box {
+    display: flex; align-items: center; justify-content: center; width: 100%;
+    box-sizing: border-box; padding: 11px 6px; background: none; border: 0;
+    font: inherit; cursor: pointer; color: rgb(var(--c-dim));
+}
+.pm-box:hover { background: color-mix(in srgb, rgb(var(--c-acc)) 8%, transparent); }
+.pm-box i {
+    width: 17px; height: 17px; border-radius: 5px; border: 1px solid var(--c-ln2);
+    display: flex; align-items: center; justify-content: center; box-sizing: border-box;
+}
+.pm-box svg { width: 12px; height: 12px; display: none; }
+.pm-box.on i { background: rgb(var(--c-acc)); border-color: rgb(var(--c-acc)); color: rgb(var(--c-accT)); }
+.pm-box.on svg { display: block; }
+
+/* THE TIER BYPASS, drawn rather than explained in a footnote. A Super Admin's
+   or an Admin's authority does not come from a position, so the column that
+   represents one is struck through: the boxes are inert and the head says why.
+   `PermissionVoter` grants on `canManageContent()` before it ever looks at a
+   position. */
+.pm-grid col.pm-bypass, .pm-grid td.pm-bypass, .pm-grid th.pm-bypass {
+    background: repeating-linear-gradient(135deg,
+        transparent 0 6px, color-mix(in srgb, rgb(var(--c-fog)) 8%, transparent) 6px 12px);
+}
+.pm-box.bypass { cursor: not-allowed; }
+.pm-box.bypass:hover { background: none; }
+.pm-box.bypass i { border-style: dashed; background: none; color: rgb(var(--c-dim)); }
+
+/* ==================== B · ONE POSITION AT A TIME =========================
+   A rail of positions and one position's checklist. `.split` / `.rail-item` /
+   `.panes` are positions.css's and are reused unchanged; only what the
+   checklist adds is here.
+   ======================================================================== */
+
+.pm-list { display: flex; flex-direction: column; }
+.pm-group { border: 1px solid var(--c-ln); border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
+.pm-group:last-child { margin-bottom: 0; }
+
+/* A row is a <button>, so the user agent's own border, background, font and
+   centring all have to be cleared explicitly — a grid row that inherits them
+   collapses to a little boxed label and stops reading as a row. */
+.pm-row {
+    display: grid; grid-template-columns: 26px 1fr auto; gap: 0 12px; align-items: center;
+    width: 100%; box-sizing: border-box; text-align: left; font: inherit; color: inherit;
+    background: none; border: 0; border-bottom: 1px dashed var(--c-ln);
+    padding: 11px 13px; cursor: pointer;
+}
+.pm-list .pm-row:last-child, .pm-group .pm-row:last-child { border-bottom: 0; }
+.pm-row:last-child { border-bottom: 0; }
+.pm-row:hover { background: color-mix(in srgb, rgb(var(--c-fog)) 5%, transparent); }
+.pm-row .pm-tick {
+    width: 17px; height: 17px; border-radius: 5px; border: 1px solid var(--c-ln2);
+    display: flex; align-items: center; justify-content: center; box-sizing: border-box; color: transparent;
+}
+.pm-row .pm-tick svg { width: 12px; height: 12px; }
+.pm-row.on .pm-tick { background: rgb(var(--c-acc)); border-color: rgb(var(--c-acc)); color: rgb(var(--c-accT)); }
+.pm-row .pm-t { min-width: 0; }
+.pm-row .pm-t b { display: block; font-size: 13px; font-weight: 600; color: rgb(var(--c-tx)); line-height: 1.35; }
+.pm-row .pm-t .perm { margin: 4px 0 0; }
+.pm-row .pm-t em {
+    display: block; font-style: normal; font-size: 11.5px; color: rgb(var(--c-dim));
+    line-height: 1.5; margin-top: 4px;
+}
+
+/* The umbrella-level toggle. It says how many of the group are held, because
+   "Areas" alone cannot distinguish all-four from one-of-four, and granting all
+   four by reflex is exactly how `area.delete` ends up somewhere nobody meant. */
+.pm-all {
+    display: inline-flex; align-items: center; gap: 7px; background: none; cursor: pointer;
+    box-sizing: border-box;
+    border: 1px solid var(--c-ln2); border-radius: 8px; padding: 5px 10px 4px; color: rgb(var(--c-fog));
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9.5px; font-weight: 700;
+    letter-spacing: .09em; text-transform: uppercase; line-height: 1;
+}
+.pm-all:hover { color: rgb(var(--c-tx)); border-color: rgb(var(--c-fog)); }
+.pm-all .c { color: rgb(var(--c-dim)); border: 0; background: none; padding: 0; border-radius: 0; }
+/* `.c` is the design system's PLATE class. Inside this button it is only ever a
+   <span> carrying the count, and the reset above stops the plate's own border,
+   background and radius from being inherited into a chip. */
+
+/* THE DESTRUCTIVE ONE IS MARKED. `area.delete` is the only permission in the
+   core six that destroys something, and a checklist that draws it exactly like
+   `area.view` is a checklist that helped. */
+.pm-row.destructive .pm-t b::after {
+    content: "destroys data"; margin-left: 9px; vertical-align: 1px;
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 8.5px; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase; color: rgb(var(--c-fail));
+    border: 1px dashed color-mix(in srgb, rgb(var(--c-fail)) 45%, transparent);
+    border-radius: 5px; padding: 3px 6px 2px; white-space: nowrap;
+}
+.pm-row.destructive.on { background: color-mix(in srgb, rgb(var(--c-fail)) 6%, transparent); }
+
+/* THE SAME FLAG IN THE GRID. `area.delete` is the one core permission that
+   destroys something, and it has to be marked in EVERY direction or the mark is
+   a property of a layout rather than of the permission. Declared here, beside
+   B's rule, so the two can never drift apart. */
+.pm-grid tr.destructive .pm-name b::after {
+    content: "destroys data"; margin-left: 9px; vertical-align: 1px;
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 8.5px; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase; color: rgb(var(--c-fail));
+    border: 1px dashed color-mix(in srgb, rgb(var(--c-fail)) 45%, transparent);
+    border-radius: 5px; padding: 3px 6px 2px; white-space: nowrap; display: inline-block;
+}
+.pm-grid tr.destructive .pm-box.on i { background: rgb(var(--c-fail)); border-color: rgb(var(--c-fail)); }
+
+/* ==================== THE UMBRELLA IS A BOUNDED UNIT =====================
+   A REVIEW FINDING, and it applies to every direction that groups: the
+   umbrella heading was drawn as one more strip in a stack of identical
+   rounded boxes, so a reader could not see where Patrols ended and Incidents
+   began. Grouping that is not visible is not grouping.
+
+   The fix is one device, used the same way everywhere, so a module boundary
+   reads identically in all five directions:
+
+     1. A CONTAINER. The umbrella's permissions live inside its own bordered
+        box; the heading is part of that box, not a card floating above it.
+     2. A COLOURED EDGE. A 3px left stripe in the module's own colour — the
+        same colour its tag, its dot and its map layer already wear. Provenance
+        becomes a thing you see at arm's length rather than read.
+     3. A SPACING RHYTHM. Big air BETWEEN groups, tight rows WITHIN them. This
+        does more work than the border does: proximity is what the eye groups
+        by, and the previous layout spaced everything equally.
+
+   `--pm-edge` is the one place a group's colour is chosen; every rule below
+   spends it, so adding a module means adding one line.
+   ======================================================================== */
+
+/* The edge colours are declared once, a little further down, beside the
+   module-boundary note that explains them. */
+
+/* THE MODULE BOUNDARY — the review finding this section exists for, and it is
+   scoped to what was actually wrong.
+
+   In C the umbrella heading was drawn as one more strip in a stack of identical
+   rounded boxes, so a reader could not see where Patrols ended and Incidents
+   began. C is fixed below: one umbrella is ONE bounded group, its permissions
+   are rows inside it, and the group carries its module's own colour.
+
+   B and D were NOT wrong — each already gives an umbrella its own bordered card
+   — so they keep exactly the chrome they were drawn with. All three gain one
+   additive thing: a 3px left edge in the module's colour, the same colour its
+   tag, its nav dot and its map layer already wear. Provenance you can see at
+   arm's length rather than read.
+
+   `--pm-edge` is the one place a group's colour is chosen; every rule below
+   spends it, so adding a module means adding one line.  */
+
+.pm-group, .pm-qgroup, .pm-pack { --pm-edge: var(--c-ln2); }
+.pm-mod-patrols   { --pm-edge: rgb(var(--c-acc)); }
+.pm-mod-incidents { --pm-edge: var(--i-poach, #E05B41); }
+.pm-mod-roster    { --pm-edge: #3457B5; }
+html.dark .pm-mod-roster { --pm-edge: #7FA6F0; }
+.pm-mod-surveys   { --pm-edge: rgb(var(--c-warn)); }
+.pm-core          { --pm-edge: rgb(var(--c-fog)); }
+
+.pm-group, .pm-qgroup, .pm-pack { border-left: 3px solid var(--pm-edge); }
+
+/* ==================== C · PERMISSION FIRST ===============================
+   The permission is the thing you open, and you tick which positions hold it —
+   the shape of the question an audit actually asks.
+   ======================================================================== */
+
+/* ONE UMBRELLA, ONE BOUNDED GROUP — the C fix. The group is the card; a
+   permission is a ROW inside it rather than a sibling card beside it, so a
+   heading can never be mistaken for a member of the list it heads. Big air
+   BETWEEN groups against hairlines WITHIN them: proximity is what the eye
+   groups by, and the old layout spaced everything equally. */
+.pm-qgroup {
+    border: 1px solid var(--c-ln2); border-left-width: 3px; border-radius: 13px;
+    overflow: hidden; margin-bottom: 26px;
+}
+.pm-qgroup:last-child { margin-bottom: 0; }
+.pm-qgroup.gone { border-style: dashed; border-left-style: solid; opacity: .72; }
+.pm-qgroup > .pm-umb { border-bottom: 1px solid var(--c-ln2); }
+.pm-q { border-top: 1px dashed var(--c-ln); }
+.pm-q:first-of-type { border-top: 0; }
+.pm-q:first-child { border-top: 0; }
+.pm-qhead {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 13px 15px;
+    background: none; cursor: pointer;
+}
+.pm-qhead .qq { font-size: 13.5px; font-weight: 600; color: rgb(var(--c-tx)); letter-spacing: -.01em; }
+.pm-qhead .cnt {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px; letter-spacing: .08em;
+    text-transform: uppercase; color: rgb(var(--c-dim)); margin-left: auto;
+}
+.pm-holders { display: flex; flex-wrap: wrap; gap: 7px; padding: 13px 15px; }
+/* A holder chip is a POSITION, and the number on it is how many people are in
+   that position right now — ticking it moves authority to real people, and the
+   count is the only thing on the screen that says how many. */
+.pm-hold {
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font: inherit;
+    border: 1px solid var(--c-ln2); border-radius: 999px; padding: 0 13px; height: 29px;
+    box-sizing: border-box; background: none; color: rgb(var(--c-fog)); font-size: 12px; line-height: 1;
+}
+.pm-hold:hover { color: rgb(var(--c-tx)); border-color: rgb(var(--c-fog)); }
+.pm-hold.on {
+    color: rgb(var(--c-tx)); border-color: color-mix(in srgb, rgb(var(--c-acc)) 55%, transparent);
+    background: color-mix(in srgb, rgb(var(--c-acc)) 10%, transparent);
+}
+.pm-hold .pn { font-weight: 600; }
+.pm-hold .pc { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px; color: rgb(var(--c-dim)); }
+.pm-hold.on .pc { color: rgb(var(--c-acc)); }
+.pm-hold.none { border-style: dashed; color: rgb(var(--c-dim)); }
+
+/* Nobody holds it — a real and often correct answer, said out loud rather than
+   left as an empty row. */
+.pm-nobody {
+    font-size: 12px; color: rgb(var(--c-dim)); font-style: italic; padding: 2px 0;
+    display: flex; align-items: center; gap: 8px;
+}
+.pm-nobody svg { flex: none; width: 14px; height: 14px; }
+
+/* ==================== D · UMBRELLA PACKS =================================
+   The matrix as its umbrellas, each collapsible, each stating who contributed
+   it — the direction that makes the catalogue's GROWTH the visible thing.
+   ======================================================================== */
+
+.pm-pack { border: 1px solid var(--c-ln2); border-radius: 13px; overflow: hidden; margin-bottom: 12px; }
+.pm-pack:last-child { margin-bottom: 0; }
+.pm-pack.gone { border-style: dashed; opacity: .72; }
+.pm-packbody { padding: 13px 15px; }
+.pm-packbody.closed { display: none; }
+.pm-summary {
+    display: flex; align-items: center; gap: 9px; flex-wrap: wrap; font-size: 12px;
+    color: rgb(var(--c-fog)); line-height: 1.6;
+}
+.pm-summary b { color: rgb(var(--c-tx)); }
+
+/* The per-position row inside a pack: the position, then one dot per permission
+   in the umbrella, filled if held. Dense enough that eight positions fit
+   without scrolling, and precise enough to count. */
+.pm-dots { display: flex; gap: 4px; align-items: center; }
+.pm-dots i {
+    width: 9px; height: 9px; border-radius: 3px; border: 1px solid var(--c-ln2);
+    display: block; box-sizing: border-box;
+}
+.pm-dots i.on { background: rgb(var(--c-acc)); border-color: rgb(var(--c-acc)); }
+.pm-dots i.del.on { background: rgb(var(--c-fail)); border-color: rgb(var(--c-fail)); }
+.pm-prow {
+    display: grid; grid-template-columns: 1fr auto auto; gap: 0 14px; align-items: center;
+    padding: 9px 0; border-bottom: 1px dashed var(--c-ln);
+}
+.pm-prow:last-child { border-bottom: 0; }
+.pm-prow .nm { font-size: 12.5px; font-weight: 600; color: rgb(var(--c-tx)); }
+.pm-prow .of {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px; color: rgb(var(--c-dim));
+    letter-spacing: .06em;
+}
+
+/* WHAT UNINSTALLING COSTS, stated where the decision is made. A module's
+   umbrella can be removed, and when it is, the permission strings stay in the
+   positions' JSON columns and simply stop resolving — `knownValues()` filters
+   them on the next write. That is a real property of the shipped model and the
+   pack says so rather than letting somebody discover it. */
+.pm-cost {
+    border-top: 1px dashed var(--c-ln2); margin-top: 12px; padding-top: 12px;
+    font-size: 11.5px; color: rgb(var(--c-dim)); line-height: 1.6; display: flex; gap: 9px; align-items: flex-start;
+}
+.pm-cost svg { flex: none; width: 14px; height: 14px; margin-top: 2px; }
+.pm-cost b { color: rgb(var(--c-fog)); }
+.pm-cost code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: rgb(var(--c-fog)); }
+
+/* ==================== E · THE EFFECTIVE LEDGER ===========================
+   Not an editor: the truth. For one person, everything they may actually do
+   and WHY — which is the only place the tier bypass and the empty position are
+   both visible at once.
+   ======================================================================== */
+
+.pm-eff { display: flex; flex-direction: column; gap: 0; }
+.pm-effrow {
+    display: grid; grid-template-columns: 1fr 168px; gap: 0 16px; align-items: center;
+    padding: 10px 0; border-bottom: 1px dashed var(--c-ln);
+}
+.pm-effrow:last-child { border-bottom: 0; }
+.pm-effrow .lhs { display: flex; align-items: center; gap: 11px; flex-wrap: wrap; min-width: 0; }
+.pm-effrow .lhs b { font-size: 12.5px; font-weight: 600; color: rgb(var(--c-tx)); }
+
+/* THE REASON, on every single row, because "may" without "why" cannot be
+   argued with. Three reasons and only three exist in the shipped model: the
+   tier grants everything, the position grants this one, or nothing grants it. */
+.pm-why {
+    display: inline-flex; align-items: center; gap: 7px; justify-self: end;
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9.5px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; border-radius: 999px;
+    padding: 4px 10px 3px; line-height: 1; white-space: nowrap; border: 1px solid var(--c-ln2);
+    color: rgb(var(--c-dim));
+}
+.pm-why svg { width: 11px; height: 11px; flex: none; }
+.pm-why.tier { color: rgb(var(--c-acc)); border-color: color-mix(in srgb, rgb(var(--c-acc)) 45%, transparent); }
+.pm-why.pos { color: rgb(var(--c-ok)); border-color: color-mix(in srgb, rgb(var(--c-ok)) 42%, transparent); }
+.pm-why.no { border-style: dashed; color: rgb(var(--c-dim)); }
+.pm-effrow.off .lhs b { color: rgb(var(--c-dim)); }
+.pm-effrow.off .perm { opacity: .6; }
+
+/* The person this ledger is about, and the one sentence that explains the
+   whole column at once. */
+.pm-subject {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 0 0 13px; border-bottom: 1px solid var(--c-ln); margin-bottom: 6px;
+}
+.pm-subject .avatar { width: 34px; height: 34px; border-radius: 10px; font-size: 12px; flex: none; }
+.pm-subject .st { min-width: 0; line-height: 1.4; }
+.pm-subject .st b { display: block; font-size: 15px; font-weight: 700; letter-spacing: -.015em; color: rgb(var(--c-tx)); }
+.pm-subject .st em {
+    display: block; font-style: normal; font-size: 11.5px; color: rgb(var(--c-dim));
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+.pm-subject .picker { margin-left: auto; }
+
+/* THE ZERO. Verified, able to sign in, and able to do nothing at all — the
+   shipped model's honest bottom, and the state a design that only ever drew
+   populated rows would never show anybody. */
+.pm-zero {
+    border: 1px dashed color-mix(in srgb, rgb(var(--c-warn)) 45%, transparent);
+    background: color-mix(in srgb, rgb(var(--c-warn)) 6%, transparent);
+    border-radius: 12px; padding: 14px 15px; display: flex; gap: 11px; align-items: flex-start;
+    font-size: 12.5px; color: rgb(var(--c-fog)); line-height: 1.6;
+}
+.pm-zero svg { flex: none; color: rgb(var(--c-warn)); margin-top: 2px; width: 16px; height: 16px; }
+.pm-zero b { color: rgb(var(--c-tx)); }
+
+/* ==================== SHARED — the editor's furniture ====================
+   Saving, the count, the position header. Used by more than one direction, so
+   it is stated once.
+   ======================================================================== */
+
+/* THE SAVE BAR. Every direction edits a JSON column, and none of them saves on
+   click: a matrix that writes on every tick is a matrix in which a mis-click is
+   a grant nobody reviewed. The bar states the pending change in words and is
+   the only thing that posts. */
+.pm-save {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    border: 1px solid color-mix(in srgb, rgb(var(--c-acc)) 34%, transparent);
+    background: color-mix(in srgb, rgb(var(--c-acc)) 5%, transparent);
+    border-radius: 12px; padding: 11px 14px; margin: 14px 0 0;
+}
+/* The sentence takes the room that is left and the actions never wrap under it
+   while there is width for them — a save bar whose buttons drift onto their own
+   line reads as two unrelated things. */
+.pm-save .txt { font-size: 12.5px; color: rgb(var(--c-fog)); line-height: 1.5; flex: 1 1 300px; min-width: 0; }
+.pm-save .txt b { color: rgb(var(--c-tx)); }
+
+/* THE ACTION PAIR, at the house scale. `widgets.css` already states this rule
+   once for every page header in the app — 32px tall, one padding, one font
+   size, and "the primary is distinguished by FILL AND WEIGHT, never by size".
+   A card's action row is the same row in a smaller frame, so it obeys the same
+   rule rather than inventing a second one: Discard is the quiet secondary and
+   sits BEFORE the primary, and the two differ only in weight and fill. */
+.pm-save .acts { display: flex; align-items: center; gap: 9px; margin-left: auto; flex: none; }
+.pm-save .acts .softbtn,
+.pm-save .acts .cta,
+.pm-save .acts button {
+    height: 32px; box-sizing: border-box;
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 0 14px; border-radius: 9px;
+    font-family: inherit; font-size: 12px; line-height: 1; letter-spacing: 0; text-transform: none;
+    white-space: nowrap; text-decoration: none;
+}
+.pm-save .acts .cta { font-weight: 700; }
+.pm-save .acts .softbtn { font-weight: 600; }
+.pm-save .acts svg { width: 14px; height: 14px; flex: none; }
+@media (max-width: 620px) {
+    .pm-save .acts { margin-left: 0; width: 100%; }
+    .pm-save .acts .softbtn, .pm-save .acts .cta { flex: 1; }
+}
+.pm-save.clean { border-color: var(--c-ln); background: none; }
+.pm-save.clean .acts .cta { display: none; }
+
+.pm-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+    padding: 0 0 13px; border-bottom: 1px solid var(--c-ln); margin-bottom: 14px;
+}
+.pm-head .hl { display: flex; align-items: center; gap: 11px; flex-wrap: wrap; min-width: 0; }
+.pm-head .hl b { font-size: 16px; font-weight: 700; letter-spacing: -.015em; color: rgb(var(--c-tx)); }
+.pm-head .hr { display: flex; align-items: center; gap: 8px; }
+
+/* How many people this change reaches. A permission ticked on Ranger reaches
+   four people at once, and the editor says four before it saves, not after. */
+.pm-reach {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9.5px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; color: rgb(var(--c-warn));
+    border: 1px solid color-mix(in srgb, rgb(var(--c-warn)) 42%, transparent); border-radius: 999px;
+    padding: 4px 10px 3px; line-height: 1; white-space: nowrap;
+}
+.pm-reach svg { width: 11px; height: 11px; flex: none; }
+
+/* A position nobody holds is not a fault — it is a position waiting for its
+   first person, and the count says 0 rather than the row disappearing. */
+.pm-held0 { color: rgb(var(--c-dim)); font-style: italic; }
+
+/* ==================== THE FIRST-RUN STATE ================================
+   A fresh installation is ONE Super Admin, ZERO positions and the six core
+   permissions. The matrix therefore has no columns at all, and this is the
+   state it opens in on day one — so it is drawn, not assumed away.
+
+   The switch is `data-state` on <body>, thrown by a `design-only` control.
+   Nothing to port: the element goes and the state comes from the query.
+   ======================================================================== */
+
+/* THE FIRST-RUN STATE IS NOT A CSS SWITCH HERE. The design app toggled
+   `data-state="fresh"` on <body> from a reviewer control so both states could
+   be seen in one file; in the product the state is simply what the query
+   returned, and the template renders one branch or the other. So the two
+   display rules are deliberately absent, and `.state-full` / `.state-fresh` are
+   plain wrappers with no rules of their own. */
+
+.pm-first {
+    border: 1px dashed var(--c-ln2); border-radius: 13px; padding: 26px 24px; text-align: left;
+    display: flex; gap: 16px; align-items: flex-start;
+}
+.pm-first > svg { flex: none; width: 26px; height: 26px; color: rgb(var(--c-dim)); margin-top: 2px; }
+.pm-first .ft { min-width: 0; }
+.pm-first h3 {
+    margin: 0 0 8px; font-size: 16px; font-weight: 700; letter-spacing: -.015em; color: rgb(var(--c-tx));
+    font-family: "Archivo", system-ui, sans-serif;
+}
+.pm-first p { margin: 0 0 12px; font-size: 13px; color: rgb(var(--c-fog)); line-height: 1.65; max-width: 62ch; }
+.pm-first p:last-of-type { margin-bottom: 16px; }
+.pm-first p b { color: rgb(var(--c-tx)); }
+.pm-first code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11.5px; color: rgb(var(--c-tx)); }
+.pm-first .acts { display: flex; gap: 9px; flex-wrap: wrap; align-items: center; }
+
+/* ==================== WIDGET-PREVIEW SAFETY ==============================
+   A half-width cell and the library's preview column are both narrower than a
+   page. The grid scrolls inside its own widget rather than pushing the page
+   sideways — the same guard positions.css ends with, for the same reason.
+   ======================================================================== */
+
+[data-pm] table { width: 100%; }
+[data-pm] .pm-scroll, .w-inner [data-pm] { min-width: 0; }
+@media (max-width: 900px) {
+    .pm-effrow { grid-template-columns: 1fr; gap: 7px; }
+    .pm-effrow .pm-why { justify-self: start; }
+    .pm-prow { grid-template-columns: 1fr auto; }
+}
+
+/* ==================== RULED — A POSITION BELONGS TO A DEPARTMENT =========
+   The verdict that reshaped this surface. A position's name is unique PER
+   DEPARTMENT, not across the installation: two departments really do carry the
+   same post, and Ecology / Analyst and Protection Service / Analyst are two
+   different jobs that share a word. `uniq_team_position_name` becomes
+   `unique(department, name)`, and Position gains a department association.
+
+   The consequence for every direction here is one rule: **a bare position name
+   is never written**. `positions.css` already ships `.qual`, `.dtag`, `.dot`
+   and `.dupflag` for exactly this — they are reused, not re-declared. Only what
+   the matrix adds is below.
+   ======================================================================== */
+
+/* The third department key. positions.css ships `.ec` (ok) and `.ps` (warn);
+   Administration is the office, and it takes the neutral fog so the two
+   operational departments keep the colours the rest of the product gives them. */
+.dot.adm { background: rgb(var(--c-fog)); }
+.dtag.adm {
+    border-color: color-mix(in srgb, rgb(var(--c-fog)) 42%, transparent);
+    background: color-mix(in srgb, rgb(var(--c-fog)) 9%, transparent);
+}
+
+/* A · the grid's column head gains a department line above the name. Two of
+   these columns are called "Analyst"; a head that wrote only the name would
+   make the grid unreadable at exactly the point the ruling exists for. */
+.pm-dept {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 8.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: rgb(var(--c-dim)); line-height: 1; white-space: nowrap;
+}
+.pm-dept .dot { width: 7px; height: 7px; }
+.pm-dept.ec { color: rgb(var(--c-ok)); }
+.pm-dept.ps { color: rgb(var(--c-warn)); }
+/* The grid gets a vertical rule between departments, so a department is a block
+   of columns you can see rather than a label you have to read across. */
+.pm-grid th:not(.pm-rowh), .pm-grid td:not(.pm-rowh) { border-right: 1px solid transparent; }
+.pm-grid th.dbreak, .pm-grid td.dbreak { border-left: 1px solid var(--c-ln2); }
+
+/* B · the rail's department bands. `.railsplit` is positions.css's and does the
+   rule-and-label; it only needs its label to read as a department here. */
+[data-pm="b"] .railsplit .lbl { color: rgb(var(--c-fog)); letter-spacing: .14em; }
+[data-pm="b"] .rail-item .rn { display: block; }
+
+/* C · the holder chip carries its department in front of its name. Without it
+   this direction would be the easiest place in the product to grant the wrong
+   Analyst. */
+.pm-hold .pq {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9.5px;
+    color: rgb(var(--c-dim)); letter-spacing: .04em;
+}
+.pm-hold .pq::after { content: "/"; margin: 0 1px 0 5px; color: var(--c-ln2); }
+.pm-hold.on .pq { color: rgb(var(--c-fog)); }
+.pm-hold .dot { width: 7px; height: 7px; }
+
+/* D · the pack's rows band by department too. */
+.pm-dband { padding: 12px 0 7px; }
+.pm-dband:first-child { padding-top: 2px; }
+.pm-prow + .pm-dband { border-top: 1px solid var(--c-ln2); margin-top: 6px; }
+
+/* A position nobody holds yet is a position created before its first person —
+   Protection Service / Analyst is the case. Not a fault, and not hidden. */
+.pm-held0 { color: rgb(var(--c-dim)); font-style: italic; }
+
+/* ==================== RULED — A PERMISSION CARRIES A DESCRIPTION =========
+   `ModulePermission` gains a fourth string and `PermissionEnum` a
+   `description()`. The three the catalogue shipped were never enough to decide
+   with: a name says what a permission is CALLED, and the question actually
+   being answered at the moment somebody ticks a box is what granting it LETS
+   SOMEBODY DO. Every direction shows it, each in its own layout's language.
+   ======================================================================== */
+
+/* A · under the machine name in the pinned row header. The column is wider for
+   it, which is the cost, and the grid can afford it because the header is the
+   one column that never repeats. */
+.pm-grid th.pm-rowh, .pm-grid td.pm-rowh { min-width: 288px; }
+.pm-name em {
+    font-style: normal; font-size: 11px; color: rgb(var(--c-dim)); line-height: 1.5; max-width: 40ch;
+}
+
+/* B · `.pm-row .pm-t em` was already declared for this and was waiting for the
+   ruling. Nothing to add. */
+
+/* C · a line under the question, above the holders. */
+.pm-qdesc {
+    flex-basis: 100%; font-style: normal; font-size: 11.5px; color: rgb(var(--c-dim));
+    line-height: 1.55; margin-top: 2px;
+}
+
+/* D · the pack's legend. THE WORKSPACE RULE IS THAT A LEGEND SAYS WHAT THE
+   MARKS MEAN, and with descriptions ruled in it can finally do that instead of
+   naming the columns and leaving the reader to guess what a dot stands for. */
+.pm-legend { margin: 0 0 13px; }
+.pm-lrow {
+    display: grid; grid-template-columns: 12px auto auto 1fr; gap: 0 9px; align-items: baseline;
+    padding: 5px 0; font-size: 11.5px; color: rgb(var(--c-dim)); line-height: 1.5;
+}
+.pm-lrow b { font-size: 12px; font-weight: 600; color: rgb(var(--c-tx)); white-space: nowrap; }
+.pm-lrow em { font-style: normal; }
+.pm-lsw {
+    width: 9px; height: 9px; border-radius: 3px; background: rgb(var(--c-acc)); display: block;
+    align-self: center;
+}
+.pm-lsw.del { background: rgb(var(--c-fail)); }
+@media (max-width: 720px) { .pm-lrow { grid-template-columns: 12px 1fr; } }
+
+/* E · the ledger row stacks the reason against the description. */
+.pm-el { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.pm-el .t { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pm-el em { font-style: normal; font-size: 11px; color: rgb(var(--c-dim)); line-height: 1.5; }
+
+/* ==================== RULED — PRUNE, DO NOT PURGE ========================
+   When a module is uninstalled the permission strings it declared STAY in the
+   positions' JSON columns and stop resolving. Module data outlives the module;
+   there is no automatic cleanup, and a surface for reviewing and explicitly
+   purging orphaned data is planned rather than designed here.
+
+   So an orphaned grant is drawn, muted, wherever a permission is drawn — the
+   difference between "you no longer have this" and "you cannot see that you
+   still have this". It is never tickable: there is nothing to grant, only
+   something to take away.
+   ======================================================================== */
+
+.pm-by.orphan { border-style: dashed; }
+.pm-by.orphan i { background: none; border: 1px solid rgb(var(--c-warn)); }
+.pm-umb.pm-mod-orphan {
+    background: repeating-linear-gradient(135deg,
+        transparent 0 7px, color-mix(in srgb, rgb(var(--c-fog)) 7%, transparent) 7px 14px);
+}
+.pm-mod-orphan { --pm-edge: rgb(var(--c-dim)); }
+
+/* A permission whose module is gone has no umbrella and no action left — the
+   JSON only ever held the value, so that is all there is to print. */
+.pm-orphname { color: rgb(var(--c-dim)); font-style: italic; font-weight: 500; }
+
+.pm-box.bypass.orphan-on i { border-style: solid; border-color: rgb(var(--c-dim)); background: rgb(var(--c-dim)); color: rgb(var(--c-cv)); }
+.pm-box.bypass.orphan-on svg { display: block; }
+
+.pm-row.orphan { cursor: default; opacity: .78; }
+.pm-row.orphan:hover { background: none; }
+.pm-row.orphan .pm-tick.held { background: rgb(var(--c-dim)); border-color: rgb(var(--c-dim)); color: rgb(var(--c-cv)); }
+.pm-hold.orphan {
+    cursor: default; border-style: dashed; opacity: .8;
+    border-color: var(--c-ln2) !important; background: none !important;
+}
+.pm-hold.orphan .pn, .pm-hold.orphan .pc { color: rgb(var(--c-dim)); }
+.pm-effrow.orphan .lhs b { color: rgb(var(--c-dim)); }
+
+/* ==================== RULED — THE MANAGER TIER IS GONE ===================
+   Team administration became an ordinary catalogue permission. `PermissionEnum`
+   grows a SEVENTH core case, `team.manage`, under a new `Team` umbrella, and
+   every team screen gates on it instead of on a tier. A "manager" is now a
+   position somebody composed — visible in this matrix, countable, and revocable
+   in one click, none of which was true of a tier.
+
+   It is not destructive, and it is not ordinary either: `team.manage` is the
+   only permission whose holder can edit this matrix, and therefore the only one
+   that can be used to grant every other one. A matrix that drew it exactly like
+   `module.view` would be hiding the one row that matters most.
+   ======================================================================== */
+
+.pm-row.elevated .pm-t b::after,
+.pm-grid tr.elevated .pm-name b::after {
+    content: "grants authority"; margin-left: 9px; vertical-align: 1px;
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 8.5px; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase; color: rgb(var(--c-acc));
+    border: 1px solid color-mix(in srgb, rgb(var(--c-acc)) 45%, transparent);
+    border-radius: 5px; padding: 3px 6px 2px; white-space: nowrap; display: inline-block;
+}
+.pm-row.elevated.on { background: color-mix(in srgb, rgb(var(--c-acc)) 7%, transparent); }
+.pm-umb.pm-mod-team { background: color-mix(in srgb, rgb(var(--c-acc)) 6%, transparent); }
+.pm-mod-team { --pm-edge: rgb(var(--c-acc)); }
+
+/* ==================== AN OPEN DECISION ASKS ITS QUESTION FIRST ===========
+   REVIEW FINDING, and it kept recurring: the verdict prose was written by
+   somebody who already held the whole model in their head, so answering a row
+   meant reconstructing the argument first. A decisions table is read by people
+   who did not author the thing.
+
+   So an OPEN row now leads with three things, in this order:
+     1. THE QUESTION, in one plain sentence that stands alone.
+     2. A LINK to the exact page being decided.
+     3. A VISUAL, where the choice is one you can see — two tiny rendered
+        strips, side by side, built from the same tokens as the real thing.
+   Context and rationale follow. A ruled row does not need this: the answer is
+   the headline, and the reasoning is the record.
+   ======================================================================== */
+
+.dq-ask {
+    display: block; font-size: 14.5px; font-weight: 600; color: rgb(var(--c-tx));
+    line-height: 1.5; letter-spacing: -.01em; margin: 0 0 10px;
+}
+.dq-go {
+    display: inline-flex; align-items: center; gap: 7px; text-decoration: none;
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; color: rgb(var(--c-acc));
+    border: 1px solid color-mix(in srgb, rgb(var(--c-acc)) 45%, transparent); border-radius: 8px;
+    padding: 5px 11px 4px; line-height: 1; margin: 0 0 14px;
+}
+.dq-go:hover { background: rgb(var(--c-acc)); color: rgb(var(--c-accT)); }
+.dq-go svg { width: 12px; height: 12px; flex: none; }
+
+/* THE TWO OPTIONS, RENDERED. Not screenshots — the same tokens, at a size that
+   fits a table cell, so they cannot drift from the pages they stand for. */
+.dq-vs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 0 14px; }
+@media (max-width: 780px) { .dq-vs { grid-template-columns: 1fr; } }
+.dq-opt {
+    border: 1px solid var(--c-ln2); border-radius: 11px; overflow: hidden;
+    background: color-mix(in srgb, rgb(var(--c-fog)) 3%, transparent);
+}
+.dq-opt > b {
+    display: block; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9px;
+    font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: rgb(var(--c-fog));
+    padding: 8px 10px 7px; border-bottom: 1px solid var(--c-ln); background: color-mix(in srgb, rgb(var(--c-fog)) 6%, transparent);
+}
+.dq-mini { padding: 9px 10px; display: flex; flex-direction: column; gap: 5px; }
+/* A band heading in the miniature. */
+.dq-mini .bd {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 8.5px; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase; color: rgb(var(--c-dim));
+    padding: 5px 0 3px; border-bottom: 1px solid var(--c-ln2); margin-top: 3px;
+}
+.dq-mini .bd:first-child { margin-top: 0; }
+.dq-mini .bd.ec { color: rgb(var(--c-ok)); }
+.dq-mini .bd.ps { color: rgb(var(--c-warn)); }
+/* A person row in the miniature: an avatar dot and two grey bars standing in
+   for name and detail. Deliberately unreadable — it is a SHAPE, and reading
+   words at 8px would be a worse lie than showing none. */
+.dq-mini .rw { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+.dq-mini .rw i { width: 11px; height: 11px; border-radius: 3px; background: var(--c-ln2); flex: none; }
+.dq-mini .rw u {
+    height: 4px; border-radius: 2px; background: var(--c-ln2); display: block; text-decoration: none;
+}
+.dq-mini .rw u.a { width: 46%; }
+.dq-mini .rw u.b { width: 22%; background: var(--c-ln); }
+.dq-mini .rw.hi i { background: color-mix(in srgb, rgb(var(--c-acc)) 55%, transparent); }
+.dq-mini .rw.hi u.a { background: color-mix(in srgb, rgb(var(--c-acc)) 45%, transparent); }
+/* A whole card standing in for a widget the composition includes. */
+.dq-mini .blk {
+    border: 1px solid var(--c-ln); border-radius: 6px; padding: 6px 7px;
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 8.5px;
+    letter-spacing: .06em; text-transform: uppercase; color: rgb(var(--c-dim));
+}
+.dq-mini .blk.acc { border-color: color-mix(in srgb, rgb(var(--c-acc)) 40%, transparent); color: rgb(var(--c-acc)); }
+.dq-mini .blk.warn { border-color: color-mix(in srgb, rgb(var(--c-warn)) 40%, transparent); color: rgb(var(--c-warn)); }
+.dq-opt .cap {
+    display: block; font-size: 11px; color: rgb(var(--c-dim)); line-height: 1.5;
+    padding: 0 10px 10px; font-style: italic;
+}
+
+/* ==========================================================================
+   TEAM · MEMBERS — the roster directions
+   Ported from team-members.css.
+   ========================================================================== */
+
+/* ---- THE TIERS, and there are now THREE -----------------------------------
+   RULING 3, and it is the largest of the three: the Manager tier is REMOVED.
+   `TeamRoleEnum` is Super Admin, Admin, Staff. The first two stand above the
+   matrix — they are the bootstrap and the recovery escape hatch, and they hold
+   everything by tier. Everyone else is Staff and holds authority only through
+   a position.
+
+   Administering the team is now an ordinary catalogue permission,
+   `team.manage`, under a new core umbrella **Team**. So "a manager" is not a
+   tier any more: it is a POSITION somebody composed, carrying `team.manage`
+   plus whatever content grants that role should have. That is a better model
+   and worth saying plainly — the old tier was a second, invisible authority
+   system running beside the matrix, and this one is grantable, revocable and
+   visible in the matrix like everything else.
+
+   `.tier.t-manager` lives in positions.css and is now DEAD for this surface.
+   It is not removed there, because the department-first presets on the
+   positions surface still render it; nothing here uses it. */
+.tier.t-super {
+    color: rgb(var(--c-accT)); background: rgb(var(--c-acc));
+    border-color: rgb(var(--c-acc));
+}
+.tier.t-staff { color: rgb(var(--c-dim)); }
+
+/* WHO ADMINISTERS THE TEAM, now that the tier no longer answers it. The marker
+   names the permission rather than inventing a word for it, because the whole
+   point of the ruling is that this is an ordinary row in the matrix — somebody
+   can be given it and somebody can take it away, and the roster should read the
+   same way the matrix does. */
+.tm-mgr {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9.5px; font-weight: 700;
+    letter-spacing: .06em; line-height: 1; white-space: nowrap;
+    color: rgb(var(--c-acc)); border: 1px solid color-mix(in srgb, rgb(var(--c-acc)) 42%, transparent);
+    border-radius: 6px; padding: 4px 8px 3px;
+}
+.tm-mgr svg { width: 11px; height: 11px; flex: none; }
+/* Granted by the tier rather than by a position — the two escape hatches. It is
+   the same authority and a different source, so it is the same chip filled in. */
+.tm-mgr.bytier {
+    color: rgb(var(--c-accT)); background: rgb(var(--c-acc)); border-color: rgb(var(--c-acc));
+}
+
+/* ---- THE STATE SWITCH ----------------------------------------------------
+   A fresh installation is ONE Super Admin and nothing else — no colleagues, no
+   positions. That state is reached through the data, so a design app has to let
+   a reviewer see it without emptying a database. Every widget in this surface
+   carries both blocks; the page's `design-only` control toggles the attribute.
+   NOTHING TO PORT: the elements go, and the state comes from the query
+   (`count($roster) === 1`). */
+/* THE FIRST-RUN STATE IS NOT A CSS SWITCH HERE. The design app toggled
+   `data-state="fresh"` on <body> from a reviewer control so both states could
+   be seen in one file; in the product the state is simply what the query
+   returned, and the template renders one branch or the other. So the two
+   display rules are deliberately absent, and `.state-full` / `.state-fresh` are
+   plain wrappers with no rules of their own. */
+
+/* The first-run card. Not an illustration and not an apology: one sentence of
+   fact, and the single next action. It never states a count it does not have —
+   "no positions yet" is a fact, "0 of 8" is an invention. */
+.tm-fresh {
+    display: flex; gap: 15px; align-items: flex-start;
+    border: 1px dashed var(--c-ln2); border-radius: 13px; padding: 18px 19px;
+    background: color-mix(in srgb, rgb(var(--c-fog)) 3%, transparent);
+}
+.tm-fresh > svg { flex: none; width: 21px; height: 21px; color: rgb(var(--c-acc)); margin-top: 2px; }
+.tm-fresh .ft { min-width: 0; }
+.tm-fresh .ft b { display: block; font-size: 14px; font-weight: 700; color: rgb(var(--c-tx)); margin-bottom: 6px; }
+.tm-fresh .ft p { margin: 0 0 13px; font-size: 12.5px; line-height: 1.6; color: rgb(var(--c-fog)); }
+.tm-fresh .ft p:last-child { margin-bottom: 0; }
+.tm-fresh .ft code {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11.5px; color: rgb(var(--c-tx));
+}
+.tm-fresh .fdo { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* ---- the tool row: search, tier chips, position filter -------------------
+   One row above a list, and it always ends by SAYING WHAT IS SHOWN. A filtered
+   list that does not state its filter is a list somebody will read as the whole
+   roster. */
+.tm-tools {
+    display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+    padding: 0 0 13px; margin-bottom: 4px; border-bottom: 1px solid var(--c-ln);
+}
+
+/* ONE ROW, wrapping only when the viewport genuinely cannot hold it. The bug
+   this fixes: both filters carry `.fld`, and `.fld` in uhifadhi.css is
+   `width: 100%` because it was written for the sign-in card, where a field IS
+   the row. In a filter bar that makes every select claim the whole line, so the
+   toolbar stacked into four rows at any width. The selects size to their
+   content and refuse to grow; the SEARCH is the one flexible thing, so it
+   absorbs all the slack and the controls stay where they were put.
+   Same grammar as `.fbar` in positions.css and `.rdf-*` in uhifadhi.css. */
+.tm-tools .sel, .tm-tools select.fld {
+    flex: 0 1 auto; width: auto; min-width: 0; max-width: 200px;
+}
+.tm-search { position: relative; flex: 1 1 200px; min-width: 150px; }
+.tm-search svg {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    width: 14px; height: 14px; color: rgb(var(--c-dim)); pointer-events: none;
+}
+.tm-search input {
+    width: 100%; box-sizing: border-box; height: 28px; padding: 0 10px 0 30px;
+    background: rgb(var(--c-raised)); border: 1px solid var(--c-ln2); border-radius: 8px;
+    color: rgb(var(--c-tx)); font-size: 12px; font-family: inherit;
+}
+.tm-search input::placeholder { color: rgb(var(--c-dim)); }
+.tm-search input:focus { outline: none; border-color: color-mix(in srgb, rgb(var(--c-acc)) 55%, transparent); }
+/* One height across every control in the row, per the house rule that a
+   primary differs from a secondary by fill and weight, never by size.
+   `.fchip` is already 28px; these are matched to it. */
+.tm-tools .sel, .tm-tools select.fld, .tm-tools .fchip, .tm-tools button {
+    height: 28px; box-sizing: border-box;
+}
+.tm-tools select.fld { padding: 0 9px; font-size: 11.5px; border-radius: 8px; }
+/* The tier pills are LINKS now, not toggles — they modify the query string, so
+   the filtered roster is bookmarkable and the back button works. */
+a.fchip { text-decoration: none; }
+.tm-shown {
+    margin-left: auto; font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: rgb(var(--c-dim));
+    white-space: nowrap;
+}
+.tm-shown b { color: rgb(var(--c-fog)); font-weight: 700; }
+
+/* A wide roster scrolls INSIDE its widget. A half-width cell and the library's
+   preview column are both narrower than a page, and a table that pushes the
+   page sideways breaks every other widget on the row. */
+.tm-scroll { overflow-x: auto; }
+.tm-scroll table.tbl { min-width: 620px; }
+[data-tm] table.tbl { width: 100%; }
+.w-inner [data-tm] { min-width: 0; }
+
+/* ---- the account state ---------------------------------------------------
+   TWO INDEPENDENT AXES, NOT ONE SCALE. This is the whole of the vocabulary and
+   the reason it is two things rather than three:
+
+     LIFECYCLE      active  ·  deactivated      (isActive / disabledAt)
+     VERIFICATION   verified  ·  never signed in (isVerified)
+
+   They are independent facts and a person can be any combination of them. Hawa
+   Rajabu is deactivated AND has never signed in — an account created, never
+   used, then switched off — and both pills are drawn on her row, because
+   collapsing them into one "Inactive" would destroy the only information that
+   distinguishes her from somebody who worked here for a year.
+
+   A deactivated account is REFUSED AT SIGN-IN, whatever its tier. It is not
+   hidden, not deleted, and stays in every list, because "this ranger left in
+   March" and "this ranger never existed" are different facts and the roster is
+   where the difference is read.
+
+   The unverified wording is "Never signed in", and it stays that way: it is the
+   VERIFICATION fact and nothing else says it. What has changed is that the
+   model now carries `invitedAt` and `invitedBy`, so a row may add HOW THE
+   ACCOUNT CAME TO EXIST — see `.tm-inv` below. That is context beside the pill,
+   never a replacement for it. */
+.tm-acct {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9.5px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; line-height: 1;
+    border-radius: 999px; padding: 4px 9px 3px; border: 1px solid var(--c-ln2); color: rgb(var(--c-dim));
+    white-space: nowrap;
+}
+.tm-acct svg { width: 11px; height: 11px; flex: none; }
+.tm-acct.ok { color: rgb(var(--c-ok)); border-color: color-mix(in srgb, rgb(var(--c-ok)) 40%, transparent); }
+.tm-acct.new {
+    color: rgb(var(--c-warn)); border-style: dashed;
+    border-color: color-mix(in srgb, rgb(var(--c-warn)) 50%, transparent);
+}
+/* DEACTIVATED. Filled and neutral rather than red: it is not a fault and not an
+   error, it is a settled decision somebody took, and it is the LEAST urgent
+   thing on the page. The urgency lives on rows that need a decision; this one
+   has had its decision. The row's own demotion does the noticing; the pill only
+   names it. */
+.tm-acct.off {
+    color: rgb(var(--c-fog)); border-color: transparent;
+    background: color-mix(in srgb, rgb(var(--c-fog)) 16%, transparent);
+}
+/* Both pills at once, on the person who is both. They never merge. */
+.tm-accts { display: inline-flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+
+/* ---- HOW THE ACCOUNT CAME TO EXIST ---------------------------------------
+   RULING 4 lifted a constraint rather than adding one: the model gains
+   `invitedAt` and `invitedBy`, so a row may finally say who invited somebody
+   and when. An earlier draft of this surface argued at length that it could
+   not, and that argument is now retired.
+
+   BOTH COLUMNS ARE NULLABLE, AND THE NULL MEANS SOMETHING. The two ways in
+   produce two genuinely different accounts:
+
+     invite-by-email        invitedAt + invitedBy are set — somebody was asked
+     create-with-a-password invitedAt IS NULL — nobody was asked; an
+                            administrator typed a password and handed it over
+
+   So there are two kinds of never-signed-in account and they want two different
+   things done about them. Printing "invited" over both would be the same
+   mistake the old copy made, in the opposite direction — which is why the null
+   case is drawn EXPLICITLY as `created directly` rather than left blank. A
+   blank says "we do not know"; these rows do know.
+
+   IT ONLY APPEARS BESIDE "NEVER SIGNED IN". Once somebody has signed in the
+   invitation has done its job and stops being a fact about them, so a verified
+   person carries no invite line however they arrived. */
+.tm-inv {
+    display: block; margin-top: 5px;
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9.5px;
+    letter-spacing: .04em; color: rgb(var(--c-dim)); line-height: 1.4; white-space: nowrap;
+}
+.tm-inv b { color: rgb(var(--c-fog)); font-weight: 600; }
+/* The null case. Dashed underline rather than a colour, because it is not a
+   worse state than being invited — just a different route in. */
+.tm-inv.none { font-style: italic; }
+/* On a card the account chips wrap, so the line goes full width beneath them. */
+.tm-pcard .tm-inv { white-space: normal; }
+
+/* ---- a deactivated row ---------------------------------------------------
+   Demoted, never hidden and never struck through — a strikethrough reads as
+   deleted, and the whole point of the ruling is that nothing is deleted. The
+   name stays fully legible because finding this person is exactly why the row
+   is still here; it is the surrounding detail that recedes. */
+.tm-off .who b, .tm-off .pi b { color: rgb(var(--c-fog)); }
+.tm-off .avatar { opacity: .6; }
+.tm-off .tm-pos, .tm-off .qual .n { color: rgb(var(--c-fog)); }
+tr.tm-off td { background: color-mix(in srgb, rgb(var(--c-fog)) 3%, transparent); }
+tr.tm-off:hover td { background: color-mix(in srgb, rgb(var(--c-fog)) 6%, transparent); }
+.tm-pcard.off { border-style: dashed; background: none; }
+
+/* ---- the unplaced person -------------------------------------------------
+   Staff with no position is the shipped model's ZERO: verified, able to sign
+   in, and able to do nothing at all, because PermissionVoter falls through to
+   `position?->hasPermissionValue()` and there is no position. An empty cell
+   would read as missing data. This reads as the fact it is. */
+.tm-nopos {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10.5px;
+    color: rgb(var(--c-dim)); font-style: italic; white-space: nowrap;
+}
+.tm-nopos svg { width: 12px; height: 12px; flex: none; color: rgb(var(--c-warn)); }
+.tm-pos { font-weight: 600; color: rgb(var(--c-tx)); text-decoration: none; font-size: 13px; }
+a.tm-pos:hover { color: rgb(var(--c-acc)); }
+
+/* ---- a position, written department-first --------------------------------
+   RULING 1, in the one place it is spent. `.qual` is positions.css's and is not
+   re-declared: these three rules only compose it with the link that wraps it,
+   so that hovering colours the WHOLE name rather than just the half after the
+   slash. The department is deliberately the quieter half — it is context, and
+   the position is the thing being named. */
+a.tm-pos.qual:hover .q, a.tm-pos.qual:hover .n, a.tm-pos.qual:hover .sep { color: rgb(var(--c-acc)); }
+.tm-off a.tm-pos.qual .q { color: rgb(var(--c-dim)); }
+/* In a table cell the qualified name must not wrap between the department and
+   the slash — a position broken across two lines reads as two positions. */
+td .qual { white-space: nowrap; }
+
+/* The count of what a position actually grants, beside the position's name.
+   A position is a permission set; its name is a label for one, and the label
+   alone has repeatedly let somebody assign "Data Clerk" believing it did more. */
+.tm-grants {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9.5px;
+    color: rgb(var(--c-dim)); letter-spacing: .06em; white-space: nowrap; margin-left: 7px;
+}
+.tm-grants.none { color: rgb(var(--c-warn)); }
+
+/* The signed-in person, marked wherever they appear — the roster is the one
+   screen where "can I still administer this after I press that" is a live
+   question. */
+.tm-you {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 8.5px; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase; color: rgb(var(--c-acc));
+    border: 1px solid color-mix(in srgb, rgb(var(--c-acc)) 40%, transparent);
+    border-radius: 5px; padding: 2px 5px 1px; margin-left: 8px; line-height: 1; vertical-align: 1px;
+}
+
+/* THE EMAIL IS THE IDENTIFIER AND IT NEVER WRAPS. `word-break: break-all` was
+   letting it split mid-address across two lines, which turns the person column
+   into a two-line column for no reason and makes the address hard to read back.
+   It is nowrap now, and the column below is wide enough to hold the longest one
+   in the cast on one line. */
+.tm-mail {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: rgb(var(--c-fog));
+    text-decoration: none; white-space: nowrap;
+}
+.tm-code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: rgb(var(--c-fog)); }
+.tm-code.none { color: rgb(var(--c-dim)); }
+/* ---- THE ROW RULE, AND WHY IT USED TO BREAK -------------------------------
+   BUG, measured: this cell was `display: flex`. A <td> given a flex display
+   stops being a table-cell, so it no longer stretches to the row's height — it
+   shrank to its content and drew its border-bottom 34px above every other cell
+   in the same row, which is exactly the visible break in the dashed rule at the
+   actions column.
+
+   A table cell has to stay a table cell. The buttons are laid out by text
+   alignment and a margin instead, which costs nothing: there are never more
+   than two of them and they are always on one line. */
+.tm-acts { text-align: right; white-space: nowrap; }
+.tm-acts > * + * { margin-left: 6px; }
+/* A member row navigates to that member, so the whole row says so. Band headers
+   are not rows of data. */
+[data-tm] table.tbl tbody tr:not(.tm-bandrow) { cursor: pointer; }
+
+/* ---- B and D · the band header ------------------------------------------
+   Tier, department and position are the grouping axes the model now has. B
+   bands by tier; D bands by department and then by position inside it. All the
+   bands share one grammar so a person who learns B can read D. */
+tr.tm-bandrow td {
+    border-bottom: 1px solid var(--c-ln2); padding: 12px 10px 9px;
+    background: color-mix(in srgb, rgb(var(--c-fog)) 7%, transparent);
+}
+tr.tm-bandrow:hover td { background: color-mix(in srgb, rgb(var(--c-fog)) 7%, transparent); }
+tr.tm-bandrow.dim td { background: none; border-bottom: 1px dashed var(--c-ln2); }
+.tm-band { display: flex; align-items: center; gap: 11px; flex-wrap: wrap; }
+.tm-band b { font-size: 14px; font-weight: 700; letter-spacing: -.01em; color: rgb(var(--c-tx)); }
+.tm-band .n {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px;
+    letter-spacing: .08em; text-transform: uppercase; color: rgb(var(--c-dim));
+}
+.tm-band .gr { display: flex; gap: 3px; flex-wrap: wrap; margin-left: auto; }
+.tm-band .say { font-size: 11.5px; color: rgb(var(--c-dim)); font-style: italic; }
+tr.tm-bandrow.dim .tm-band b { color: rgb(var(--c-dim)); }
+/* every member row is visually INSIDE its band */
+td.tm-in { padding-left: 26px !important; position: relative; }
+tr.tm-memrow td.tm-in::before {
+    content: ""; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px;
+    background: color-mix(in srgb, rgb(var(--c-fog)) 30%, transparent);
+}
+tr.tm-memrow.loose td.tm-in::before {
+    background: none; border-left: 2px dashed color-mix(in srgb, rgb(var(--c-warn)) 45%, transparent);
+}
+
+/* ---- D · the department band, one level above the position band ----------
+   D now bands twice, and the two levels have to be unmistakably different or
+   the table reads as eighteen flat headings. The department band is the heavy
+   one: it spans the full width, it is the only row with a rule above it, and it
+   carries the department's own colour. The position bands sit inside it,
+   indented, in the grammar B already established. */
+tr.tm-deptrow td {
+    padding: 20px 10px 10px; border-bottom: 2px solid var(--c-ln2); background: none;
+}
+tr.tm-deptrow:first-child td { padding-top: 4px; }
+tr.tm-deptrow:hover td { background: none; }
+.tm-deptband { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.tm-deptband .dtag { font-size: 11px; padding: 6px 13px 5px; height: 26px; }
+.tm-deptband .n {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px;
+    letter-spacing: .08em; text-transform: uppercase; color: rgb(var(--c-dim));
+}
+/* The position bands inside a department are indented so the nesting is a fact
+   of the layout rather than of the colour. */
+tr.tm-deptrow.ec td { border-bottom-color: color-mix(in srgb, rgb(var(--c-ok)) 45%, transparent); }
+tr.tm-deptrow.ps td { border-bottom-color: color-mix(in srgb, rgb(var(--c-warn)) 45%, transparent); }
+tr.tm-deptrow.adm td { border-bottom-color: var(--c-ln2); }
+tr.tm-bandrow.inner td { padding-left: 24px; }
+tr.tm-memrow.inner td.tm-in { padding-left: 40px !important; }
+tr.tm-memrow.inner td.tm-in::before { left: 24px; }
+
+/* A POSITION NOBODY HOLDS. Not a fault and not an empty result — a position
+   created before its first person, which is the ordinary way an org grows. It
+   keeps its band and its permission set, because what it grants is exactly the
+   thing worth checking BEFORE somebody is put in it. */
+tr.tm-bandrow.vacant td { background: none; border-bottom: 1px dashed var(--c-ln2); }
+tr.tm-bandrow.vacant .tm-band b { color: rgb(var(--c-fog)); }
+.tm-vacant {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px;
+    letter-spacing: .08em; text-transform: uppercase; color: rgb(var(--c-dim)); font-style: italic;
+}
+
+/* ---- C · person cards ----------------------------------------------------
+   The card is the direction's whole argument: a person is a face, a tier and a
+   permission set, and at the size an org is still being assembled you want all
+   three at once rather than a row you have to read across. */
+.tm-cardgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(252px, 1fr)); gap: 14px; }
+@media (max-width: 420px) { .tm-cardgrid { grid-template-columns: 1fr; } }
+.tm-pcard {
+    border: 1px solid var(--c-ln2); border-radius: 13px; padding: 15px 16px 14px;
+    display: flex; flex-direction: column; gap: 11px; min-width: 0;
+    background: color-mix(in srgb, rgb(var(--c-fog)) 3%, transparent); text-decoration: none;
+}
+.tm-pcard:hover { border-color: rgb(var(--c-fog)); }
+.tm-pcard.new { border-style: dashed; border-color: color-mix(in srgb, rgb(var(--c-warn)) 40%, transparent); }
+.tm-pcard.loose { border-color: color-mix(in srgb, rgb(var(--c-warn)) 34%, transparent); }
+.tm-pcard .ph { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.tm-pcard .ph .avatar { width: 36px; height: 36px; border-radius: 11px; font-size: 12px; flex: none; }
+.tm-pcard .pi { min-width: 0; line-height: 1.35; }
+.tm-pcard .pi b { display: block; font-size: 14px; font-weight: 600; color: rgb(var(--c-tx)); }
+.tm-pcard .pi .em {
+    display: block; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10.5px;
+    color: rgb(var(--c-dim)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tm-pcard .pr { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.tm-pcard .pgr {
+    border-top: 1px dashed var(--c-ln2); padding-top: 11px; margin-top: auto;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+}
+.tm-pcard .pgr .k {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9px; font-weight: 600;
+    letter-spacing: .14em; text-transform: uppercase; color: rgb(var(--c-dim));
+}
+.tm-pcard .pgr .v { font-size: 12.5px; font-weight: 600; color: rgb(var(--c-tx)); }
+.tm-pcard .pgr .v.none { color: rgb(var(--c-warn)); font-weight: 500; font-style: italic; }
+/* The card's footer row now carries a qualified position rather than a bare
+   name, so it takes `.qual` instead of the mono `.k` label — at card width the
+   department has to wrap under the name rather than push the count off the
+   edge, which is the one place `.qual`'s nowrap is wrong. */
+.tm-pcard .pgr .qual { flex-wrap: wrap; white-space: normal; min-width: 0; }
+.tm-pcard .pgr .qual .q { font-size: 11.5px; }
+.tm-pcard .pgr .qual .n { font-size: 13px; color: rgb(var(--c-tx)); }
+
+/* ---- E · attention first -------------------------------------------------
+   The split is the argument: a weekly visitor wants the decisions, not the
+   roster. The settled list is still whole and still below — nothing is hidden,
+   it is only demoted. */
+.tm-att { display: flex; flex-direction: column; gap: 9px; }
+.tm-attrow {
+    display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px;
+    border: 1px solid var(--c-ln2); border-radius: 11px;
+    background: color-mix(in srgb, rgb(var(--c-fog)) 4%, transparent);
+}
+.tm-attrow > svg { flex: none; width: 17px; height: 17px; margin-top: 1px; }
+.tm-attrow.w { border-color: color-mix(in srgb, rgb(var(--c-warn)) 38%, transparent); background: color-mix(in srgb, rgb(var(--c-warn)) 6%, transparent); }
+.tm-attrow.w > svg { color: rgb(var(--c-warn)); }
+.tm-attrow.r { border-color: color-mix(in srgb, rgb(var(--c-fail)) 38%, transparent); background: color-mix(in srgb, rgb(var(--c-fail)) 6%, transparent); }
+.tm-attrow.r > svg { color: rgb(var(--c-fail)); }
+.tm-attrow .at { min-width: 0; flex: 1; line-height: 1.55; }
+.tm-attrow .at b { display: block; font-size: 13px; font-weight: 600; color: rgb(var(--c-tx)); margin-bottom: 3px; }
+.tm-attrow .at p { margin: 0; font-size: 12px; color: rgb(var(--c-fog)); }
+.tm-attrow .at code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: rgb(var(--c-tx)); }
+.tm-attrow .ad { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; flex: none; }
+/* A STANDING RISK is not a task: it has no "done", so it is drawn without an
+   action that would imply one. It wears the failure colour and says what would
+   happen, in the present tense. */
+.tm-attrow.standing { border-style: dashed; }
+.tm-attrow.standing .at p b { display: inline; color: rgb(var(--c-tx)); }
+.tm-quiet {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px; letter-spacing: .1em;
+    text-transform: uppercase; color: rgb(var(--c-dim)); margin: 18px 0 10px;
+    display: flex; align-items: center; gap: 10px;
+}
+.tm-quiet::after { content: ""; flex: 1; height: 1px; background: var(--c-ln); }
+/* The healthy state of the attention pane, and the direction's own honest cost:
+   in a settled org this is the top of the page and it holds one green line. */
+.tm-clear {
+    display: flex; align-items: center; gap: 10px; padding: 13px 15px;
+    border: 1px solid color-mix(in srgb, rgb(var(--c-ok)) 38%, transparent); border-radius: 11px;
+    background: color-mix(in srgb, rgb(var(--c-ok)) 6%, transparent);
+    font-size: 12.5px; color: rgb(var(--c-fog)); line-height: 1.55;
+}
+.tm-clear svg { flex: none; width: 16px; height: 16px; color: rgb(var(--c-ok)); }
+.tm-clear b { color: rgb(var(--c-tx)); }
+
+/* ---- the tier/permission explainer --------------------------------------
+   Two columns because they are two mechanisms, and every direction above
+   implies they are one. */
+.tm-two { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+@media (max-width: 700px) { .tm-two { grid-template-columns: 1fr; } }
+.tm-two > div { padding: 0 18px; }
+.tm-two > div:first-child { padding-left: 0; border-right: 1px solid var(--c-ln); }
+.tm-two > div:last-child { padding-right: 0; }
+@media (max-width: 700px) {
+    .tm-two > div:first-child { padding: 0 0 15px; border-right: 0; border-bottom: 1px solid var(--c-ln); }
+    .tm-two > div:last-child { padding: 15px 0 0; }
+}
+.tm-gate { display: flex; flex-direction: column; gap: 9px; margin-top: 11px; }
+.tm-gaterow { display: flex; align-items: baseline; gap: 11px; font-size: 12.5px; line-height: 1.55; color: rgb(var(--c-fog)); }
+.tm-gaterow .gk { flex: none; width: 96px; }
+.tm-gaterow .gv { min-width: 0; }
+.tm-gaterow .gv b { color: rgb(var(--c-tx)); font-weight: 600; }
+.tm-gaterow .gv code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: rgb(var(--c-tx)); }
+/* The correction this widget exists to make. The archived /team page states
+   that "managers and admins hold everything by tier and therefore hold no
+   position at all". The shipped enum says otherwise — canManageContent() is
+   SuperAdmin and Admin ONLY — so a Manager with no position holds no capability
+   whatsoever, and the old sentence would have left four people unable to work. */
+.tm-correct {
+    margin-top: 14px; border-top: 1px dashed var(--c-ln2); padding-top: 13px;
+    display: flex; gap: 10px; align-items: flex-start; font-size: 12px; line-height: 1.6; color: rgb(var(--c-fog));
+}
+.tm-correct svg { flex: none; width: 15px; height: 15px; color: rgb(var(--c-warn)); margin-top: 2px; }
+.tm-correct b { color: rgb(var(--c-tx)); }
+.tm-correct code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: rgb(var(--c-tx)); }
+
+/* ============================================================================
+   COLUMN BALANCE — measured, not guessed.
+
+   Before: person 160px, tier 95px, position 385px, account 354px. The person
+   column was too narrow to hold an email on one line, the tier column too
+   narrow to hold "Super Admin" without breaking the pill across two lines, and
+   the position column — one long inline run of position + department +
+   permissions — was eating the width both of them needed.
+
+   The fix pays for itself: stacking the position cell into three lines frees
+   roughly 180px, which is what the person and tier columns were short of.
+   ========================================================================== */
+
+/* THE POSITION CELL, IN THREE LINES.
+   `.qual` is positions.css's inline-flex and is NOT re-declared there — this
+   composes it, scoped to a table cell, so the card directions keep the inline
+   form that suits them.
+
+   The DOM order stays department-first, because the ruling is that a position
+   is written department-first and that is what a screen reader and a
+   copy-paste should get. Only the visual order is flipped, with
+   `column-reverse`: the position is the thing being named and belongs on the
+   first line; the department is context and sits under it. The slash is
+   presentational once they are on separate lines, so it goes. */
+[data-tm] td .tm-pos.qual {
+    display: flex; flex-direction: column-reverse; align-items: flex-start;
+    gap: 1px; white-space: normal;
+}
+[data-tm] td .tm-pos.qual .sep { display: none; }
+[data-tm] td .tm-pos.qual .n { font-size: 13px; line-height: 1.3; }
+[data-tm] td .tm-pos.qual .q { font-size: 11px; line-height: 1.35; }
+/* Line three. It was riding on the same line with a left margin. */
+[data-tm] td .tm-grants { display: block; margin: 3px 0 0; }
+/* The team.manage marker is a fourth thing and must not re-widen the cell. */
+[data-tm] td .tm-mgr { margin: 4px 0 0; }
+
+/* THE PERSON COLUMN holds the longest email in the cast on one line. */
+[data-tm] table.tbl th:first-child,
+[data-tm] table.tbl td:first-child { min-width: 226px; }
+
+/* THE TIER COLUMN holds "Super Admin" without the pill breaking. A pill that
+   wraps is not a pill — it is two half-pills — so the guard is on the pill as
+   well as on the column. `.tier` is positions.css's; this only adds the nowrap,
+   scoped, rather than re-declaring it. */
+[data-tm] .tier { white-space: nowrap; }
+[data-tm] table.tbl th:nth-child(2),
+[data-tm] table.tbl td:nth-child(2) { min-width: 106px; }
+
+/* The narrow columns stop donating their width to the wide ones. */
+[data-tm] table.tbl td .tm-code { white-space: nowrap; }
+
+/* The sum of the minimums, so the table scrolls inside its own widget rather
+   than starving a column when it is put in a half-width cell. */
+.tm-scroll table.tbl { min-width: 880px; }
+
+/* THE ACCOUNT COLUMN SHRINKS TO ITS CONTENT. With `table-layout: auto` the
+   browser hands slack to whichever column holds the most text, and after the
+   position cell was stacked that was this one — it took 454px to hold a pill
+   and a short invite line, leaving a band of dead space between the state and
+   the actions. `width: 1%` on a nowrap cell is the house idiom for "as narrow
+   as your content" (positions.css uses it for `td.dcell`), and the slack falls
+   to the position column, which is the one that can use it. */
+[data-tm] table.tbl th:nth-child(5),
+[data-tm] table.tbl td:nth-child(5) { width: 1%; white-space: nowrap; }
+
+/* ---- THE KPI SUB-LINE READS AS A SENTENCE, NOT AS A FLEX ROW -------------
+   Measured: `.kpi .sub` is `display: flex` in uhifadhi.css, so each element in
+   it is a flex item and the plain text between them is an anonymous one. When
+   the tile is narrower than the line, the wrap happens INSIDE whichever item is
+   too long rather than at a word boundary in the sentence — TM·K2 rendered at
+   29px against 14px for its neighbours, with "the matrix" orphaned at a
+   different indent from the words it belongs to.
+
+   These sub-lines are sentences: "3 departments · 8 held · the matrix". The
+   separators are literal characters in the markup, so normal text flow already
+   spaces them and the flex row was only adding a second, competing 9px gap.
+   Block display lets a wrap fall where a wrap belongs.
+
+   Scoped to this surface — `.kpi` is the host's and other surfaces use its sub
+   for chip rows, where flex is right. */
+[data-tm] .kpi .sub { display: block; line-height: 1.55; }
+
+/* And the strip folds a column sooner rather than squeezing five tiles: the
+   sub-lines here are longer than a KPI strip's usually are, because each one
+   names the people behind its number instead of restating the label. */
+[data-tm] .dp-kstrip { grid-template-columns: repeat(auto-fit, minmax(196px, 1fr)); }
+
+/* ==========================================================================
+   TEAM · PAGES — the member record and the invite flow
+   Ported from team-pages.css.
+   ========================================================================== */
+
+/* ==================== THE IDENTITY BAND ==================================
+   Who this record is, above everything that can be done to it. It carries the
+   two identifiers the model actually has — the email, which is the login and is
+   unique, and the ranger code, which is unique but NULLABLE and therefore
+   genuinely absent for office staff rather than empty.
+   ======================================================================== */
+
+.mb-band {
+    display: flex; align-items: center; gap: 17px; flex-wrap: wrap;
+    padding: 0 0 18px; border-bottom: 1px solid var(--c-ln); margin-bottom: 20px;
+}
+.mb-band .avatar { width: 54px; height: 54px; border-radius: 15px; font-size: 18px; flex: none; }
+.mb-id { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.mb-id h2 {
+    margin: 0; font-family: "Archivo", system-ui, sans-serif; font-size: 23px; font-weight: 700;
+    letter-spacing: -.025em; color: rgb(var(--c-tx)); line-height: 1.1;
+}
+.mb-idrow { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.mb-idrow .em {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px; color: rgb(var(--c-fog));
+    word-break: break-all;
+}
+.mb-band .acts { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* A ranger code is unique and NULLABLE. Absent is a real value — an office
+   analyst has no field identifier — so it is written as an absence rather than
+   as an empty box that looks unfilled. */
+.mb-code {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10.5px; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase; color: rgb(var(--c-tx));
+    border: 1px solid var(--c-ln2); border-radius: 6px; padding: 4px 8px 3px; line-height: 1;
+}
+.mb-code.none { border-style: dashed; color: rgb(var(--c-dim)); font-weight: 600; letter-spacing: .06em; }
+
+/* ==================== THE ACCOUNT STATE ==================================
+   Exactly one boolean exists: isVerified. So exactly two states are drawn, and
+   the words for the false one are "has never signed in" — NOT "pending
+   invitation", because nothing in the shipped model records that an invitation
+   was ever sent, and copy that claims otherwise is copy the data cannot back.
+   ======================================================================== */
+
+.mb-state {
+    display: flex; gap: 13px; align-items: flex-start; border-radius: 12px; padding: 14px 15px;
+    border: 1px solid var(--c-ln2); font-size: 12.5px; line-height: 1.6; color: rgb(var(--c-fog));
+}
+.mb-state > svg { flex: none; width: 17px; height: 17px; margin-top: 2px; }
+.mb-state b { color: rgb(var(--c-tx)); }
+.mb-state .st-acts { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; flex: none; }
+.mb-state.ok { border-color: color-mix(in srgb, rgb(var(--c-ok)) 38%, transparent); background: color-mix(in srgb, rgb(var(--c-ok)) 6%, transparent); }
+.mb-state.ok > svg { color: rgb(var(--c-ok)); }
+.mb-state.wait { border-style: dashed; border-color: color-mix(in srgb, rgb(var(--c-warn)) 48%, transparent); background: color-mix(in srgb, rgb(var(--c-warn)) 6%, transparent); }
+.mb-state.wait > svg { color: rgb(var(--c-warn)); }
+
+/* ==================== THE FIELD GRID =====================================
+   The editable half of the record. Four columns of the shipped table and
+   nothing invented beside them.
+   ======================================================================== */
+
+.mb-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(232px, 1fr)); gap: 17px 20px; }
+.mb-f { display: flex; flex-direction: column; min-width: 0; }
+.mb-f .lbl { margin-bottom: 7px; }
+.mb-f .hint { font-size: 11.5px; color: rgb(var(--c-dim)); line-height: 1.55; margin: 7px 0 0; }
+.mb-f .hint code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: rgb(var(--c-fog)); }
+.mb-f.wide { grid-column: 1 / -1; }
+
+/* ==================== THE TIER CONTROL ===================================
+   Four radio cards, because a tier is not a value on a spectrum and a <select>
+   of four words hides what each one actually gates. Every card states its own
+   consequence in the same grammar: what it lets a person ADMINISTER, and what
+   it grants them by tier alone — which for Manager is deliberately "nothing".
+   ======================================================================== */
+
+.mb-tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(214px, 1fr)); gap: 11px; }
+.mb-tier {
+    display: flex; flex-direction: column; gap: 7px; text-align: left; cursor: pointer;
+    border: 1px solid var(--c-ln2); border-radius: 12px; padding: 13px 14px; background: none;
+    color: rgb(var(--c-fog)); min-width: 0;
+}
+.mb-tier:hover { border-color: rgb(var(--c-fog)); }
+.mb-tier .tt { display: flex; align-items: center; gap: 9px; }
+.mb-tier .tt b { font-size: 13.5px; font-weight: 700; color: rgb(var(--c-tx)); letter-spacing: -.01em; }
+.mb-tier .tt i {
+    width: 15px; height: 15px; border-radius: 50%; border: 1px solid var(--c-ln2); flex: none;
+    display: block; box-sizing: border-box;
+}
+.mb-tier.on { border-color: color-mix(in srgb, rgb(var(--c-acc)) 55%, transparent); background: color-mix(in srgb, rgb(var(--c-acc)) 6%, transparent); }
+.mb-tier.on .tt i { border: 4px solid rgb(var(--c-acc)); }
+.mb-tier em { font-style: normal; font-size: 11.5px; line-height: 1.55; color: rgb(var(--c-fog)); }
+.mb-tier .grants {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9.5px; letter-spacing: .07em;
+    text-transform: uppercase; color: rgb(var(--c-dim)); border-top: 1px dashed var(--c-ln2); padding-top: 8px;
+}
+.mb-tier .grants b { color: rgb(var(--c-acc)); font-weight: 700; }
+.mb-tier .grants b.none { color: rgb(var(--c-dim)); }
+
+/* THE REFUSAL. The last Super Admin cannot be demoted, and the card says so in
+   place of being greyed out — a disabled radio teaches nobody why. */
+.mb-tier.refused { border-style: dashed; cursor: not-allowed; }
+.mb-tier.refused .tt b { color: rgb(var(--c-dim)); }
+.mb-refuse {
+    display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; padding: 12px 14px;
+    border: 1px dashed color-mix(in srgb, rgb(var(--c-fail)) 45%, transparent);
+    background: color-mix(in srgb, rgb(var(--c-fail)) 5%, transparent);
+    border-radius: 11px; font-size: 12px; color: rgb(var(--c-fog)); line-height: 1.6;
+}
+.mb-refuse svg { flex: none; color: rgb(var(--c-fail)); margin-top: 2px; width: 15px; height: 15px; }
+.mb-refuse b { color: rgb(var(--c-tx)); }
+
+/* ==================== THE DANGER ROW =====================================
+   What can actually be done to an account, and — as importantly — what cannot.
+   Each row is one action with its real consequence written beside it, never a bare
+   button.
+   ======================================================================== */
+
+.mb-danger { display: flex; flex-direction: column; }
+.mb-drow {
+    display: grid; grid-template-columns: 1fr auto; gap: 12px 18px; align-items: center;
+    padding: 14px 0; border-bottom: 1px dashed var(--c-ln);
+}
+.mb-drow:last-child { border-bottom: 0; }
+.mb-drow .dt { min-width: 0; }
+/* DIRECT CHILD ONLY. The row's title is a block; a <b> inside the description
+   beneath it is emphasis in a sentence, and making that a block too broke every
+   emphasised phrase onto its own line. */
+.mb-drow .dt > b { display: block; font-size: 13px; font-weight: 600; color: rgb(var(--c-tx)); margin-bottom: 4px; }
+.mb-drow .dt em b { color: rgb(var(--c-tx)); font-weight: 700; }
+.mb-drow .dt em { font-style: normal; display: block; font-size: 12px; color: rgb(var(--c-fog)); line-height: 1.6; }
+.mb-drow .dt code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: rgb(var(--c-fog)); }
+
+/* THE ABSENT ACTION. There is no deactivate, so there is no button — this row
+   holds a verdict badge instead, and the row is dashed to say that what is
+   described here does not exist yet. */
+.mb-drow.absent { border-style: dashed; opacity: .92; }
+.mb-drow.absent .dt b { color: rgb(var(--c-dim)); }
+.mb-absent {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9px; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase; color: rgb(var(--c-warn));
+    border: 1px dashed color-mix(in srgb, rgb(var(--c-warn)) 50%, transparent); border-radius: 999px;
+    padding: 5px 11px 4px; line-height: 1; white-space: nowrap;
+}
+.mb-absent svg { width: 11px; height: 11px; flex: none; }
+
+/* ==================== THE INVITE FLOW ====================================
+   Two ways in, drawn side by side as the two screens they are, because the
+   choice between them is a real product decision and not a preference: one of
+   them works with the columns that exist today and the other needs a mailer,
+   a token lifetime and a route that do not.
+   ======================================================================== */
+
+.iv-ways { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+.iv-way {
+    border: 1px solid var(--c-ln2); border-radius: 14px; overflow: hidden; display: flex;
+    flex-direction: column; min-width: 0;
+}
+.iv-way.needs { border-style: dashed; }
+.iv-whead {
+    display: flex; align-items: center; gap: 11px; flex-wrap: wrap; padding: 14px 16px;
+    border-bottom: 1px solid var(--c-ln); background: color-mix(in srgb, rgb(var(--c-fog)) 5%, transparent);
+}
+.iv-way.needs .iv-whead { border-bottom-style: dashed; }
+.iv-whead b { font-size: 14.5px; font-weight: 700; letter-spacing: -.015em; color: rgb(var(--c-tx)); }
+.iv-wbody { padding: 16px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+.iv-lede { font-size: 12.5px; color: rgb(var(--c-fog)); line-height: 1.65; margin: 0; }
+.iv-lede b { color: rgb(var(--c-tx)); }
+
+/* WHAT IT COSTS TO SHIP — under each way, because "invite by email" is one
+   sentence to say and four things to build, and a decision made without them
+   listed is a decision made on the sentence. */
+.iv-cost { border-top: 1px dashed var(--c-ln2); padding-top: 13px; margin-top: auto; }
+.iv-cost .lbl { margin-bottom: 8px; }
+.iv-cost ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.iv-cost li {
+    display: flex; gap: 9px; align-items: flex-start; font-size: 11.5px; color: rgb(var(--c-fog)); line-height: 1.55;
+}
+.iv-cost li svg { flex: none; width: 13px; height: 13px; margin-top: 2px; }
+.iv-cost li.have svg { color: rgb(var(--c-ok)); }
+.iv-cost li.need svg { color: rgb(var(--c-warn)); }
+.iv-cost li code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: rgb(var(--c-tx)); }
+
+/* THE FLOW STRIP — an invite is more than one screen, so the screens are drawn
+   as a strip and the one this page is showing is marked. Each step names the
+   route it would be. */
+.iv-flow { display: flex; align-items: stretch; gap: 0; flex-wrap: wrap; margin: 0 0 20px; }
+.iv-step {
+    display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 158px;
+    border: 1px solid var(--c-ln); border-right: 0; padding: 12px 14px; background: none;
+    text-decoration: none; color: rgb(var(--c-fog));
+}
+.iv-step:first-child { border-radius: 12px 0 0 12px; }
+.iv-step:last-child { border-right: 1px solid var(--c-ln); border-radius: 0 12px 12px 0; }
+.iv-step .n {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9px; font-weight: 700;
+    letter-spacing: .14em; text-transform: uppercase; color: rgb(var(--c-dim));
+}
+.iv-step b { font-size: 12.5px; font-weight: 600; color: rgb(var(--c-tx)); line-height: 1.35; }
+.iv-step .rt { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px; color: rgb(var(--c-dim)); }
+.iv-step.on { background: color-mix(in srgb, rgb(var(--c-acc)) 8%, transparent); border-color: color-mix(in srgb, rgb(var(--c-acc)) 40%, transparent); }
+.iv-step.on .n { color: rgb(var(--c-acc)); }
+.iv-step.off { border-style: dashed; }
+.iv-step.off b { color: rgb(var(--c-dim)); }
+@media (max-width: 760px) {
+    .iv-step { border-right: 1px solid var(--c-ln); border-radius: 12px !important; }
+    .iv-flow { gap: 8px; }
+}
+
+/* The row a newly-created person lands in, previewed before the button is
+   pressed: this is exactly what the list will show, so nobody has to imagine it. */
+.iv-preview {
+    border: 1px dashed var(--c-ln2); border-radius: 12px; padding: 13px 15px;
+    background: color-mix(in srgb, rgb(var(--c-fog)) 4%, transparent);
+}
+.iv-preview .lbl { margin-bottom: 10px; }
+
+/* ==================== THE FIRST-RUN STATE ================================
+   Shared with the matrix surface: `body[data-state="fresh"]` swaps the two
+   blocks. The rules live in permissions.css, which every team page loads;
+   only what these two pages add is here.
+   ======================================================================== */
+
+.mb-first {
+    border: 1px dashed var(--c-ln2); border-radius: 14px; padding: 26px 24px;
+    display: flex; gap: 17px; align-items: flex-start;
+}
+.mb-first > svg { flex: none; width: 26px; height: 26px; color: rgb(var(--c-dim)); margin-top: 2px; }
+.mb-first h3 {
+    margin: 0 0 9px; font-family: "Archivo", system-ui, sans-serif; font-size: 17px;
+    font-weight: 700; letter-spacing: -.02em; color: rgb(var(--c-tx));
+}
+.mb-first p { margin: 0 0 13px; font-size: 13px; color: rgb(var(--c-fog)); line-height: 1.65; max-width: 64ch; }
+.mb-first p b { color: rgb(var(--c-tx)); }
+.mb-first code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11.5px; color: rgb(var(--c-tx)); }
+.mb-first .acts { display: flex; gap: 9px; flex-wrap: wrap; align-items: center; }
+
+/* ==================== RULED — BOTH WAYS IN SHIP ==========================
+   Create-with-a-password works from day one and needs nothing from the
+   deployment; invite-by-email ships beside it and starts working by itself once
+   an installation has a mailer. So neither path is provisional and neither is
+   dashed: they are peers, and `.iv-way.needs` is retired.
+
+   When there is no mailer the invite path is OFFERED AND REFUSED, not hidden.
+   That is a deliberate exception to the workspace's "never a disabled control"
+   rule, and the rule's own wording is why it is allowed: absence is for a thing
+   that will NEVER exist. This one exists — it is one environment variable away
+   — so hiding it would send an administrator hunting for a feature the product
+   has, and failing after the click would leave a colleague waiting for an email
+   nobody sent. The control stays, inert, with the reason written on it.
+   ======================================================================== */
+
+.iv-nomailer {
+    display: flex; gap: 11px; align-items: flex-start;
+    border: 1px dashed color-mix(in srgb, rgb(var(--c-warn)) 50%, transparent);
+    background: color-mix(in srgb, rgb(var(--c-warn)) 6%, transparent);
+    border-radius: 12px; padding: 14px 15px;
+    font-size: 12px; color: rgb(var(--c-fog)); line-height: 1.6;
+}
+.iv-nomailer svg { flex: none; color: rgb(var(--c-warn)); margin-top: 2px; }
+.iv-nomailer b { color: rgb(var(--c-tx)); }
+.iv-nomailer code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: rgb(var(--c-tx)); }
+
+/* Everything the refused path holds goes quiet together, so it reads as one
+   unavailable thing rather than a form with a broken button. */
+.iv-way[data-mailer="off"] .mb-form,
+.iv-way[data-mailer="off"] .iv-preview { opacity: .5; pointer-events: none; }
+.iv-way[data-mailer="off"] .iv-whead { border-bottom-style: dashed; }
+
+/* ==================== RULED — ACCOUNTS ARE NEVER HARD-DELETED ============
+   The model gains `isActive` + `disabledAt`, and a separate `deletedAt` marker
+   reserved for a recycle bin that is NOT designed in this phase. Leaving is
+   deactivation: the row stays, everything the person recorded keeps its author,
+   and they stay on the list under an inactive filter.
+
+   `.mb-drow.absent` survives, and its meaning has inverted — it no longer marks
+   a control waiting for a column, it marks a control the product has decided it
+   will never have.
+   ======================================================================== */
+
+.mb-state.off {
+    border-color: color-mix(in srgb, rgb(var(--c-fail)) 40%, transparent);
+    background: color-mix(in srgb, rgb(var(--c-fail)) 6%, transparent);
+}
+.mb-state.off > svg { color: rgb(var(--c-fail)); }
+.softbtn.acc { color: rgb(var(--c-acc)); border-color: color-mix(in srgb, rgb(var(--c-acc)) 50%, transparent); }
+
+/* A deactivated person is still a person: the record is legible, not greyed
+   into unreadability. Only the identity dims, and only slightly. */
+body[data-life="off"] .mb-band .avatar { opacity: .6; }
+
+/* ==================== RULED — A POSITION BELONGS TO A DEPARTMENT =========
+   The identity band and the picker both carry it. `.qual` is positions.css's.
+   ======================================================================== */
+
+.mb-idrow .qual { font-size: 12.5px; }
+.mb-idrow .qual .n { color: rgb(var(--c-tx)); }
+/* The two-field create form: department first, because the name is only unique
+   once the department is chosen. */
+.pgact .assign .sel { height: 32px; box-sizing: border-box; }
+
+/* ==================== RULED — OWNERSHIP IS TRANSFERABLE ==================
+   No owner flag, no break-glass account. A Super Admin can promote a successor,
+   and the only rule is a REFUSAL IN CODE: an installation must always keep at
+   least one ACTIVE Super Admin, so demoting or deactivating the last one is
+   refused rather than disabled — `.mb-refuse` above already does that, and this
+   ruling confirms the treatment.
+
+   The expected off-boarding is transfer-before-disable: grant, confirm, then
+   deactivate. Which makes the GRANT the dangerous moment, not the departure —
+   so that is where the warning goes.
+   ======================================================================== */
+
+.mb-grant {
+    display: flex; gap: 11px; align-items: flex-start; margin-top: 12px;
+    border: 1px solid color-mix(in srgb, rgb(var(--c-warn)) 52%, transparent);
+    background: color-mix(in srgb, rgb(var(--c-warn)) 7%, transparent);
+    border-radius: 12px; padding: 14px 15px;
+    font-size: 12.5px; color: rgb(var(--c-fog)); line-height: 1.65;
+}
+.mb-grant svg { flex: none; color: rgb(var(--c-warn)); margin-top: 2px; }
+.mb-grant b { color: rgb(var(--c-tx)); }
+
+/* ==========================================================================
+   TEAM · AUTH — the document-rung recovery screens
+   Ported from team-auth.css.
+   ========================================================================== */
+
+/* THE SIGN-IN CARD'S OWN RULES ARE NOT REPEATED HERE. The design workspace's
+   team-auth.css opens with a verbatim copy of them so its three pages render
+   standalone in a browser; in the bundle they are already above, at the top of
+   this file, and a second copy would be a second opinion about the one card
+   every one of these screens IS. The one rule the design added and the shipped
+   card lacked — a visible focus ring, without which a password field is
+   unusable by keyboard — is kept. */
+.fld:focus { outline: none; border-color: color-mix(in srgb, rgb(var(--c-acc)) 60%, transparent); }
+
+/* ==================== NEW — the self-service screens =====================
+   Three screens the module does not yet draw: ask for a link, set a new
+   password, and accept an invitation. They are the SAME CARD as sign-in, and
+   that is the whole design conviction: a person who has just failed to get in
+   must not be handed a second-looking product to recover in.
+   ======================================================================== */
+
+/* THE BACK LINK — every recovery screen has a way back to the front door, and
+   it is the only navigation an anonymous page is allowed: it leads somewhere
+   the visitor has already been, so it leaks nothing. */
+.auth-back {
+    display: block; text-align: center; margin-top: 16px; font-size: 12px; color: rgb(var(--c-fog));
+    text-decoration: none;
+}
+.auth-back:hover { color: rgb(var(--c-acc)); }
+.auth-back svg { vertical-align: -2px; margin-right: 5px; width: 13px; height: 13px; }
+
+/* THE NEUTRAL ANSWER. "If that address belongs to an account, a link is on its
+   way" — said whether or not it does. An installation that answers differently
+   for a known and an unknown address is an installation whose front door is a
+   membership oracle, so the copy, the icon and the timing are identical for
+   both, and there is no state in which this card says "no such user". */
+.auth-said {
+    border: 1px solid color-mix(in srgb, rgb(var(--c-ok)) 40%, transparent);
+    background: color-mix(in srgb, rgb(var(--c-ok)) 7%, transparent);
+    border-radius: 12px; padding: 15px 16px; display: flex; gap: 11px; align-items: flex-start;
+    font-size: 12.5px; line-height: 1.6; color: rgb(var(--c-fog)); margin-bottom: 4px;
+}
+.auth-said svg { flex: none; color: rgb(var(--c-ok)); margin-top: 2px; width: 17px; height: 17px; }
+.auth-said b { color: rgb(var(--c-tx)); }
+.auth-said .addr {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11.5px; color: rgb(var(--c-tx));
+    display: block; margin-top: 5px; word-break: break-all;
+}
+
+/* THE EXPIRED LINK is not an error the visitor caused, so it is not drawn in
+   the failure colour: it is a fact with one obvious next step, and the step is
+   the card's only button. */
+.auth-stale {
+    border: 1px dashed color-mix(in srgb, rgb(var(--c-warn)) 50%, transparent);
+    background: color-mix(in srgb, rgb(var(--c-warn)) 7%, transparent);
+    border-radius: 12px; padding: 15px 16px; display: flex; gap: 11px; align-items: flex-start;
+    font-size: 12.5px; line-height: 1.6; color: rgb(var(--c-fog)); margin-bottom: 18px;
+}
+.auth-stale svg { flex: none; color: rgb(var(--c-warn)); margin-top: 2px; width: 17px; height: 17px; }
+.auth-stale b { color: rgb(var(--c-tx)); }
+
+/* WHO THE LINK IS FOR. On a reset and on an invitation the card states the
+   account it will change, read from the token and never from a query string a
+   visitor can retype. It is text, not a field: there is nothing here to choose. */
+.auth-for {
+    display: flex; align-items: center; gap: 10px; border: 1px solid var(--c-ln);
+    border-radius: 10px; padding: 10px 12px; margin-bottom: 18px; background: color-mix(in srgb, rgb(var(--c-fog)) 4%, transparent);
+}
+.auth-for .avatar { width: 30px; height: 30px; border-radius: 9px; font-size: 11px; flex: none; }
+.auth-for .who-t { min-width: 0; line-height: 1.35; }
+.auth-for .who-t b { display: block; font-size: 13px; font-weight: 600; color: rgb(var(--c-tx)); }
+.auth-for .who-t em {
+    display: block; font-style: normal; font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 10.5px; color: rgb(var(--c-dim)); overflow: hidden; text-overflow: ellipsis;
+}
+
+/* THE PASSWORD RULES, stated BEFORE the field and checked live as it is typed.
+   A rule a person only learns by failing a submit is a rule the form kept to
+   itself. Each row owns its own met/unmet state, so the list never becomes one
+   red paragraph that hides which part is wrong. */
+.auth-rules { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.auth-rules li {
+    display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: rgb(var(--c-dim)); line-height: 1.4;
+}
+.auth-rules li svg { flex: none; width: 13px; height: 13px; }
+.auth-rules li .no { display: block; }
+.auth-rules li .yes { display: none; color: rgb(var(--c-ok)); }
+.auth-rules li.met { color: rgb(var(--c-fog)); }
+.auth-rules li.met .no { display: none; }
+.auth-rules li.met .yes { display: block; }
+
+/* THE STRENGTH BAR is advice, never a gate: the rules above are the gate. Four
+   segments, because a continuous meter invites the reading that 61% is a
+   score. */
+.auth-meter { display: flex; gap: 4px; margin: -6px 0 15px; }
+.auth-meter i { flex: 1; height: 3px; border-radius: 2px; background: var(--c-ln2); display: block; }
+.auth-meter.s1 i:nth-child(-n+1) { background: rgb(var(--c-fail)); }
+.auth-meter.s2 i:nth-child(-n+2) { background: rgb(var(--c-warn)); }
+.auth-meter.s3 i:nth-child(-n+3) { background: rgb(var(--c-acc)); }
+.auth-meter.s4 i { background: rgb(var(--c-ok)); }
+
+/* THE FIELD WITH A REVEAL. Typing a password you cannot see, twice, into a
+   card you reached from an email is how a person ends up locked out of the
+   account they were recovering. */
+.auth-pw { position: relative; }
+.auth-pw .fld { padding-right: 42px; }
+.auth-pw .rev {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    background: none; border: 0; cursor: pointer; color: rgb(var(--c-dim)); padding: 6px; line-height: 0;
+    border-radius: 7px;
+}
+.auth-pw .rev:hover { color: rgb(var(--c-tx)); background: rgb(var(--c-raised)); }
+.auth-pw .rev svg { width: 16px; height: 16px; }
+.auth-pw .rev .off { display: none; }
+.auth-pw.shown .rev .on { display: none; }
+.auth-pw.shown .rev .off { display: block; }
+
+/* THE FINE PRINT under a recovery card: how long the link lives, and that using
+   it signs every other session out. Both are consequences, so they are stated
+   before the button and not in a confirmation afterwards. */
+.auth-fine {
+    font-size: 11.5px; color: rgb(var(--c-dim)); line-height: 1.6; margin: 14px 0 0;
+    border-top: 1px dashed var(--c-ln2); padding-top: 13px;
+}
+.auth-fine b { color: rgb(var(--c-fog)); font-weight: 600; }
+.auth-fine code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: rgb(var(--c-fog)); }
+
+/* THE FIRST-RUN NOTE. A fresh installation has exactly one Super Admin and no
+   mail transport configured until somebody configures one — so the recovery
+   screens have an honest state in which they cannot do the thing they offer,
+   and it says so rather than swallowing the request. */
+.auth-nomail {
+    border: 1px dashed var(--c-ln2); border-radius: 12px; padding: 14px 15px; margin-bottom: 18px;
+    font-size: 12px; color: rgb(var(--c-fog)); line-height: 1.6;
+}
+.auth-nomail b { color: rgb(var(--c-tx)); }
+.auth-nomail code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: rgb(var(--c-tx)); }
+
+/* THE DESIGN APP'S STATE SWITCHER IS NOT PORTED. `.auth-states` was a row of
+   reviewer buttons that let one file show the ask / sent / no-mailer states of
+   a screen the product reaches through a token in a URL and a row in a table.
+   The rule that the workspace marks such controls `design-only` is exactly so
+   that porting can delete them, and this is that deletion. */
+
+/* One card per state, one visible at a time. */
+.auth-state { display: none; }
+.auth-state.on { display: block; }

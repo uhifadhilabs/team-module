@@ -23,11 +23,13 @@ use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 use Symfony\UX\Icons\UXIconsBundle;
 use Symfony\UX\StimulusBundle\StimulusBundle;
+use Uhifadhi\ModuleContracts\Entity\UserInterface as ModuleUserInterface;
 use Uhifadhi\Shell\UhifadhiShellBundle;
 use Uhifadhi\Team\Entity\User;
 use Uhifadhi\Team\Tests\Integration\Fixtures\DeclaringModuleProvider;
 use Uhifadhi\Team\Tests\Integration\Fixtures\GuardedController;
 use Uhifadhi\Team\UhifadhiTeamBundle;
+use Uhifadhi\Widget\UhifadhiWidgetBundle;
 
 /**
  * The smallest host this bundle can live in: framework + twig + doctrine +
@@ -55,6 +57,8 @@ final class TestKernel extends Kernel
         yield new DoctrineBundle();
         yield new SecurityBundle();
         yield new UhifadhiShellBundle();
+        // Hard-required: both team screens are widget surfaces.
+        yield new UhifadhiWidgetBundle();
         yield new UhifadhiTeamBundle();
     }
 
@@ -132,6 +136,16 @@ final class TestKernel extends Kernel
                 // The skeleton's own choice, mirrored so the bundle's SQL is
                 // exercised against the column names it will actually meet.
                 'naming_strategy' => 'doctrine.orm.naming_strategy.underscore',
+                // THE README'S OWN HAND-STEP, and it is here for the same reason
+                // the firewall above is: what this kernel writes is what an
+                // installation is told to write. The widget module keeps a
+                // layout per PERSON and points at the contract to do it, so
+                // without this line the schema stops before it reaches a single
+                // team_ table — which is exactly the failure an installation
+                // would hit, and exactly why the README says so first.
+                'resolve_target_entities' => [
+                    ModuleUserInterface::class => User::class,
+                ],
             ],
         ]);
 
@@ -164,6 +178,8 @@ final class TestKernel extends Kernel
             \Uhifadhi\Team\Repository\PositionRepository::class => \Uhifadhi\Team\Repository\PositionRepository::class,
             \Uhifadhi\Team\Repository\DepartmentRepository::class => \Uhifadhi\Team\Repository\DepartmentRepository::class,
             \Uhifadhi\Team\Service\SuperAdminInvariant::class => 'team.super_admin_invariant',
+            \Uhifadhi\Team\Service\TeamOverview::class => 'team.overview',
+            \Uhifadhi\Widget\Registry\WidgetSurfaceRegistry::class => 'widget.surfaces',
         ] as $class => $serviceId) {
             $container->services()->alias('test_public.'.$class, $serviceId)->public();
         }
