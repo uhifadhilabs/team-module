@@ -34,11 +34,13 @@ use Uhifadhi\Team\UhifadhiTeamBundle;
  * security + the shell the sign-in screen renders through, talking to a REAL
  * database (TEAM_TEST_DATABASE_URL, see phpunit.dist.xml).
  *
- * THE SECURITY CONFIG HERE IS THE RECIPE'S. What this kernel writes under
- * `security:` is what the recipe writes into an installing project's
- * config/packages/security.yaml — provider, form_login pointing at this
- * bundle's routes, the access_control ladder. A test kernel that invented its
- * own firewall would prove the module works in a shape no installation has.
+ * THE SECURITY CONFIG HERE IS THE README'S. What this kernel writes under
+ * `security:` is what the README's "Wire the security" tells an installation to
+ * put in its own config/packages/security.yaml — provider, form_login pointing
+ * at this bundle's routes, the access_control ladder. The two are kept in step
+ * deliberately: a test kernel that invented its own firewall would prove the
+ * module works in a shape no installation has, and documentation nothing
+ * exercises is documentation that rots.
  */
 final class TestKernel extends Kernel
 {

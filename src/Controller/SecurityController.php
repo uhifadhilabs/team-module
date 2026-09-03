@@ -25,7 +25,8 @@ use Twig\Environment;
  * SIGN IN AND SIGN OUT — the two addresses this module owns.
  *
  * AUTHENTICATION ITSELF HAPPENS NOWHERE IN THIS CLASS. The `form_login`
- * firewall the recipe writes intercepts the POST to /login before any
+ * firewall — which the installation writes in its own security.yaml, because
+ * that file is the application's — intercepts the POST to /login before any
  * controller runs, and the `logout` key intercepts /logout entirely. What is
  * left for a controller is rendering the form and bouncing somebody who is
  * already signed in — which is why login() only ever answers a GET it was
@@ -82,6 +83,6 @@ final readonly class SecurityController
     #[Route('/logout', name: 'team_logout', methods: ['GET'])]
     public function logout(): never
     {
-        throw new \LogicException('This method is intercepted by the logout key on the firewall — see the security.yaml this module\'s recipe writes.');
+        throw new \LogicException('This method is intercepted by the logout key on the firewall — see the security.yaml this installation wired (the module README\'s "Wire the security").');
     }
 }

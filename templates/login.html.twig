@@ -74,9 +74,9 @@
 
                 {# The checkbox is rendered unconditionally and does nothing at
                    all unless the installation's firewall has a `remember_me`
-                   key — the recipe writes one, and it is yours to delete. That
-                   is the honest failure direction: a box that is ignored, rather
-                   than a firewall this bundle pretends to configure. #}
+                   key. That is the honest failure direction: a box that is
+                   ignored, rather than a module pretending to configure a
+                   firewall it does not own. #}
                 <div class="auth-row">
                     <label class="auth-remember">
                         <input type="checkbox" name="_remember_me"> Remember me for a week

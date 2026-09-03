@@ -31,15 +31,17 @@ use Uhifadhi\Team\DependencyInjection\TeamConfiguration;
  * IT DOES NOT OWN ENFORCEMENT, and cannot. Firewalls and access_control are
  * application configuration by Symfony's own design — `security.yaml` lives in
  * the installing project, because only that project knows which of its paths
- * are public. This bundle's Flex recipe WRITES that file, pointed at the user
- * provider and the routes below; an installation is free to edit it afterwards,
- * and every one does. There is no separate security module and there is nothing
- * for one to hold.
+ * are public. So this bundle does not write it, does not merge into it, and
+ * ships no second file that quietly overrides it: the README states the exact
+ * contents an installation should end up with, and the installation puts them
+ * there. One security file, one owner. There is no separate security module and
+ * there is nothing for one to hold.
  *
- * ZERO-CONFIG. Registering the bundle maps its own entities (no doctrine block
- * for team_user / team_position in the installing project), wires its own
- * services and registers its voter. The recipe adds the two things a module
- * genuinely cannot write for itself: the firewall, and the routes.
+ * ZERO-CONFIG, WITH ONE HAND-STEP. Registering the bundle maps its own entities
+ * (no doctrine block for team_user / team_position in the installing project),
+ * wires its own services and registers its voter. The recipe adds its options
+ * and its routes. The firewall is the hand-step, and it is the one thing a
+ * module may not do for you.
  */
 final class UhifadhiTeamBundle extends AbstractBundle
 {

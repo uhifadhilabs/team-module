@@ -9,15 +9,14 @@ A [uhifadhi](https://github.com/uhifadhilabs) platform bundle.
 > provides two tables (`team_user`, `team_position`), two routes (`/login`,
 > `/logout`), a six-entry permission catalogue that installed modules extend,
 > a voter that decides it, and a sign-in screen rendered through the shell's
-> document. Its recipe writes the firewall that uses all of it. Needs a database
-> and `uhifadhi/shell-module`.
+> document. You wire the firewall yourself — the README gives you the file.
+> Needs a database and `uhifadhi/shell-module`.
 
 ## Contents
 
 - [The architecture](#the-architecture)
 - [What it owns](#what-it-owns)
 - [What it does not own: enforcement](#what-it-does-not-own-enforcement)
-  - [The file is `team_security.yaml`](#the-file-is-team_securityyaml-not-securityyaml)
 - [The authorization model](#the-authorization-model)
   - [Two axes: tier and position](#two-axes-tier-and-position)
   - [The six permissions](#the-six-permissions)
@@ -27,7 +26,9 @@ A [uhifadhi](https://github.com/uhifadhilabs) platform bundle.
 - [The schema](#the-schema)
 - [What is here](#what-is-here)
 - [Installation](#installation)
-  - [What a fresh installation gains](#what-a-fresh-installation-gains)
+- [Wire the security](#wire-the-security)
+- [Create the tables](#create-the-tables)
+- [What a fresh installation gains](#what-a-fresh-installation-gains)
 - [Configuration](#configuration)
 - [Not here yet](#not-here-yet)
 - [Development](#development)
@@ -69,29 +70,15 @@ decide that for an installation, and one that tried would be a module every
 installation had to fight.
 
 So there is **no separate security module**, and there is nothing for one to
-hold. What this module does instead is what a module can do: its **Flex recipe
-writes the settings**, pointed at the user provider and the routes below, and an
-installation edits them from there. That is the same shape
-[`uhifadhi/shell-module`](https://github.com/uhifadhilabs/shell-module) uses for
-the welcome route it cannot own either.
+hold. `config/packages/security.yaml` is your file: you own it, you rework it,
+and this module does not write a line of it. What it does instead is tell you
+exactly what to put there — see [Wire the security](#wire-the-security), which
+is a **required hand-step**, not an optional polish.
 
-### The file is `team_security.yaml`, not `security.yaml`
-
-Where you expect these settings is `config/packages/security.yaml`, and that is
-not where they arrive. That filename already belongs to
-**symfony/security-bundle's own recipe**, and Symfony Flex refuses to let one
-recipe overwrite another recipe's file — silently on install, and under
-`composer recipes:install … --force` too. A recipe shipping that filename would
-therefore ship nothing at all: you would install this module, keep the stock
-in-memory provider, and find out at your first sign-in attempt.
-
-So the settings arrive as `config/packages/team_security.yaml`. Symfony merges
-every `config/packages/*.yaml` into one `security` configuration **in filename
-order**, so that file is read after `security.yaml` and wins wherever the two
-disagree — which is exactly one line, `firewalls.main.provider`. The stock
-`providers.users_in_memory` is left defined and unused; delete it. Both files
-are yours, and merging them by hand is fine: nothing in the module reads a
-filename.
+This module's recipe therefore ships only what is unambiguously its own: its
+`team.yaml` options and the routes that mount its two screens. It ships no
+security file at all, by design and not by limitation — one security file, one
+owner, and that owner is the application.
 
 ## The authorization model
 
@@ -219,16 +206,144 @@ public/team.css
 composer require uhifadhi/team-module
 ```
 
-Flex registers the bundle and copies three files into your project:
+Flex registers the bundle and copies two files into your project:
 
-- `config/packages/team_security.yaml` — the firewall, pointed at this module's
-  user provider and routes. **Yours to edit**, and you will: the
-  `access_control` ladder it writes is a starting point. See
-  [why not `security.yaml`](#the-file-is-team_securityyaml-not-securityyaml).
 - `config/packages/team.yaml` — the two options below.
 - `config/routes/team.yaml` — mounts `/login` and `/logout`.
 
-Then create the tables:
+It does **not** touch `config/packages/security.yaml`. Wiring that file is the
+next step and it is required — see [Wire the security](#wire-the-security).
+
+## Wire the security
+
+**This step is required, and it is done by hand.** `config/packages/security.yaml`
+is application-owned by Symfony's design — only your project knows which of its
+paths are public — and a Flex recipe may not edit a file the application owns.
+So this module does not write it, does not merge into it, and does not ship a
+second file that quietly overrides it. It tells you what belongs there, and you
+put it there.
+
+Until you do, the module is installed and inert: `/login` renders, and nothing
+authenticates, because the stock configuration still looks users up in memory.
+
+Replace `config/packages/security.yaml` with this. It is the whole file, ready
+to copy:
+
+```yaml
+security:
+    # Hashing is a framework concern: the interface named here is Symfony's, and
+    # "auto" is the framework picking the best algorithm available. Every user
+    # uhifadhi/team-module stores implements it.
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+
+    # The staff accounts, looked up by email. `property: email` is what makes
+    # `_username` on the sign-in form an email address. The stock
+    # `users_in_memory` provider is gone — you have user storage now, and a
+    # provider nothing names is a provider that will confuse the next reader.
+    providers:
+        team_user_provider:
+            entity:
+                class: Uhifadhi\Team\Entity\User
+                property: email
+
+    firewalls:
+        # The toolbar, the profiler and the asset server. `security: false`
+        # rather than a public rule: these must not be authenticated at all.
+        dev:
+            pattern: ^/(_profiler|_wdt|assets|build)/
+            security: false
+
+        main:
+            lazy: true
+            provider: team_user_provider
+
+            # THE AUTHENTICATION ITSELF, and it is in no controller: this key is
+            # what intercepts the POST to /login. Both paths are the same route,
+            # which is what makes a failed sign-in re-render the form with its
+            # error rather than bouncing through a second URL. The field names
+            # the module's template uses (`_username`, `_password`,
+            # `_csrf_token`) are this key's defaults.
+            form_login:
+                login_path: team_login
+                check_path: team_login
+                enable_csrf: true
+                # Where a FRESH sign-in lands — as distinct from team.yaml's
+                # `after_sign_in_path`, which only covers somebody already
+                # signed in who asks for /login again. Point this at your home
+                # screen the day you have one.
+                default_target_path: '/'
+
+            # The checkbox on the sign-in card is wired to this. Delete the key
+            # and the box is simply ignored — the card still works.
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 604800 # one week
+                always_remember_me: false
+
+            logout:
+                path: team_logout
+                target: team_login
+
+            # Super Admin impersonation. The tier grants ROLE_ALLOWED_TO_SWITCH
+            # (see the hierarchy below), so no other tier can reach it.
+            switch_user: true
+
+            # Blunting credential stuffing. Commented out because it needs a
+            # package you may not have — see the note under this file.
+            #login_throttling:
+            #    max_attempts: 5
+
+    # THE TIER LADDER, and it is not a permission tree. Admin and above hold the
+    # two umbrella capability roles; Manager grants NO umbrella by tier, because
+    # a Manager's capabilities come from their assigned position exactly as a
+    # Staff user's do. The granular leaves (area.create, module.view, …) are
+    # never listed here — they are decided by the module's voter. There are two
+    # umbrellas and there is no ROLE_INGESTION.
+    role_hierarchy:
+        ROLE_ADMIN: [ROLE_MANAGER, ROLE_AREAS, ROLE_MODULES]
+        ROLE_SUPER_ADMIN: [ROLE_ADMIN, ROLE_ALLOWED_TO_SWITCH]
+
+    # ONLY THE FIRST MATCHING RULE APPLIES.
+    #
+    # THIS LADDER IS OPEN, AND CLOSING IT IS YOUR ONGOING JOB. One rule ships
+    # here — the sign-in screen has to be reachable by somebody who is not
+    # signed in — and everything else stays as reachable as it was before this
+    # module arrived. That is deliberate: shutting the front door in a snippet
+    # would lock every page of every module you already have, in one paste.
+    # Add rules as you learn which of your paths are which; the commented lines
+    # are the shape most installations end up with.
+    access_control:
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        #- { path: ^/areas, roles: ROLE_AREAS }      # the umbrella; the verb is the voter's
+        #- { path: ^/, roles: ROLE_USER }            # sign in to see anything at all
+
+# Hashing is expensive by design. In tests that cost buys nothing, so it is
+# floored — the documented Symfony practice, and safe because it applies to no
+# other environment.
+when@test:
+    security:
+        password_hashers:
+            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                algorithm: auto
+                cost: 4 # lowest possible for bcrypt
+                time_cost: 3 # lowest possible for argon
+                memory_cost: 10 # lowest possible for argon
+```
+
+The `login_throttling` key is commented out because it needs
+`symfony/rate-limiter`; run `composer require symfony/rate-limiter` and
+uncomment it to cap sign-in attempts per IP.
+
+Two things in that file the module actually depends on — everything else is
+yours to change freely:
+
+1. a provider that resolves `Uhifadhi\Team\Entity\User`, and
+2. the route names `team_login` / `team_logout` (`config/routes/team.yaml`).
+
+Break either and the container says so at compile time rather than at 3am.
+
+## Create the tables
 
 ```bash
 bin/console doctrine:migrations:diff
@@ -243,14 +358,14 @@ metadata, so the seam's own `resolve_target_entities` step
 (`config/packages/seam.yaml`) has to be done first — otherwise the diff stops on
 `Uhifadhi\Seam\Entity\AreaInterface` before it ever reaches `team_user`.
 
-### What a fresh installation gains
+## What a fresh installation gains
 
 - **`/login` answers 200**, in the shell's document, in both palettes.
 - **`/logout` ends the session** and returns to `/login`.
 - **`/` is unchanged** — still whatever your installation had there (the
-  skeleton's welcome page), and still public: the `access_control` the recipe
-  writes leaves the front door open, because deciding otherwise is an
-  installation's decision and not a module's.
+  skeleton's welcome page), and still public: the `access_control` above leaves
+  the front door open, because deciding otherwise is an installation's decision
+  and not a module's.
 - Nothing else changes appearance. There is no team-administration screen yet
   (see below), and no user exists until you create one.
 
@@ -269,7 +384,8 @@ team:
 ```
 
 Everything else about signing in — session lifetime, remember-me, throttling,
-who may reach what — is `security.yaml`, which is yours.
+who may reach what — is `security.yaml`, which is yours and which you wired by
+hand (see [Wire the security](#wire-the-security)).
 
 ## Not here yet
 
