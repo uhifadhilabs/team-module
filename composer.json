@@ -32,7 +32,7 @@
         "symfony/security-bundle": "^7.3 || ^8.0",
         "symfony/uid": "^7.3 || ^8.0",
         "twig/twig": "^3.12",
-        "uhifadhi/module-contracts": "^0.1"
+        "uhifadhi/module-contracts": "^0.2"
     },
     "autoload": {
         "psr-4": {

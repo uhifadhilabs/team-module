@@ -15,8 +15,10 @@ A [uhifadhi](https://github.com/uhifadhilabs) platform bundle.
 ## Contents
 
 - [The architecture](#the-architecture)
+  - [Security is three layers, and one of them is here](#security-is-three-layers-and-one-of-them-is-here)
 - [What it owns](#what-it-owns)
 - [What it does not own: enforcement](#what-it-does-not-own-enforcement)
+- [Modules point at your people](#modules-point-at-your-people)
 - [The authorization model](#the-authorization-model)
   - [Two axes: tier and position](#two-axes-tier-and-position)
   - [The six permissions](#the-six-permissions)
@@ -46,6 +48,43 @@ updated forever. A module **registers with the seam**
 
 The skeleton is the application, the seam carries the modules, the shell is what
 you see — and this is **who is looking**.
+
+### Security is three layers, and one of them is here
+
+Asking "may this person do this?" takes three separate things, owned by three
+separate places. They are worth naming apart, because the commonest way to get
+this wrong is to build one thing that tries to be all three.
+
+**1. Declaration — what permissions exist.** A module declares its own on its
+provider: `ModuleProviderInterface::permissions()` returning `ModulePermission`
+values, both from
+[`uhifadhi/module-contracts`](https://github.com/uhifadhilabs/module-contracts).
+The declarations arrive through the seam's `uhifadhi.module` tag — the same
+plug-point a module registers everything else through, not a second one invented
+for security. That is what lets a permission belonging to a module written years
+from now reach the matrix without this module, or the seam, having heard of it.
+See [What a module adds](#what-a-module-adds).
+
+**2. Identity — who is asking, and what they hold.** Accounts, positions, tiers,
+and what a position grants. This is this module's whole domain, and it is why the
+module is named after the **team** rather than after a mechanism: what it knows
+is the people of an installation, and permissions are one of the things it knows
+about them.
+
+**3. Enforcement — the decision, at the moment it is needed.** A protected module
+never calls anything in here. It writes `is_granted('area.edit')`; Symfony's
+security layer is the socket; this module's voter answers. Swap this module for a
+different identity provider and the protected module changes nothing, because it
+was never pointed at this one. Firewalls and `access_control` sit at this layer
+too, and they belong to the installation — see
+[What it does not own: enforcement](#what-it-does-not-own-enforcement).
+
+**Why the permission layer cannot sit in the seam.** Deciding whether a person
+may do something requires knowing what that person's position grants — identity
+data. The seam knows nothing about accounts, and keeping it that way is the
+point rather than an omission: the seam records what exists, this module decides
+who may use it, and Symfony's security layer is where the two meet without
+either having to know the other.
 
 ## What it owns
 
@@ -79,6 +118,47 @@ This module's recipe therefore ships only what is unambiguously its own: its
 `team.yaml` options and the routes that mount its two screens. It ships no
 security file at all, by design and not by limitation — one security file, one
 owner, and that owner is the application.
+
+## Modules point at your people
+
+Nearly every module keeps records with a name on them — who reported the
+incident, who led the patrol, whose dashboard layout this is. **None of them
+type-hints this bundle's `User`**, and none of them should: a module that did
+would be a module no installation could run without this one.
+
+They take the contract instead —
+`Uhifadhi\ModuleContracts\Entity\UserInterface`, from
+[`uhifadhi/module-contracts`](https://github.com/uhifadhilabs/module-contracts) —
+and this module's `User` **is** its answer. Seven questions: `getId()`,
+`getUuidString()`, `getEmail()`, `getFirstName()`, `getLastName()`,
+`getFullName()`, `getRangerCode()`. It implemented all seven before it declared
+the interface, because the surface was measured against the modules that read it.
+
+**One line closes the loop, and it is yours to write** — a bundle cannot know
+what an installation calls its people:
+
+```yaml
+# config/packages/doctrine.yaml
+doctrine:
+    orm:
+        resolve_target_entities:
+            Uhifadhi\ModuleContracts\Entity\UserInterface: Uhifadhi\Team\Entity\User
+```
+
+Write it once. Every module that points at a person resolves through it, and a
+module installed later needs nothing further. **What stops without it is the
+schema, not the boot**: the container compiles and the kernel starts, but
+`doctrine:migrations:diff` reports `Class
+'Uhifadhi\ModuleContracts\Entity\UserInterface' does not exist` — the same
+failure, for the same reason, as the seam's unresolved `AreaInterface`.
+
+Nothing above is needed if the only module you have installed is this one: the
+line resolves an interface, and with nothing pointing at it there is nothing to
+resolve.
+
+**It is not Symfony's `UserInterface`.** That one answers "who is signed in" and
+still comes from the token storage; this one answers "who is this record about".
+`User` implements both, and a class that needs both imports one aliased.
 
 ## The authorization model
 

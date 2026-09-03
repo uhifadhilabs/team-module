@@ -16,6 +16,7 @@ namespace Uhifadhi\Team\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Uhifadhi\ModuleContracts\Entity\UserInterface as ModuleUserInterface;
 use Uhifadhi\Team\Entity\Trait\TimestampableTrait;
 use Uhifadhi\Team\Entity\Trait\UuidTrait;
 use Uhifadhi\Team\Enum\TeamRoleEnum;
@@ -33,11 +34,27 @@ use Uhifadhi\Team\Repository\UserRepository;
  *
  * ADDRESSED BY UUID. The sequential id is Doctrine's business; anything outside this bundle —
  * a URL, an API payload, another module's foreign key surface — uses the uuid.
+ *
+ * TWO USER INTERFACES, AND THEY ANSWER DIFFERENT QUESTIONS. Symfony's answers "who is signed
+ * in" — the firewall's business. `Uhifadhi\ModuleContracts\Entity\UserInterface`, imported here
+ * aliased because the short names collide, answers "who is this record about": it is the
+ * stand-in every other module points its associations at, so that no module has to require this
+ * bundle to keep a record with a name on it. An installation closes the loop itself:
+ *
+ *     doctrine:
+ *         orm:
+ *             resolve_target_entities:
+ *                 Uhifadhi\ModuleContracts\Entity\UserInterface: Uhifadhi\Team\Entity\User
+ *
+ * The contract asks seven questions and this class already answered all seven before it declared
+ * them — which is the sign the surface was measured against real modules rather than invented.
+ * Nothing here may narrow to suit it: widening the contract is a contracts release, and dropping
+ * one of the seven is a breaking change for every module that reads it.
  */
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'team_user')]
 #[ORM\HasLifecycleCallbacks]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User implements ModuleUserInterface, PasswordAuthenticatedUserInterface, UserInterface
 {
     use TimestampableTrait;
     use UuidTrait;
