@@ -1,0 +1,53 @@
+{# THE TEAM PAGE — a widget surface, rendered through the shell's page frame.
+
+   The page types no furniture of its own: no `<div class="page">`, no crumb
+   markup, no flash loop. Those are the frame's, and a module that carried a copy
+   of them is a module the frame stops reaching.
+
+   THE BODY IS THE PERSON'S OWN RESOLVED LAYOUT, in their own order, with the
+   widgets they switched off simply absent. Which widgets, how wide and in what
+   order comes from the widget framework resolving TeamWidgets — the design's
+   composition until this person changes it. #}
+{% extends '@UhifadhiShell/page.html.twig' %}
+{% import '@UhifadhiTeam/team/_bits.html.twig' as bits %}
+
+{% block title %}Team{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset(constant('Uhifadhi\\Team\\UhifadhiTeamBundle::STYLESHEET')) }}">
+{% endblock %}
+
+{# The team page is not inside an area, so it fills the tab socket with nothing
+   rather than inheriting the area strip. A page outside any place says so by
+   saying nothing. #}
+{% block shell_page_tabs %}{% endblock %}
+
+{% block shell_breadcrumbs %}<a href="{{ path('team_index') }}">uhifadhi</a> / team{% endblock %}
+
+{% block shell_page_title %}Team{% endblock %}
+
+{% block shell_page_subtitle %}
+    Everybody who can sign in to this installation, the tier that decides whether they stand above the permission
+    matrix, and the position that decides what they may actually do. <b>Tier and permission are different
+    things</b> &mdash; and since the Manager tier was retired, administering the team is itself one of the
+    permissions: <span class="mono">team.manage</span>.
+{% endblock %}
+
+{% block shell_page_actions %}
+    <a class="cta" href="{{ path('team_invite') }}">{{ bits.icon_plus() }} Add somebody</a>
+    <a class="tgl w-act" href="{{ path('team_positions') }}">{{ bits.icon_tag() }} Positions &amp; permissions</a>
+    <a class="tgl w-act" href="{{ path('team_widgets') }}">{{ bits.icon_grid() }} Widget library</a>
+{% endblock %}
+
+{% block shell_page %}
+    <div class="w-grid">
+        {% for widget in widgets %}
+            {% if widget.on %}
+                <div data-w="{{ widget.id }}" class="w{{ widget.cols }}">
+                    {{ include('@UhifadhiTeam/team/_w_' ~ widget.id ~ '.html.twig') }}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endblock %}

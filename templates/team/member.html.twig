@@ -1,0 +1,313 @@
+{# ONE PERSON'S RECORD. Everything here writes to team_user; there is nothing on
+   this page the schema cannot store. #}
+{% extends '@UhifadhiShell/page.html.twig' %}
+{% import '@UhifadhiTeam/team/_bits.html.twig' as bits %}
+
+{% block title %}{{ member.fullName }} &middot; team{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset(constant('Uhifadhi\\Team\\UhifadhiTeamBundle::STYLESHEET')) }}">
+{% endblock %}
+
+{% block shell_page_tabs %}{% endblock %}
+
+{% block shell_breadcrumbs %}
+    <a href="{{ path('team_index') }}">uhifadhi</a> / <a href="{{ path('team_index') }}">team</a> / {{ member.fullName|lower }}
+{% endblock %}
+
+{% block shell_page_title %}{{ member.fullName }}{% endblock %}
+
+{% block shell_page_subtitle %}
+    One person&rsquo;s record: the four fields the roster shows, the tier that decides whether they stand above
+    the permission matrix, and the position that decides what they may actually do.
+{% endblock %}
+
+{% block shell_page_actions %}
+    <a class="tgl w-act" href="{{ path('team_index') }}">{{ bits.icon_back() }} Back to the team</a>
+    <button class="cta" type="submit" form="member-form">{{ bits.icon_save() }} Save changes</button>
+{% endblock %}
+
+{% block shell_page %}
+
+<div class="mb-band">
+    <span class="avatar">{{ bits.initials(member) }}</span>
+    <div class="mb-id">
+        <h2>{{ member.fullName }}</h2>
+        <div class="mb-idrow">
+            <span class="em">{{ member.email }}</span>
+            {{ bits.tier_pill(member.teamRole) }}
+            {% if member.rangerCode %}<span class="mb-code">{{ member.rangerCode|upper }}</span>{% endif %}
+            {% if member.position %}
+                <span class="qual">
+                    {%- if member.position.department %}<span class="q">{{ member.position.department.name }}</span><span class="sep">/</span>{% endif -%}
+                    <span class="n">{{ member.position.name }}</span>
+                </span>
+            {% endif %}
+        </div>
+    </div>
+    {# IMPERSONATION IS A REAL, SHIPPED CAPABILITY, offered to a Super Admin
+       only — TeamRoleEnum::canSwitch(). For anybody else this control is ABSENT
+       rather than disabled. #}
+    {% if mayImpersonate and not isSelf %}
+        <div class="acts">
+            <a class="softbtn" href="{{ path('team_index') }}?_switch_user={{ member.email|url_encode }}"
+               title="Sign in as this person to reproduce what they see">
+                {{ bits.icon_eye() }} Sign in as {{ member.firstName }}
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+{# ─── MB·01 · THE ACCOUNT ─────────────────────────────────────────────── #}
+<div class="c">
+    <span class="tab"><span class="idx">MB&middot;01</span>The account<span class="src">&middot; two booleans, and what each of them gates</span></span>
+
+    {% if not member.isActive %}
+        <div class="mb-state off">
+            {{ bits.icon_off() }}
+            <span><b>Deactivated &mdash; cannot sign in.</b> <code>isActive</code> is false and
+            <code>disabledAt</code> records when{% if member.disabledAt %} ({{ member.disabledAt|date('j F Y') }}){% endif %}.
+            The row is <b>not deleted and never will be</b>: accounts are never hard-deleted, because &ldquo;this
+            ranger left in March&rdquo; and &ldquo;this ranger never existed&rdquo; must not be the same operation
+            &mdash; every patrol they recorded keeps its author. They stay listed, filterable, and one click from
+            coming back.</span>
+            <span class="st-acts">
+                <form method="post" action="{{ path('team_member_reactivate', {uuid: member.uuidString}) }}">
+                    <input type="hidden" name="_token" value="{{ csrfToken }}">
+                    <button class="softbtn acc" type="submit">{{ bits.icon_undo() }} Reactivate</button>
+                </form>
+            </span>
+        </div>
+    {% elseif member.isVerified %}
+        <div class="mb-state ok">
+            {{ bits.icon_check() }}
+            <span><b>Signed in and verified.</b> <code>isVerified</code> is true, so the verification token is
+            spent and this person reaches the product normally. There is nothing to resend.</span>
+        </div>
+    {% else %}
+        <div class="mb-state wait">
+            {{ bits.icon_warn() }}
+            <span>
+                <b>Has never signed in{% if member.wasInvited %} &mdash; invited by {{ member.invitedBy ? member.invitedBy.fullName : 'somebody since removed' }}, {{ bits.ago(member.invitedAt) }}{% endif %}.</b>
+                <code>isVerified</code> is false and a <code>verificationToken</code> is sitting in the column.
+                {% if not member.wasInvited %}
+                    <br><br><b>Nobody invited them.</b> <code>invitedAt</code> is null, which is meaningful rather
+                    than missing: this account was created with a password by an administrator, so there is no
+                    invitation outstanding and nothing to resend. Somebody has to hand the password over.
+                {% endif %}
+            </span>
+        </div>
+    {% endif %}
+</div>
+
+{# ─── MB·02 · THE RECORD ──────────────────────────────────────────────── #}
+<div class="c" style="margin-top:18px">
+    <span class="tab"><span class="idx">MB&middot;02</span>The record<span class="src">&middot; exactly the columns team_user has</span></span>
+
+    <form class="mb-form" id="member-form" method="post" action="{{ path('team_member_update', {uuid: member.uuidString}) }}" style="margin-top:14px">
+        <input type="hidden" name="_token" value="{{ csrfToken }}">
+        <div class="mb-f">
+            <span class="lbl">first name</span>
+            <input class="fld" name="firstName" value="{{ member.firstName }}" required maxlength="100">
+            <p class="hint">Required. <code>length: 100</code>.</p>
+        </div>
+        <div class="mb-f">
+            <span class="lbl">last name</span>
+            <input class="fld" name="lastName" value="{{ member.lastName }}" required maxlength="100">
+            <p class="hint">Required. <code>length: 100</code>.</p>
+        </div>
+        <div class="mb-f">
+            <span class="lbl">email</span>
+            <input class="fld" name="email" type="email" value="{{ member.email }}" required maxlength="180">
+            <p class="hint">The sign-in identifier, and <b>unique</b>. Lowercased on save by the entity itself, so
+            <code>G.Ndosi@&hellip;</code> and <code>g.ndosi@&hellip;</code> are the same person.</p>
+        </div>
+        <div class="mb-f">
+            <span class="lbl">ranger code</span>
+            <input class="fld" name="rangerCode" value="{{ member.rangerCode }}" maxlength="32">
+            <p class="hint">Unique, and <b>nullable</b> &mdash; office staff genuinely have none, so empty is a
+            value and not an unfinished field. Lowercased and trimmed; an empty string is stored as NULL.</p>
+        </div>
+    </form>
+</div>
+
+{# ─── MB·03 · TIER ────────────────────────────────────────────────────── #}
+<div class="c" style="margin-top:18px">
+    <span class="tab"><span class="idx">MB&middot;03</span>Tier<span class="src">&middot; who stands above the matrix</span></span>
+
+    <p class="use" style="margin-top:2px">Three cards rather than a dropdown, because the words do not explain
+    themselves and this list is <b>shorter than it used to be</b>. There was a fourth tier, <i>Manager</i>, and it
+    has been removed: it named a job rather than a system level, and it created the model&rsquo;s single most
+    misread rule &mdash; a Manager could administer the team and yet hold no capability at all. <b>Administering
+    the team is now a permission like any other</b>, <code>team.manage</code>, granted through a position. So a
+    &ldquo;manager&rdquo; is something an administrator <i>composes</i> &mdash; visible in the matrix, countable,
+    and revocable in one click, none of which was true of a tier.</p>
+
+    <form method="post" action="{{ path('team_member_tier', {uuid: member.uuidString}) }}">
+        <input type="hidden" name="_token" value="{{ csrfToken }}">
+        <div class="mb-tiers" style="margin-top:13px">
+            {% for tier in tiers %}
+                <button type="submit" name="tier" value="{{ tier.value }}"
+                        class="mb-tier{{ member.teamRole == tier ? ' on' : '' }}"
+                        aria-pressed="{{ member.teamRole == tier ? 'true' : 'false' }}"
+                        {{ isLastSuperAdmin and tier != member.teamRole ? 'disabled' : '' }}>
+                    <span class="tt"><i></i><b>{{ tier.label }}</b></span>
+                    <em>{{ tier.description }}</em>
+                    <span class="grants">grants <b{{ tier.canManageContent ? '' : ' class="none"' }}>{{ tier.grants }}</b></span>
+                </button>
+            {% endfor %}
+        </div>
+    </form>
+
+    {# THE WARNING LIVES AT THE GRANT. Shown whenever this person is not already
+       a Super Admin, because that is exactly when pressing the card hands
+       somebody every permission the presser holds. #}
+    {% if member.teamRole.value != 'super_admin' %}
+        <div class="mb-grant">
+            {{ bits.icon_warn() }}
+            <div><b>Granting Super Admin gives this person every permission you hold</b>, including this one
+            &mdash; they will be able to promote others, and to demote you. There is no lesser form of it.<br><br>
+            This is the intended way ownership moves: <b>transfer before you leave</b>. Grant it to your successor,
+            confirm they can sign in, then have your own account deactivated &mdash; in that order. The reverse
+            order is the one the code refuses.</div>
+        </div>
+    {% endif %}
+
+    {# THE REFUSAL, WITH ITS REASON — not a greyed-out control and not a
+       failure on submit. It unlocks the moment somebody else holds the tier. #}
+    {% if isLastSuperAdmin %}
+        <div class="mb-refuse">
+            {{ bits.icon_warn() }}
+            <span><b>One change cannot be made here, and it is not greyed out &mdash; it is refused, with the
+            reason.</b> {{ member.fullName }} is the <b>only active Super Admin</b> on this installation. Demoting
+            or deactivating the last one leaves nobody who can administer the team, so both are refused: <b>an
+            installation must always keep at least one active Super Admin</b>. There is deliberately no separate
+            owner flag and no break-glass account; ownership is simply transferable, and the only rule is that it
+            may not reach zero. Grant Super Admin to somebody else and both unlock in the same moment.</span>
+        </div>
+    {% endif %}
+</div>
+
+{# ─── MB·04 · POSITION ────────────────────────────────────────────────── #}
+<div class="c" style="margin-top:18px">
+    <span class="tab"><span class="idx">MB&middot;04</span>Position<span class="src">&middot; the one control that changes what this person may do</span></span>
+
+    <p class="use" style="margin-top:2px">A position is assigned, never composed here. There is deliberately <b>no
+    per-person permission</b> on this page, because the shipped model has no such thing &mdash; authority lives on
+    the position, and giving one person an exception would mean giving them a position of their own.</p>
+
+    <div class="grid g2" style="margin-top:14px;align-items:start">
+        <div>
+            <span class="lbl">assigned position</span>
+            <form method="post" action="{{ path('team_member_position', {uuid: member.uuidString}) }}">
+                <input type="hidden" name="_token" value="{{ csrfToken }}">
+                {# GROUPED BY DEPARTMENT, because that is where a name is unique.
+                   Two of these options may be called "Analyst" and a flat list
+                   would make them one. #}
+                <select class="sel" name="position" style="width:100%;max-width:340px;height:34px" onchange="this.form.submit()">
+                    <option value="">&mdash; no position &mdash;</option>
+                    {% for department, positions in groupedPositions %}
+                        <optgroup label="{{ department is empty ? 'No department yet' : department }}">
+                            {% for position in positions %}
+                                <option value="{{ position.uuidString }}"{{ member.position == position ? ' selected' : '' }}>{{ position.name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    {% endfor %}
+                </select>
+                <noscript><button class="softbtn" type="submit" style="margin-top:8px">Assign</button></noscript>
+            </form>
+            <p class="hint" style="font-size:11.5px;line-height:1.55;margin:9px 0 0">Grouped by department, because
+            that is where a name is unique. Nullable, so &ldquo;no position&rdquo; is a real choice and not a
+            blank. It is also the model&rsquo;s zero: a Staff member with no position is verified, can sign in, and
+            can do nothing at all.</p>
+        </div>
+
+        <div>
+            <span class="lbl">what that actually grants, right now</span>
+            <div class="pm-eff">
+                {% for row in effective %}
+                    <div class="pm-effrow{{ row.held ? '' : ' off' }}">
+                        <span class="lhs">
+                            <b>{% if row.why == 'orphaned grant' %}<span class="pm-orphname">{{ row.label }}</span>{% else %}{{ row.label }}{% endif %}</b>
+                            <span class="perm">{{ row.value }}</span>
+                            {% if row.description %}<span class="pm-desc">{{ row.description }}</span>{% endif %}
+                        </span>
+                        <span class="pm-why {{ row.held ? (row.why == 'by tier' ? 'tier' : 'pos') : 'no' }}">
+                            {{- row.held ? bits.icon_tag() : bits.icon_off() }}{{ row.why -}}
+                        </span>
+                    </div>
+                {% endfor %}
+            </div>
+            <p class="hint" style="font-size:11.5px;line-height:1.55;margin:11px 0 0">
+                {% if member.teamRole.canManageContent %}
+                    Every row says <b>by tier</b>: this person stands above the matrix, so the voter grants before
+                    it ever looks at a position. Changing the position below changes nothing they can do.
+                {% else %}
+                    Every row says <b>why</b>. This person is Staff, so their tier grants them nothing at all and
+                    every capability they have is on the position. <a href="{{ path('team_positions') }}">Edit the
+                    position &rarr;</a>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+
+{# ─── MB·05 · ACCOUNT ACTIONS ─────────────────────────────────────────── #}
+<div class="c" style="margin-top:18px">
+    <span class="tab"><span class="idx">MB&middot;05</span>Account actions<span class="src">&middot; and the one that does not exist</span></span>
+
+    <div class="mb-danger" style="margin-top:6px">
+        {% if mayImpersonate and not isSelf %}
+            <div class="mb-drow">
+                <div class="dt"><b>Sign in as this person</b>
+                <em>Symfony's own <code>switch_user</code>, offered to a Super Admin only &mdash;
+                <code>TeamRoleEnum::canSwitch()</code>. For anybody else this row is absent, not disabled.</em></div>
+                <a class="softbtn" href="{{ path('team_index') }}?_switch_user={{ member.email|url_encode }}">{{ bits.icon_eye() }} Switch</a>
+            </div>
+        {% endif %}
+
+        {% if member.isActive %}
+            <div class="mb-drow">
+                <div class="dt"><b>Deactivate the account</b>
+                <em>Sets <code>isActive</code> false and stamps <code>disabledAt</code>. The person can no longer
+                sign in &mdash; the firewall refuses them, and it says so rather than pretending the password is
+                wrong. <b>Everything they ever recorded keeps its author</b>, they stay on the team list under the
+                inactive filter, and reactivating is one click. This is the way somebody leaves &mdash; and for
+                the <b>last active Super Admin</b> it is refused by the same invariant that refuses the demotion
+                above, with the same reason in the same place. Transfer first, then leave.</em></div>
+                {% if isLastSuperAdmin %}
+                    <span class="mb-absent">{{ bits.icon_off() }} refused &mdash; the last active Super Admin</span>
+                {% else %}
+                    <form method="post" action="{{ path('team_member_deactivate', {uuid: member.uuidString}) }}">
+                        <input type="hidden" name="_token" value="{{ csrfToken }}">
+                        <button class="softbtn danger" type="submit">{{ bits.icon_off() }} Deactivate</button>
+                    </form>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="mb-drow">
+                <div class="dt"><b>Reactivate the account</b>
+                <em>Clears <code>isActive</code> back to true and drops <code>disabledAt</code>, because a stale
+                &ldquo;disabled at&rdquo; on a live account is a fact that reads as true and is not.</em></div>
+                <form method="post" action="{{ path('team_member_reactivate', {uuid: member.uuidString}) }}">
+                    <input type="hidden" name="_token" value="{{ csrfToken }}">
+                    <button class="softbtn acc" type="submit">{{ bits.icon_undo() }} Reactivate</button>
+                </form>
+            </div>
+        {% endif %}
+
+        {# THE ONE THAT DOES NOT EXIST, drawn as absent rather than left out —
+           because a reader looking for a delete button needs to be told there
+           is none, not left to conclude they have not found it. #}
+        <div class="mb-drow absent">
+            <div class="dt"><b>Delete this person</b>
+            <em><b>There is no such action, and there is no button for it.</b> Accounts are never hard-deleted. A
+            separate <code>deletedAt</code> marker exists in the model so a recycle bin is not foreclosed &mdash;
+            a future surface will expose removed records with an explicit purge. Nothing in this release draws it,
+            and nothing here destroys a row.</em></div>
+            <span class="mb-absent">{{ bits.icon_off() }} deliberately absent</span>
+        </div>
+    </div>
+</div>
+{% endblock %}

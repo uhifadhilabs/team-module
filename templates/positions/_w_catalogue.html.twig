@@ -1,1 +1,57 @@
-{# placeholder #}
+{# PM·CAT — WHERE EVERY PERMISSION COMES FROM: the seam, drawn as a table.
+
+   This is the widget that makes the matrix's central fact legible — the list is
+   not fixed. It says which umbrella is the host's, which arrived with a bundle,
+   and what removing that bundle would do to the grants already written. #}
+{% import '@UhifadhiTeam/positions/_bits.html.twig' as pm %}
+
+<div class="c">
+    <span class="tab"><span class="idx">PM&middot;CAT</span>Where every permission comes from<span class="src">&middot; the seam, as a table</span></span>
+    <p class="use" style="margin-top:2px">Seven permissions are this module&rsquo;s and will always be here. Every
+    other row arrived when a bundle was installed and <b>leaves when it is removed</b> &mdash; on the next
+    request, not the next deploy. That is the whole difference between this matrix and every other one, so it is
+    stated rather than left to be discovered.</p>
+
+    <table class="tbl" style="margin-top:12px">
+        <thead><tr><th>Umbrella</th><th>Declared by</th><th>Permissions</th><th>If it goes</th></tr></thead>
+        <tbody>
+            {% for umbrella, permissions in grouped %}
+                {% set source = permissions[0].source %}
+                <tr>
+                    <td><b>{{ umbrella }}</b></td>
+                    <td>
+                        {% if permissions[0].isCore %}
+                            <span class="pm-by core"><i></i>the host</span>
+                        {% else %}
+                            <span class="pm-by {{ source }}"><i></i>{{ moduleNames[source]|default(source) }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{% for permission in permissions %}<span class="perm">{{ permission.value }}</span>{% endfor %}</td>
+                    <td>
+                        {%- if permissions[0].isCore -%}
+                            <span class="fog">it does not &mdash; these ship with the product</span>
+                        {%- else -%}
+                            the rows vanish from this page; <b>grants already written stay in the positions</b> and stop resolving
+                        {%- endif -%}
+                    </td>
+                </tr>
+            {% endfor %}
+            {% for slug in silentModules %}
+                <tr>
+                    <td class="fog">&mdash;</td>
+                    <td><span class="pm-by {{ slug }}"><i></i>{{ moduleNames[slug]|default(slug) }}</span></td>
+                    <td><span class="pm-nobody">{{ pm.icon_info() }} installed, declares none</span></td>
+                    <td class="fog">nothing to lose</td>
+                </tr>
+            {% endfor %}
+            {% for value, holdingPositions in orphans %}
+                <tr class="muted">
+                    <td class="fog"><span class="pm-orphname">no longer described</span></td>
+                    <td><span class="pm-by next"><i></i>not installed</span></td>
+                    <td><span class="perm">{{ value }}</span></td>
+                    <td>already gone &mdash; still held by {{ holdingPositions|length }} position{{ holdingPositions|length == 1 ? '' : 's' }}, provided by nothing</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

@@ -1,1 +1,66 @@
-{# placeholder #}
+{# TM·B — GROUPED BY TIER.
+
+   Three bands, in the order the enum declares them. The top two are the ESCAPE
+   HATCHES — they pass every permission check without holding a position — and
+   everybody else is in the third.
+
+   THIS DIRECTION CAN NO LONGER ANSWER ITS OWN QUESTION FROM THE BANDS ALONE,
+   and it says so rather than hiding it. Administering the team is the
+   team.manage permission now, so a Staff member can hold it. Every person who
+   does is marked, wherever they sit.
+
+   The whole roster, not a page of it: a banded list whose bands are cut in half
+   by a pager is a list that lies about its bands. #}
+{% import '@UhifadhiTeam/team/_bits.html.twig' as bits %}
+
+<div class="c" data-tm data-tm-dir="b">
+    <span class="tab"><span class="idx">TM&middot;B</span>Roster<span class="src">&middot; grouped by tier</span></span>
+
+    <p class="use" style="margin:2px 0 14px">Three bands, in the order the enum declares them. The top two are the
+    <b>escape hatches</b> &mdash; they pass every permission check without holding a position &mdash; and everybody
+    else is in the third. <b>This direction can no longer answer its own question from the bands alone</b>, and
+    says so rather than hiding it: administering the team is the <span class="mono">team.manage</span> permission
+    now, so a Staff member can hold it. Every person who does is marked, wherever they sit.</p>
+
+    {# THE POST-RULING WEAKNESS, said plainly rather than apologised for. Both
+       halves are true and the direction is worth keeping for the second. #}
+    <div class="tm-correct" style="margin:0 0 16px;border-top:0;padding-top:0">
+        {{ bits.icon_info() }}
+        <div><b>As a grouping this now sorts {{ tierCounts['super_admin'] }} + {{ tierCounts['admin'] }} + {{ tierCounts['staff'] }}.</b>
+        With three system tiers and two of them escape hatches, almost everybody lands in one enormous Staff band,
+        and a band holding most of the roster is not doing much sorting. <b>That is the honest cost, and it is not
+        the whole story:</b> this is still the fastest screen in the product for seeing <b>who stands above the
+        matrix</b> &mdash; the accounts whose authority no permission grants and no permission can take away. If
+        you want the roster sorted rather than that question answered, take <b>The org chart</b> instead.</div>
+    </div>
+
+    <div class="tm-scroll">
+        <table class="tbl">
+            <thead><tr><th>Person</th><th>Position</th><th>Ranger code</th><th>Account</th><th></th></tr></thead>
+            <tbody>
+                {% for tier in tiers %}
+                    {% set band = everybody|filter(p => p.teamRole == tier) %}
+                    {% if band|length %}
+                        {% set managers = band|filter(p => p.position and p.position.hasPermissionValue('team.manage')) %}
+                        <tr class="tm-bandrow"><td colspan="5"><div class="tm-band">
+                            {{ bits.tier_pill(tier) }}<b>{{ band|length }} {{ band|length == 1 ? 'person' : 'people' }}</b>
+                            <span class="say">{{ tier.grants }}</span>
+                            {% if managers|length %}
+                                <span class="gr"><span class="tm-mgr">{{ bits.icon_shield() }}{{ managers|length }} hold team.manage</span></span>
+                            {% endif %}
+                        </div></td></tr>
+                        {% for person in band %}
+                            <tr class="tm-memrow{{ person.isActive ? '' : ' tm-off' }}{{ person.position is null and not person.teamRole.canManageContent ? ' loose' : '' }}">
+                                <td class="tm-in">{{ bits.person(person, person == app.user) }}</td>
+                                <td>{{ bits.position_cell(person, path('team_positions')) }}</td>
+                                <td>{{ bits.ranger_code(person) }}</td>
+                                <td>{{ bits.account_cell(person) }}</td>
+                                <td class="tm-acts">{{ bits.open_button(person) }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

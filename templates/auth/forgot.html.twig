@@ -1,0 +1,60 @@
+{% extends '@UhifadhiTeam/auth/_card.html.twig' %}
+{% import '@UhifadhiTeam/auth/_card.html.twig' as card %}
+
+{% block title %}Forgotten password{% endblock %}
+
+{% block auth_card %}
+    {% if state == 'ask' %}
+        <form class="c" method="post" action="{{ path('team_reset_send') }}">
+            {{ card.brand() }}
+            <p class="auth-lede">Forgotten your password? Give the address you sign in with and we will send a
+            link that lets you set a new one.</p>
+            <div class="auth-field">
+                <label for="reset-email">Email</label>
+                <input class="fld" id="reset-email" name="email" type="email" autocomplete="email" placeholder="you@example.test" required autofocus>
+            </div>
+            <input type="hidden" name="_token" value="{{ csrfToken }}">
+            <p class="auth-fine" style="border-top:0;padding-top:0;margin:0 0 18px">The link is good for
+            <b>one hour</b> and can be used <b>once</b> &mdash; Symfony&rsquo;s own recommended defaults, and
+            stated before you ask rather than discovered afterwards. Asking again replaces the previous link, so
+            an old email in an inbox stops working the moment a new one is sent.</p>
+            <button class="cta" type="submit">Send the link</button>
+        </form>
+
+    {% elseif state == 'sent' %}
+        <div class="c">
+            {{ card.brand() }}
+            <p class="auth-lede">Check your email.</p>
+            <div class="auth-said">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                <div>
+                    <b>If that address has an account, a reset link is on its way &mdash; it works for one hour.</b>
+                    <span class="addr">{{ address }}</span>
+                </div>
+            </div>
+            {# THE NEUTRAL ANSWER, and the page says why rather than leaving it
+               to look like vagueness. #}
+            <p class="auth-fine"><b>Read that sentence carefully &mdash; it is deliberate.</b> This screen says the
+            same thing, in the same words, whether or not that address has an account. An installation that
+            answered differently for a known and an unknown address would be an installation whose front door
+            tells a stranger who works here. There is no state of this screen that says <code>no such user</code>.</p>
+            <p class="auth-fine" style="border-top:0;padding-top:0">Nothing arrived? Check the spam folder, then
+            ask an administrator &mdash; they can send the same link from your record.</p>
+        </div>
+
+    {% else %}
+        <div class="c">
+            {{ card.brand() }}
+            <p class="auth-lede">This installation cannot send email yet.</p>
+            <div class="auth-nomail">
+                <b>No mail transport is configured</b>, so there is nothing to send a link with, and pretending
+                otherwise would leave you waiting for an email that will never arrive.<br><br>
+                Ask an administrator to reset your password from your record, or &mdash; if you are the
+                administrator &mdash; set <code>MAILER_DSN</code> and try again.
+            </div>
+            <p class="auth-fine" style="border-top:0;padding-top:0">A fresh installation is in exactly this state
+            until somebody configures a transport. The screen is honest about it rather than swallowing the
+            request, because a silently discarded reset is the worst failure this flow has.</p>
+        </div>
+    {% endif %}
+{% endblock %}

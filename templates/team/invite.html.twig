@@ -1,0 +1,185 @@
+{# ADD SOMEBODY — BOTH WAYS SHIP, side by side.
+
+   They are not two settings and not a migration: they are two answers to a real
+   difference, which is whether the person is standing next to you. #}
+{% extends '@UhifadhiShell/page.html.twig' %}
+{% import '@UhifadhiTeam/team/_bits.html.twig' as bits %}
+
+{% block title %}Add somebody &middot; team{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset(constant('Uhifadhi\\Team\\UhifadhiTeamBundle::STYLESHEET')) }}">
+{% endblock %}
+
+{% block shell_page_tabs %}{% endblock %}
+
+{% block shell_breadcrumbs %}
+    <a href="{{ path('team_index') }}">uhifadhi</a> / <a href="{{ path('team_index') }}">team</a> / add somebody
+{% endblock %}
+
+{% block shell_page_title %}Add somebody{% endblock %}
+
+{% block shell_page_subtitle %}
+    <b>Both ways ship.</b> Creating somebody with a password works from day one and needs no infrastructure at
+    all; inviting them by email ships beside it and starts working by itself the moment an installation has a
+    mailer configured. They are not two settings and not a migration &mdash; they are two answers to a real
+    difference, which is whether the person is standing next to you.
+{% endblock %}
+
+{% block shell_page_actions %}
+    <a class="tgl w-act" href="{{ path('team_index') }}">{{ bits.icon_back() }} Back to the team</a>
+{% endblock %}
+
+{% block shell_page %}
+
+{# THE INVITE PATH AS FOUR STEPS, so the second and third are not a surprise. #}
+<div class="iv-flow">
+    <div class="iv-step on"><span class="n">step 1</span><b>An administrator adds them</b><span class="rt">/team/invite</span></div>
+    <div class="iv-step"><span class="n">step 2</span><b>The account exists, unverified</b><span class="rt">team_user.isVerified = false</span></div>
+    <div class="iv-step"><span class="n">step 3</span><b>They set their own password</b><span class="rt">/invite/{token}</span></div>
+    <div class="iv-step"><span class="n">step 4</span><b>They sign in</b><span class="rt">/login</span></div>
+</div>
+<p class="pgsub" style="margin:-10px 0 20px">That is the <b>invite</b> path. The <b>create</b> path is the same
+flow with steps 2 and 3 collapsed into step 1: the administrator sets the password, so the account is verified the
+moment it exists and the person goes straight to signing in.</p>
+
+<div class="iv-ways">
+
+    {# ── CREATE WITH A PASSWORD ───────────────────────────────────────── #}
+    <div class="iv-way">
+        <div class="iv-whead"><b>Create with a password</b><span class="chip ok">always available</span></div>
+        <div class="iv-wbody">
+            <p class="iv-lede">The administrator types the person&rsquo;s details and a first password, and hands
+            it over. <b>This path needs nothing at all from the deployment</b> &mdash; no mailer, no network, no
+            working inbox &mdash; which is exactly why it is the one that is always available. The person is
+            verified the moment they exist, because an administrator who typed the password has already proved the
+            account is real. It is the right path when the two of you are in the same room, and it is the only
+            path when a ranger&rsquo;s only address is one they cannot reach from the field.</p>
+
+            <form method="post" action="{{ path('team_member_create') }}">
+                <input type="hidden" name="_token" value="{{ createToken }}">
+                <div class="mb-form">
+                    <div class="mb-f"><span class="lbl">first name</span><input class="fld" name="firstName" placeholder="Joseph" required></div>
+                    <div class="mb-f"><span class="lbl">last name</span><input class="fld" name="lastName" placeholder="Mrema" required></div>
+                    <div class="mb-f"><span class="lbl">email</span><input class="fld" name="email" type="email" placeholder="j.mrema@example.test" required></div>
+                    <div class="mb-f"><span class="lbl">ranger code &mdash; optional</span><input class="fld" name="rangerCode" placeholder="R-121"></div>
+                    <div class="mb-f wide">
+                        <span class="lbl">first password</span>
+                        <input class="fld" type="password" name="password" minlength="{{ passwordMinLength }}" required autocomplete="new-password">
+                        <p class="hint">At least {{ passwordMinLength }} characters. Hashed on save. <b>The product
+                        cannot show it again</b>, so the administrator has to hand it over now &mdash; which is
+                        this way&rsquo;s real cost, and it is operational rather than technical.</p>
+                    </div>
+                    <div class="mb-f wide">
+                        <span class="lbl">position</span>
+                        <select class="sel" name="position" style="height:34px;max-width:340px">
+                            <option value="">&mdash; no position &mdash;</option>
+                            {% for department, positions in groupedPositions %}
+                                <optgroup label="{{ department is empty ? 'No department yet' : department }}">
+                                    {% for position in positions %}<option value="{{ position.uuidString }}">{{ position.name }}</option>{% endfor %}
+                                </optgroup>
+                            {% endfor %}
+                        </select>
+                        <p class="hint">Grouped by department, because a position&rsquo;s name is unique only
+                        inside one. Optional, and honestly so: leaving it empty creates somebody who can sign in
+                        and do nothing. Better than guessing.</p>
+                    </div>
+                    <div class="mb-f wide"><button class="cta" type="submit">{{ bits.icon_plus() }} Create the account</button></div>
+                </div>
+            </form>
+
+            <div class="iv-cost">
+                <span class="lbl">what this path needs</span>
+                <ul>
+                    <li class="have">{{ bits.icon_check() }}<span>Nothing from the deployment. No mailer, no outbound network, no reachable inbox.</span></li>
+                    <li class="have">{{ bits.icon_check() }}<span>The password hasher &mdash; already part of the firewall.</span></li>
+                    <li class="need">{{ bits.icon_warn() }}<span>A habit: the password is hashed on save and <b>the product can never show it again</b>, so it has to be handed over in the room.</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    {# ── INVITE BY EMAIL ──────────────────────────────────────────────── #}
+    <div class="iv-way" data-mailer="{{ mailerConfigured ? 'on' : 'off' }}">
+        <div class="iv-whead">
+            <b>Invite by email</b>
+            {% if mailerConfigured %}
+                <span class="chip ok">available &mdash; mailer configured</span>
+            {% else %}
+                <span class="chip idle">unavailable here</span>
+            {% endif %}
+        </div>
+        <div class="iv-wbody">
+            <p class="iv-lede">The administrator types one thing &mdash; an address &mdash; and the person sets
+            their own password from a link. <b>Nobody ever knows anybody else&rsquo;s password</b>, which is the
+            whole argument for it, and it is the right path for anybody who is not in the room. It needs one thing
+            from the deployment: somewhere to send mail from.</p>
+
+            {% if not mailerConfigured %}
+                {# OFFERED AND REFUSED, NOT HIDDEN. The rule against disabled
+                   controls is for a thing that will NEVER exist; this one is an
+                   environment variable away, and the rule's own wording allows
+                   the exception. #}
+                <div class="iv-nomailer">
+                    {{ bits.icon_warn() }}
+                    <div><b>This installation has no mailer configured, so this path is offered and refused &mdash;
+                    not hidden.</b> <code>MAILER_DSN</code> is unset. Hiding the option would leave an
+                    administrator hunting for a feature the product does have; failing silently after the click
+                    would leave a colleague waiting for an email nobody sent. So the form is visible, the button
+                    is inert, and the reason is written on it. Configure a transport and this path starts working
+                    with no other change. Meanwhile the path on the left needs nothing, which is the point of
+                    shipping both.</div>
+                </div>
+            {% endif %}
+
+            <form method="post" action="{{ path('team_invite_send') }}">
+                <input type="hidden" name="_token" value="{{ inviteToken }}">
+                <div class="mb-form">
+                    <div class="mb-f wide">
+                        <span class="lbl">email</span>
+                        <input class="fld" name="email" type="email" placeholder="h.rajabu@example.test" {{ mailerConfigured ? 'required' : 'disabled' }}>
+                        <p class="hint">One field, so it is one field &mdash; not a screen. The name comes from
+                        the person when they accept; an administrator guessing at somebody&rsquo;s own spelling of
+                        their own name is a small indignity the product does not need to cause.</p>
+                    </div>
+                    <div class="mb-f wide">
+                        <span class="lbl">position &mdash; optional</span>
+                        <select class="sel" name="position" style="height:34px;max-width:340px" {{ mailerConfigured ? '' : 'disabled' }}>
+                            <option value="">&mdash; decide later &mdash;</option>
+                            {% for department, positions in groupedPositions %}
+                                <optgroup label="{{ department is empty ? 'No department yet' : department }}">
+                                    {% for position in positions %}<option value="{{ position.uuidString }}">{{ position.name }}</option>{% endfor %}
+                                </optgroup>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-f wide">
+                        <button class="cta" type="submit" {{ mailerConfigured ? '' : 'disabled title="No mail transport is configured, so there is nothing to send the invitation with."' }}>
+                            {{ bits.icon_plus() }} Send the invitation
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="iv-cost">
+                <span class="lbl">what this path needs</span>
+                <ul>
+                    <li class="have">{{ bits.icon_check() }}<span><code>verificationToken</code> and <code>isVerified</code> &mdash; both columns already exist and are the natural hook.</span></li>
+                    <li class="{{ mailerConfigured ? 'have' : 'need' }}">{{ mailerConfigured ? bits.icon_check() : bits.icon_warn() }}<span><b>A configured mailer.</b> The one deployment-level requirement, and the only reason this path is ever unavailable.</span></li>
+                    <li class="have">{{ bits.icon_check() }}<span><code>invitedAt</code> and <code>invitedBy</code> &mdash; so the roster can say who invited somebody and when, instead of only that they have not arrived.</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="okline" style="margin-top:20px">
+    {{ bits.icon_info() }}
+    <span><b>Both ship, and the cost of that is honest:</b> an account can be born in two states, and the team
+    list has to read correctly for both forever. It does, and the two facts are kept apart to make that work: the
+    state a row shows is <b><code>isVerified</code></b> either way &mdash; which is why &ldquo;never signed
+    in&rdquo; is the pill on both &mdash; and <b><code>invitedAt</code> / <code>invitedBy</code></b> ride beside it
+    as context where they exist. An account made on the left has neither, and says so by saying nothing.</span>
+</div>
+{% endblock %}

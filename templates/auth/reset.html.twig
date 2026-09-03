@@ -1,0 +1,71 @@
+{% extends '@UhifadhiTeam/auth/_card.html.twig' %}
+{% import '@UhifadhiTeam/auth/_card.html.twig' as card %}
+
+{% block title %}Set a new password{% endblock %}
+
+{% block auth_card %}
+    {% if state == 'good' %}
+        <form class="c" method="post">
+            {{ card.brand() }}
+            <p class="auth-lede">Set a new password.</p>
+            {{ card.error(error|default(null)) }}
+            <div class="auth-for">
+                <span class="avatar">{{ (member.firstName|slice(0,1) ~ member.lastName|slice(0,1))|upper }}</span>
+                <span class="who-t"><b>{{ member.fullName }}</b><em>{{ member.email }}</em></span>
+            </div>
+            {# WHO THIS LINK IS FOR IS READ FROM THE TOKEN, never from the
+               address bar — so it is text here, not a field, and retyping the
+               URL cannot aim it at somebody else. #}
+            <p class="auth-fine" style="border-top:0;padding-top:0;margin:-8px 0 18px">Who this link is for is read
+            <b>from the token</b>, never from the address bar &mdash; so it is text here, not a field, and
+            retyping the URL cannot aim it at somebody else.</p>
+
+            {{ card.rules(minLength) }}
+
+            <div class="auth-field">
+                <label for="pw">New password</label>
+                <input class="fld" id="pw" type="password" name="password" autocomplete="new-password" minlength="{{ minLength }}" required>
+            </div>
+            <div class="auth-field">
+                <label for="pw2">New password again</label>
+                <input class="fld" id="pw2" type="password" name="password_confirm" autocomplete="new-password" minlength="{{ minLength }}" required>
+            </div>
+            <input type="hidden" name="_token" value="{{ csrfToken }}">
+            <button class="cta" type="submit">Set the password</button>
+            <p class="auth-fine">This link was good for <b>one hour</b> and works <b>once</b>; using it now
+            <b>signs every other session of this account out</b>, on every device. If you did not ask for it,
+            close the page &mdash; it expires by itself and nothing has changed yet.</p>
+        </form>
+
+    {% elseif state == 'done' %}
+        <div class="c">
+            {{ card.brand() }}
+            <p class="auth-lede">Your password is set.</p>
+            <div class="auth-said">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                <div><b>Every other session signed out.</b> Anywhere this account was still open &mdash; another
+                browser, a handset left in a vehicle, a machine in an office you have left &mdash; has been signed
+                out. That is the point of a reset, so it is confirmed here rather than done quietly.</div>
+            </div>
+            <a class="cta" href="{{ path('team_login') }}" style="display:block;text-align:center;text-decoration:none;margin-top:18px">Sign in</a>
+        </div>
+
+    {% else %}
+        <div class="c">
+            {{ card.brand() }}
+            <p class="auth-lede">That link has expired.</p>
+            {# ONE ANSWER FOR EXPIRED AND ALREADY-USED, on purpose: telling a
+               visitor which it was tells whoever holds a stolen link something
+               about the account. #}
+            <div class="auth-stale">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                <div><b>Reset links last one hour and work once.</b> This one is past its hour, or it has already
+                been used. Nothing is wrong with your account and nothing has changed.</div>
+            </div>
+            {# Drawn in the WARNING colour rather than the failure colour: an
+                 expired link is not a mistake the visitor made, it is a fact with
+                 exactly one next step — and that step is the only button here. #}
+            <a class="cta" href="{{ path('team_reset_request') }}" style="display:block;text-align:center;text-decoration:none">Ask for a new link</a>
+        </div>
+    {% endif %}
+{% endblock %}

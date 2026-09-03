@@ -1,1 +1,93 @@
-{# placeholder #}
+{# TM·02 — NEEDS A DECISION, and the pane COLLAPSES TO NOTHING when nobody does.
+
+   A pane that stayed on screen to report that nothing is wrong would spend the
+   top of the page saying so, every visit, forever. So the whole plate is
+   guarded: no rows, no widget.
+
+   THREE KINDS OF ROW, AND THE THIRD IS NOT LIKE THE OTHER TWO. Rows one and two
+   are TASKS — they have a done, so they carry the control that reaches it. Row
+   three is a STANDING RISK: an installation with one Super Admin has no
+   recovery path if that account is lost, because the model has no break-glass,
+   no second owner and no audit trail. It carries no action, because resolving
+   it means promoting somebody, and that is a decision rather than a button on a
+   warning. It does not go away by being read.
+
+   NOTHING HERE IS DISMISSIBLE. Every row is a live query, so the only way to
+   clear one is to change the fact underneath it. #}
+{% import '@UhifadhiTeam/team/_bits.html.twig' as bits %}
+
+{% if overview.needsAttention %}
+<div class="c" data-tm>
+    <span class="tab"><span class="idx">TM&middot;02</span>Needs a decision<span class="src">&middot; {{ overview.attentionCount }} &middot; nothing here is dismissible</span></span>
+
+    <div class="tm-att">
+        {# ACTIVE ACCOUNTS ONLY. Somebody who has never signed in AND has been
+           deactivated is deliberately absent: the decision this row asks for has
+           already been taken about them, and a pane that kept chasing a
+           switched-off account is a pane nobody trusts. #}
+        {% for person in overview.neverSignedIn %}
+            <div class="tm-attrow w">
+                {{ bits.icon_mail() }}
+                <div class="at">
+                    <b>{{ person.fullName }} has never signed in</b>
+                    <p>
+                        {%- if person.wasInvited -%}
+                            <b>{{ person.invitedBy ? person.invitedBy.fullName : 'Somebody since removed' }} invited them {{ bits.ago(person.invitedAt) }}</b>
+                            and the verification token is still unused &mdash; so the invitation was sent, and they
+                            have not arrived.
+                        {%- else -%}
+                            <b>Nobody invited them</b> &mdash; this account was created with a password rather than
+                            invited, so there is no link outstanding and nothing to resend. Somebody has to hand
+                            the password over, or send a reset link from the person's own record.
+                        {%- endif -%}
+                    </p>
+                </div>
+                <div class="ad">
+                    <a class="softbtn" href="{{ path('team_member', {uuid: person.uuidString}) }}">Open {{ person.firstName }}</a>
+                </div>
+            </div>
+        {% endfor %}
+
+        {% for person in overview.holdNothing %}
+            <div class="tm-attrow w">
+                {{ bits.icon_info() }}
+                <div class="at">
+                    <b>{{ person.fullName }} holds nothing</b>
+                    <p>Staff, and with no position &mdash; so <code>PermissionVoter</code> falls through to
+                    <code>position?-&gt;hasPermissionValue()</code> and denies every capability there is. They can
+                    reach the sign-in screen and then no page behind it.</p>
+                </div>
+                <div class="ad">
+                    <a class="softbtn acc" href="{{ path('team_member', {uuid: person.uuidString}) }}">Give them a position</a>
+                </div>
+            </div>
+        {% endfor %}
+
+        {% if overview.soleSuperAdmin %}
+            <div class="tm-attrow r standing">
+                {{ bits.icon_warn() }}
+                <div class="at">
+                    {% if overview.isFirstRun %}
+                        <b>You are the only account on this installation</b>
+                        <p>Nothing here is broken &mdash; this is what a fresh install looks like. It is worth
+                        knowing before you go any further that if this one account is lost there is no second
+                        owner and no recovery path in the model. <b>A second administrator is the first thing
+                        worth adding.</b></p>
+                    {% else %}
+                        <b>There is one Super Admin: {{ overview.soleSuperAdmin.fullName }}</b>
+                        <p>The only account that can switch user, and the only one that survives every permission
+                        check by tier. If it is lost there is no second owner, no break-glass and no audit trail
+                        to reconstruct from &mdash; the installation is administered from a database client or not
+                        at all. It is also why this account cannot be demoted or deactivated: the code refuses,
+                        and it unlocks the moment somebody else holds the tier. <b>This does not go away by being
+                        read.</b></p>
+                    {% endif %}
+                </div>
+                {% if overview.isFirstRun %}
+                    <div class="ad"><a class="softbtn acc" href="{{ path('team_invite') }}">Add a person</a></div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

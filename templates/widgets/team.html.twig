@@ -1,0 +1,40 @@
+{# THE WIDGET LIBRARY for the roster surface — chrome around the widget module's
+   shared preset component.
+
+   Nothing team-shaped happens inside that component: it is handed this
+   surface's catalogue, this surface's partial name and this surface's routes,
+   and it renders the strips, the toolbar and the canvas. Arranging a dashboard
+   here works exactly as it does on every other surface in the installation,
+   which is the whole reason this module rides the framework rather than
+   carrying a copy of it. #}
+{% extends '@UhifadhiShell/page.html.twig' %}
+{% import '@UhifadhiTeam/team/_bits.html.twig' as bits %}
+
+{% block title %}Team widgets{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset(constant('Uhifadhi\\Team\\UhifadhiTeamBundle::STYLESHEET')) }}">
+{% endblock %}
+
+{% block shell_page_tabs %}{% endblock %}
+
+{% block shell_breadcrumbs %}
+    <a href="{{ path('team_index') }}">uhifadhi</a> / <a href="{{ path('team_index') }}">team</a> / widgets
+{% endblock %}
+
+{% block shell_page_title %}Team widgets{% endblock %}
+
+{% block shell_page_subtitle %}
+    Six ways to lay the same people out, and three additions that can ride any of them. A direction is
+    <b>adopted</b>, copied and mixed &mdash; never picked once and frozen. Every card below carries the
+    direction&rsquo;s own trade-off line: what it buys, and what it costs.
+{% endblock %}
+
+{% block shell_page_actions %}
+    <a class="tgl w-act" href="{{ path('team_index') }}">{{ bits.icon_back() }} Back to the team</a>
+{% endblock %}
+
+{% block shell_page %}
+    {{ include('@UhifadhiWidget/widgets/_library.html.twig') }}
+{% endblock %}

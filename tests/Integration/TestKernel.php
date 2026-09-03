@@ -28,6 +28,7 @@ use Uhifadhi\Shell\UhifadhiShellBundle;
 use Uhifadhi\Team\Entity\User;
 use Uhifadhi\Team\Tests\Integration\Fixtures\DeclaringModuleProvider;
 use Uhifadhi\Team\Tests\Integration\Fixtures\GuardedController;
+use Uhifadhi\Team\Tests\Integration\Fixtures\SilentModuleProvider;
 use Uhifadhi\Team\UhifadhiTeamBundle;
 use Uhifadhi\Widget\UhifadhiWidgetBundle;
 
@@ -82,6 +83,9 @@ final class TestKernel extends Kernel
             // installation — which is why the assertions match a stem and not a
             // literal filename.
             'assets' => true,
+            'asset_mapper' => [
+                'paths' => [__DIR__.'/Fixtures/app/assets' => ''],
+            ],
         ]);
 
         $container->extension('security', [
@@ -163,6 +167,13 @@ final class TestKernel extends Kernel
             ->set(DeclaringModuleProvider::class)
             ->tag('uhifadhi.module');
 
+        // And one that declares NOTHING, which is what most modules do. The
+        // matrix has to draw it rather than skip it, so the catalogue has to
+        // know it is there.
+        $container->services()
+            ->set(SilentModuleProvider::class)
+            ->tag('uhifadhi.module');
+
         // The thing behind the firewall (see configureRoutes).
         $container->services()->set(GuardedController::class)->public();
 
@@ -200,6 +211,19 @@ final class TestKernel extends Kernel
         // default_target_path sends a fresh sign-in to it, and a redirect to
         // nowhere would make the suite prove nothing.
         $routes->add('home', '/')->controller(GuardedController::class);
+    }
+
+    /**
+     * THE STAND-IN HOST'S PROJECT DIRECTORY — a Flex-installed application's
+     * asset side and nothing else. The shell's document renders the importmap
+     * of whatever application it is installed in, so a suite that renders any
+     * page through the page frame needs an application that has one. Pointing
+     * the kernel at a fixture is how it gets one without this bundle growing an
+     * importmap of its own, which a shipped bundle has no business carrying.
+     */
+    public function getProjectDir(): string
+    {
+        return __DIR__.'/Fixtures/app';
     }
 
     public function getCacheDir(): string

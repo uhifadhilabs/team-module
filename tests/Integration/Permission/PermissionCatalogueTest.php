@@ -101,6 +101,43 @@ final class PermissionCatalogueTest extends IntegrationTestCase
         self::fail('The declared permission is not in the catalogue.');
     }
 
+    /**
+     * EVERY ROW WEARS ITS CONTRIBUTOR, and that is the thing that makes this
+     * matrix different from every other permission matrix: the list of
+     * permissions is NOT FIXED. Seven are this module's and will always be
+     * there; the rest arrive when a bundle is installed and leave when it is
+     * removed. A row that could not say where it came from would leave an
+     * administrator unable to tell a power the product has from a power a
+     * bundle brought.
+     */
+    public function testACoreRowSaysItIsTheHostsAndADeclaredOneNamesItsModule(): void
+    {
+        foreach ($this->catalogue()->all() as $permission) {
+            if ('area.view' === $permission->value) {
+                self::assertNull($permission->source, 'A core permission has no module: it is the host\'s.');
+                self::assertTrue($permission->isCore());
+            }
+            if ('surveys.record' === $permission->value) {
+                self::assertSame('surveys', $permission->source);
+                self::assertFalse($permission->isCore());
+            }
+        }
+    }
+
+    /**
+     * AN INSTALLED MODULE THAT DECLARES NOTHING IS STILL DRAWN. Hiding it would
+     * read as "that module is not installed", which is a different and wrong
+     * fact — and the matrix's whole job is to be honest about what the
+     * installation contains.
+     */
+    public function testAnInstalledModuleDeclaringNothingIsNameable(): void
+    {
+        // The test kernel registers one module that declares a permission and
+        // one that declares none.
+        self::assertContains('roster', $this->catalogue()->silentModules());
+        self::assertNotContains('surveys', $this->catalogue()->silentModules());
+    }
+
     public function testAnUnknownValueIsFilteredOutOnWrite(): void
     {
         // The write-side filter: only catalogue values survive, in catalogue order.

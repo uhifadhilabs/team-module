@@ -1,1 +1,26 @@
-{# placeholder #}
+{# DEPT·C — a card per department, SO TWO SAME-NAMED POSITIONS CAN NEVER BE READ
+   AS ONE. Ecology's Analyst and Protection Service's Analyst are in different
+   cards, and no amount of skim-reading merges them. #}
+{% import '@UhifadhiTeam/positions/_bits.html.twig' as pm %}
+
+<div class="c" data-pm="dept-c">
+    <span class="tab"><span class="idx">DP&middot;C</span>Department-first<span class="src">&middot; a card each</span></span>
+    <p class="use" style="margin-top:2px">One card per department. The reason this direction exists: two
+    departments may own the same word, and in separate cards <b>they can never be read as one job</b>.</p>
+
+    <div class="tm-cardgrid" style="margin-top:12px">
+        {% for department, group in groupedPositions %}
+            <div class="c pm-deptcard">
+                <span class="tab"><span class="dtag"><i class="dot"></i>{{ department is empty ? 'No department yet' : department }}</span></span>
+                {% for position in group %}
+                    {% set held = holders[position.uuidString]|default(0) %}
+                    <a class="pm-deptrow" href="{{ path('team_positions', {position: position.uuidString}) }}">
+                        <b>{{ position.name }}</b>
+                        <span class="rh">{% if held %}{{ held }} holder{{ held == 1 ? '' : 's' }}{% else %}<span class="pm-held0">nobody yet</span>{% endif %}
+                        &middot; {{ position.permissionValues|length }} permission{{ position.permissionValues|length == 1 ? '' : 's' }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+</div>

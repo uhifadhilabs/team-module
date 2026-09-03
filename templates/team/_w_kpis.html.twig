@@ -1,1 +1,85 @@
-{# placeholder #}
+{# TM·K — the counts, and they sit at the TOP of the page. Standing rule, no
+   exceptions; the preset's key order puts them there, so nothing here enforces
+   it and nothing here can break it either.
+
+   EVERY NUMBER IS A QUERY over team_user and team_position at render time,
+   never a stored counter — a person who is deactivated stops being counted as
+   active because the column says so.
+
+   A FRESH INSTALLATION GETS NO STRIP AT ALL. Four of the five counts would be
+   zero, and a strip of zeros is a strip that says nothing. The honest first-run
+   fact is a sentence, and the useful thing to do from it is a button. #}
+{% import '@UhifadhiTeam/team/_bits.html.twig' as bits %}
+
+{% if overview.isFirstRun %}
+    <div class="tm-fresh">
+        {{ bits.icon_people(1.6) }}
+        <div class="ft">
+            <b>You are the only person here.</b>
+            <p>A fresh installation has one account &mdash; the Super Admin the installer created &mdash; and no
+            positions. Everyone you add lands as <b>Staff with no position</b>, which means they can sign in and
+            do nothing at all, so the first useful thing to make is a position for them to hold.</p>
+            <div class="fdo">
+                <a class="cta" href="{{ path('team_positions') }}">{{ bits.icon_plus() }} Make the first position</a>
+                <a class="softbtn" href="{{ path('team_invite') }}">Add a person first</a>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="grid w-flush dp-kstrip">
+        <div class="c kpi">
+            <span class="tab"><span class="idx">TM&middot;K1</span>People</span>
+            <b class="disp">{{ overview.people }}</b>
+            <span class="sub">{{ overview.active }} active{% if overview.deactivated %} &middot; <span class="fog">{{ overview.deactivated }} deactivated</span>{% endif %}</span>
+        </div>
+
+        {# No link to the matrix on this sub-line. It was the longest thing on the
+           strip and the only one that wrapped, and it was the THIRD route to the
+           same page: the header carries "Positions & permissions" and every
+           position name in the table below is a link to it. A KPI sub-line says
+           what the number is made of; it is not navigation. #}
+        <div class="c kpi">
+            <span class="tab"><span class="idx">TM&middot;K2</span>Positions</span>
+            <b class="disp">{{ overview.positions }}</b>
+            <span class="sub">{{ overview.departments }} department{{ overview.departments == 1 ? '' : 's' }} &middot; {{ overview.positionsHeld }} of {{ overview.positions }} held</span>
+        </div>
+
+        <div class="c kpi">
+            <span class="tab"><span class="idx">TM&middot;K3</span>Never signed in</span>
+            <b class="disp">{{ overview.neverSignedIn|length }}</b>
+            <span class="sub">
+                {%- if overview.neverSignedIn is empty -%}<span class="fog">everybody has arrived</span>
+                {%- else -%}
+                    {%- for person in overview.neverSignedIn|slice(0, 2) -%}
+                        {{ loop.first ? '' : ' &middot; ' }}<span class="w">{{ person.firstName|slice(0, 1) }}. {{ person.lastName }}</span>
+                    {%- endfor -%}
+                    {%- if overview.neverSignedIn|length > 2 %} &middot; <span class="fog">and {{ overview.neverSignedIn|length - 2 }} more</span>{% endif -%}
+                {%- endif -%}
+            </span>
+        </div>
+
+        <div class="c kpi">
+            <span class="tab"><span class="idx">TM&middot;K4</span>Hold nothing</span>
+            <b class="disp">{{ overview.holdNothing|length }}</b>
+            <span class="sub">
+                {%- if overview.holdNothing is empty -%}<span class="fog">everybody holds a position</span>
+                {%- else -%}
+                    {%- for person in overview.holdNothing|slice(0, 2) -%}
+                        {{ loop.first ? '' : ' &middot; ' }}<span class="w">{{ person.firstName|slice(0, 1) }}. {{ person.lastName }}</span>
+                    {%- endfor -%}
+                    &middot; no position
+                {%- endif -%}
+            </span>
+        </div>
+
+        {# THE COUNT THE TIER COLUMN NO LONGER ANSWERS. Some of these people are
+           administrators because of their tier and some because a position they
+           hold carries team.manage. One number, two mechanisms, and the sub-line
+           has to name both or the number is unreadable. #}
+        <div class="c kpi hot">
+            <span class="tab"><span class="idx">TM&middot;K5</span>Can administer</span>
+            <b class="disp">{{ overview.administrators }}<em>of {{ overview.people }}</em></b>
+            <span class="sub">{{ overview.administratorsByTier }} by tier &middot; {{ overview.administratorsByPermission }} by <span class="mono">team.manage</span></span>
+        </div>
+    </div>
+{% endif %}

@@ -111,5 +111,21 @@ final class UhifadhiTeamBundle extends AbstractBundle
                 ? $config['sign_in_lede']
                 : TeamConfiguration::DEFAULT_SIGN_IN_LEDE,
         );
+
+        // WHAT A LETTER NEEDS THAT A TRANSPORT HAS NO OPINION ABOUT. An empty
+        // from-address is the honest default: it is what makes Mail report that
+        // this installation cannot send, so the invite path refuses itself in
+        // writing instead of dropping a colleague's invitation on the floor.
+        $builder->setParameter(
+            'team.mail_from',
+            \is_string($config['mail_from'] ?? null) ? $config['mail_from'] : '',
+        );
+
+        $builder->setParameter(
+            'team.installation_name',
+            \is_string($config['installation_name'] ?? null)
+                ? $config['installation_name']
+                : TeamConfiguration::DEFAULT_INSTALLATION_NAME,
+        );
     }
 }

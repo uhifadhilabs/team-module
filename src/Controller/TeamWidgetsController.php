@@ -1,0 +1,206 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the UhifadhiLabs Team Module.
+ *
+ * (c) Ezekiel Mjema <https://github.com/eemjema>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Uhifadhi\Team\Controller;
+
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Uid\Uuid;
+use Twig\Environment;
+use Uhifadhi\Team\Enum\PermissionEnum;
+use Uhifadhi\Team\Widget\TeamWidgets;
+use Uhifadhi\Widget\Service\WidgetEndpoint;
+use Uhifadhi\Widget\Service\WidgetService;
+
+/**
+ * THE WIDGET LIBRARY for the roster surface — the one editing screen.
+ *
+ * THE PAGE IS CHROME; everything inside it is the widget module's shared preset
+ * component, handed this surface's catalogue, this surface's partial name and
+ * this surface's routes. There are no team-specific widget mechanics anywhere,
+ * which is the whole point of riding the framework: adopting a direction here
+ * works exactly as it does on every other surface in the installation.
+ *
+ * EVERY WRITE IS ANSWERED BY {@see WidgetEndpoint}. This controller validates
+ * nothing itself, mints no token and chooses no status code — it names the
+ * catalogue and turns a 204 into a redirect with a sentence, so the plain-form
+ * path works with no JavaScript at all.
+ *
+ * ORG-WIDE, SO NO AREA UUID. The roster is one list of one installation's
+ * people; there is no per-area version of it to lay out differently, and every
+ * framework call therefore passes null for the area.
+ */
+final readonly class TeamWidgetsController
+{
+    public function __construct(
+        private Environment $twig,
+        private UrlGeneratorInterface $router,
+        private WidgetService $widgets,
+        private WidgetEndpoint $endpoint,
+        private TeamController $team,
+    ) {
+    }
+
+    #[Route('/team/widgets', name: 'team_widgets', methods: ['GET'])]
+    #[IsGranted(PermissionEnum::TeamManage->value)]
+    public function library(Request $request): Response
+    {
+        $catalog = new TeamWidgets()->catalog();
+        $user = $this->endpoint->user();
+
+        return new Response($this->twig->render('@UhifadhiTeam/widgets/team.html.twig', [
+            'catalog' => $catalog,
+            'builtins' => $catalog->builtins(),
+            'customPresets' => $this->widgets->customPresets($catalog, $user),
+            'active' => $this->widgets->activeRef($catalog, $user),
+            'widgets' => $this->widgets->resolve($catalog, $user),
+            'partial' => '@UhifadhiTeam/team/_w_%s.html.twig',
+            // EVERY PARTIAL RENDERS THE REAL WIDGET ON REAL DATA, at full size.
+            // The picture of a widget IS the widget, so what you arrange is
+            // exactly what you get.
+            'widgetContext' => $this->team->widgetContext($request),
+            'urls' => $this->urls(),
+            'csrfToken' => $this->endpoint->csrfToken($catalog),
+        ]));
+    }
+
+    #[Route('/team/widgets/save', name: 'team_widgets_save', methods: ['POST'])]
+    #[IsGranted(PermissionEnum::TeamManage->value)]
+    public function save(Request $request): Response
+    {
+        return $this->endpoint->save($request, new TeamWidgets()->catalog());
+    }
+
+    #[Route('/team/widgets/reset', name: 'team_widgets_reset', methods: ['POST'])]
+    #[IsGranted(PermissionEnum::TeamManage->value)]
+    public function reset(Request $request): Response
+    {
+        return $this->afterWrite(
+            $request,
+            $this->endpoint->reset($request, new TeamWidgets()->catalog()),
+            \sprintf('Your team page is back to “%s”.', TeamWidgets::DEFAULT_LABEL),
+        );
+    }
+
+    #[Route('/team/widgets/preset/{presetId}', name: 'team_widgets_preset', requirements: ['presetId' => '[a-z0-9_-]+'], methods: ['POST'])]
+    #[IsGranted(PermissionEnum::TeamManage->value)]
+    public function applyPreset(Request $request, string $presetId): Response
+    {
+        $catalog = new TeamWidgets()->catalog();
+        // A design the surface does not ship is refused by the endpoint; naming
+        // it in the flash is only for the case where it IS shipped.
+        $adopted = $catalog->preset($presetId);
+
+        return $this->afterWrite(
+            $request,
+            $this->endpoint->applyPreset($request, $catalog, $presetId),
+            \sprintf('Your team page now follows “%s”.', null !== $adopted ? $adopted->label : $presetId),
+        );
+    }
+
+    #[Route('/team/widgets/preset/{presetId}/copy', name: 'team_widgets_preset_copy', requirements: ['presetId' => '[a-z0-9_-]+'], methods: ['POST'], priority: 1)]
+    #[IsGranted(PermissionEnum::TeamManage->value)]
+    public function copyPreset(Request $request, string $presetId): Response
+    {
+        return $this->afterWrite(
+            $request,
+            $this->endpoint->copyPreset($request, new TeamWidgets()->catalog(), $presetId),
+            'Copied — the copy is yours to edit, and the design it came from is untouched.',
+        );
+    }
+
+    #[Route('/team/widgets/presets', name: 'team_widgets_preset_create', methods: ['POST'])]
+    #[IsGranted(PermissionEnum::TeamManage->value)]
+    public function createPreset(Request $request): Response
+    {
+        return $this->afterWrite(
+            $request,
+            $this->endpoint->createCustomPreset($request, new TeamWidgets()->catalog()),
+            'Saved — this arrangement is now one of your own designs.',
+        );
+    }
+
+    #[Route('/team/widgets/presets/{presetUuid}/apply', name: 'team_widgets_preset_apply', requirements: ['presetUuid' => Requirement::UUID], methods: ['POST'])]
+    #[IsGranted(PermissionEnum::TeamManage->value)]
+    public function applyCustomPreset(Request $request, string $presetUuid): Response
+    {
+        return $this->afterWrite(
+            $request,
+            $this->endpoint->applyCustomPreset($request, new TeamWidgets()->catalog(), Uuid::fromString($presetUuid)),
+            'Your design is on.',
+        );
+    }
+
+    #[Route('/team/widgets/presets/{presetUuid}/rename', name: 'team_widgets_preset_rename', requirements: ['presetUuid' => Requirement::UUID], methods: ['POST'])]
+    #[IsGranted(PermissionEnum::TeamManage->value)]
+    public function renameCustomPreset(Request $request, string $presetUuid): Response
+    {
+        return $this->afterWrite(
+            $request,
+            $this->endpoint->renameCustomPreset($request, new TeamWidgets()->catalog(), Uuid::fromString($presetUuid)),
+            'Renamed.',
+        );
+    }
+
+    #[Route('/team/widgets/presets/{presetUuid}/delete', name: 'team_widgets_preset_delete', requirements: ['presetUuid' => Requirement::UUID], methods: ['POST'])]
+    #[IsGranted(PermissionEnum::TeamManage->value)]
+    public function deleteCustomPreset(Request $request, string $presetUuid): Response
+    {
+        return $this->afterWrite(
+            $request,
+            $this->endpoint->deleteCustomPreset($request, new TeamWidgets()->catalog(), Uuid::fromString($presetUuid)),
+            'Design deleted. Your team page is back on the one this module ships with.',
+        );
+    }
+
+    /** @return array<string, string> */
+    private function urls(): array
+    {
+        return [
+            'save' => $this->router->generate('team_widgets_save'),
+            'reset' => $this->router->generate('team_widgets_reset'),
+            'preset' => $this->router->generate('team_widgets_preset', ['presetId' => '__ID__']),
+            'copy' => $this->router->generate('team_widgets_preset_copy', ['presetId' => '__ID__']),
+            'presets' => $this->router->generate('team_widgets_preset_create'),
+            'apply' => $this->router->generate('team_widgets_preset_apply', ['presetUuid' => '00000000-0000-0000-0000-000000000000']),
+            'rename' => $this->router->generate('team_widgets_preset_rename', ['presetUuid' => '00000000-0000-0000-0000-000000000000']),
+            'delete' => $this->router->generate('team_widgets_preset_delete', ['presetUuid' => '00000000-0000-0000-0000-000000000000']),
+            'dashboard' => $this->router->generate('team_index'),
+        ];
+    }
+
+    /**
+     * A refused write is returned as it came (the library's fetch() reads the
+     * status and the message); a successful one says so and goes back to the
+     * library, so the plain-form path works with no JavaScript at all.
+     */
+    private function afterWrite(Request $request, Response $response, string $flash): Response
+    {
+        if (Response::HTTP_NO_CONTENT !== $response->getStatusCode()) {
+            return $response;
+        }
+
+        $session = $request->hasSession() ? $request->getSession() : null;
+        if ($session instanceof FlashBagAwareSessionInterface) {
+            $session->getFlashBag()->add('success', $flash);
+        }
+
+        return new RedirectResponse($this->router->generate('team_widgets'));
+    }
+}

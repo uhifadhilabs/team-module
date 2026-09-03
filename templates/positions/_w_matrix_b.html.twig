@@ -1,1 +1,128 @@
-{# placeholder #}
+{# PM·B — ONE POSITION AT A TIME. THE SHIPPED DIRECTION.
+
+   A rail of every position beside one position's permissions. The SAFEST
+   EDITOR there is: you are always demonstrably changing exactly one position,
+   and the pane's header says which and how many people it reaches. The cost is
+   real — comparing two positions costs two clicks and there is no view of the
+   whole.
+
+   B SHIPS SELECTED on the fresh-installation argument rather than the populated
+   one: on day one there are no positions, and B is the only direction whose
+   empty state is a single control that makes the first one. The grid opens on
+   nothing at all.
+
+   THE COUNT IS IN THE HEADER, NOT IN A CONFIRMATION AFTERWARDS. Every box
+   ticked here is granted to everybody holding the position at once, and
+   unticking one takes it from all of them — which is the point of a position,
+   and it should be known before the click rather than after. #}
+{% import '@UhifadhiTeam/positions/_bits.html.twig' as pm %}
+
+<div class="c" data-pm="b">
+    <span class="tab"><span class="idx">PM&middot;B</span>One position at a time<span class="src">&middot; the rail and the checklist</span></span>
+    <p class="use" style="margin-top:2px">A rail of every position beside one position&rsquo;s permissions. The
+    <b>safest editor</b>: you are always demonstrably changing exactly one position, and the pane says which and
+    how many people it reaches. You cannot compare two positions without clicking twice.</p>
+
+    {% if positions is empty %}
+        {# THE EMPTY STATE THAT MADE B THE SHIPPED ONE: the rail is one control,
+           and it is the control that makes the first position. #}
+        <div class="pm-first">
+            {{ pm.icon_plus() }}
+            <div class="ft">
+                <h3>There are no positions yet, and the rail is the button that makes the first one.</h3>
+                <p>Until one exists, every Staff member on this installation holds nothing at all &mdash; they can
+                sign in and reach no page behind it. The two tiers above the matrix are unaffected, which is what
+                they are for.</p>
+            </div>
+        </div>
+    {% else %}
+        <div class="split">
+            {# THE RAIL, banded by department — because a bare "Analyst" appearing
+               twice in one list is two jobs a reader cannot tell apart. #}
+            <div class="dept-rail">
+                <span class="lbl">positions &middot; {{ positions|length }} in {{ departments|length }} department{{ departments|length == 1 ? '' : 's' }}</span>
+                {% for department, group in groupedPositions %}
+                    <div class="railsplit"><span class="lbl">{{ department is empty ? 'No department yet' : department }}</span></div>
+                    {% for position in group %}
+                        {% set held = holders[position.uuidString]|default(0) %}
+                        <a class="rail-item{{ selected and selected.id == position.id ? ' on' : '' }}"
+                           href="{{ path('team_positions', {position: position.uuidString}) }}">
+                            <i class="dot"></i>
+                            <span class="rn">{{ position.name }}</span>
+                            <span class="rc">{{ held }}</span>
+                            <span class="rh">
+                                {%- if held == 0 -%}<span class="pm-held0">nobody yet</span>
+                                {%- else -%}{{ held }} holder{{ held == 1 ? '' : 's' }}{% endif %}
+                                &middot; {{ position.permissionValues|length }} permission{{ position.permissionValues|length == 1 ? '' : 's' }}
+                            </span>
+                        </a>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+
+            <div class="panes">
+                {% if selected %}
+                    {% set held = selected.permissionValues %}
+                    {% set reaches = holders[selected.uuidString]|default(0) %}
+                    <form class="pane on" method="post" action="{{ path('team_position_permissions', {uuid: selected.uuidString}) }}">
+                        <input type="hidden" name="_token" value="{{ csrfToken }}">
+
+                        <div class="pm-head">
+                            <span class="hl">
+                                {% if selected.department %}<span class="dtag"><i class="dot"></i>{{ selected.department.name }}</span>{% endif %}
+                                <b>{{ selected.name }}</b>
+                                <span class="pm-reach">{{ pm.icon_people() }} reaches {{ reaches }} {{ reaches == 1 ? 'person' : 'people' }}</span>
+                            </span>
+                        </div>
+
+                        <p class="use" style="margin:-4px 0 14px">Every box ticked here is granted to
+                        <b>{{ reaches == 1 ? 'the one person' : 'all ' ~ reaches ~ ' people' }}</b> holding this
+                        position at once, and unticking one takes it from all of them &mdash; which is the point
+                        of a position, and the reason the count is in the header rather than in a confirmation
+                        afterwards.</p>
+
+                        <div class="pm-list">
+                            {# PER-MODULE GROUPS, CLEARLY BOUNDED. One umbrella is
+                               ONE bounded group with its rows inside it, carrying
+                               its module's own colour on a 3px left edge — so a
+                               reader can see where one module's permissions end
+                               and the next module's begin at arm's length. #}
+                            {% for umbrella, permissions in grouped %}
+                                <div class="pm-group {{ permissions[0].isCore ? 'pm-core' : 'pm-mod pm-mod-' ~ permissions[0].source }}">
+                                    {{ pm.umbrella_head(umbrella, permissions, moduleNames, held) }}
+                                    {% for permission in permissions %}
+                                        {{ pm.row(permission, held) }}
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+
+                            {# The modules that are here and have nothing to grant. #}
+                            {% for slug in silentModules %}
+                                {{ pm.silent_module(slug, moduleNames[slug]|default(slug)) }}
+                            {% endfor %}
+
+                            {# And what nothing installed provides any more. #}
+                            {{ pm.orphans(orphans|keys, held) }}
+                        </div>
+
+                        {# THE SAVE BAR. Two controls of EQUAL SIZE, because
+                           discarding a mis-tick and keeping it are equally
+                           ordinary things to want, and a page that makes one of
+                           them the small grey word is a page with an opinion
+                           about which mistake you made.
+
+                           IT IS HONEST ABOUT HAVING CHANGED NOTHING. A bar that
+                           always says "unsaved changes" is a bar nobody reads. #}
+                        <div class="pm-save clean">
+                            <span class="txt">Saved. This position holds <b>{{ held|length }} of the {{ catalogue|length }} permissions</b> the catalogue offers here.</span>
+                            <span class="acts">
+                                <a class="softbtn" href="{{ path('team_positions', {position: selected.uuidString}) }}">Discard</a>
+                                <button class="cta" type="submit">{{ pm.icon_save() }} Save</button>
+                            </span>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>

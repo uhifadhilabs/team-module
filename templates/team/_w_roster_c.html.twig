@@ -1,1 +1,55 @@
-{# placeholder #}
+{# TM·C — PERSON CARDS.
+
+   Everything about a person on one card, including WHAT THEIR POSITION ACTUALLY
+   GRANTS — the number, not the name, because the name is what people trust
+   wrongly. "Senior Ranger" sounds like a lot; five permissions is a fact.
+
+   Twelve cards read beautifully; two hundred would not, and that is the whole
+   of the trade. #}
+{% import '@UhifadhiTeam/team/_bits.html.twig' as bits %}
+
+<div class="c" data-tm data-tm-dir="c">
+    <span class="tab"><span class="idx">TM&middot;C</span>Roster<span class="src">&middot; person cards</span></span>
+
+    <p class="use" style="margin:2px 0 15px">Everything about a person on one card, including <b>what their
+    position actually grants</b> &mdash; the number, not the name, because the name is what people trust wrongly.
+    A dozen cards read beautifully; two hundred would not.</p>
+
+    <div class="tm-cardgrid">
+        {% for person in everybody %}
+            <a class="tm-pcard{{ person.isActive ? '' : ' tm-off' }}" href="{{ path('team_member', {uuid: person.uuidString}) }}">
+                <div class="ph">
+                    <span class="avatar">{{ bits.initials(person) }}</span>
+                    <div class="pi">
+                        <b>{{ person.fullName }}{% if person == app.user %} <span class="tm-you">you</span>{% endif %}</b>
+                        <span class="em">{{ person.email }}</span>
+                    </div>
+                </div>
+                <div class="pr">
+                    {{ bits.tier_pill(person.teamRole) }}
+                    {% if person.rangerCode %}<span class="tm-code">{{ person.rangerCode|upper }}</span>{% endif %}
+                    {{ bits.account_cell(person) }}
+                    {% if person.position and person.position.hasPermissionValue('team.manage') %}
+                        <span class="tm-mgr">{{ bits.icon_shield() }}team.manage</span>
+                    {% endif %}
+                </div>
+                <div class="pgr">
+                    {% if person.position %}
+                        <span class="qual">
+                            {%- if person.position.department %}<span class="q">{{ person.position.department.name }}</span><span class="sep">/</span>{% endif -%}
+                            <span class="n">{{ person.position.name }}</span>
+                        </span>
+                    {% else %}
+                        <span class="qual un"><span class="q">no position</span></span>
+                    {% endif %}
+                    <span class="v">
+                        {%- if person.teamRole.canManageContent -%}everything, by tier
+                        {%- elseif person.position is null -%}nothing at all
+                        {%- else -%}{{ person.position.permissionValues|length }} permission{{ person.position.permissionValues|length == 1 ? '' : 's' }}
+                        {%- endif -%}
+                    </span>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+</div>

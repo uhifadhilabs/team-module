@@ -1,1 +1,68 @@
-{# placeholder #}
+{# TM·03 — THE ORIENTATION WIDGET, and the note without which every list above
+   is read wrongly.
+
+   Every list on this page shows a tier beside a position and the two look like
+   one scale. They are two mechanisms with two enforcement points, and since the
+   Manager tier was removed the difference has become sharper rather than
+   subtler: the tier column no longer tells you who administers this
+   installation, and team.manage does. #}
+{% import '@UhifadhiTeam/team/_bits.html.twig' as bits %}
+
+<div class="c" data-tm>
+    <span class="tab"><span class="idx">TM&middot;03</span>How authority works here<span class="src">&middot; read this before the list above</span></span>
+
+    <div class="tm-two">
+        <div>
+            <span class="lbl">Tier &mdash; two escape hatches, and everyone else</span>
+            <p class="use" style="margin:0">Set on the person&rsquo;s own account, and deliberately <b>almost never
+            used</b>. The top two tiers exist so an installation can be bootstrapped and recovered; they are not
+            how authority is meant to be handed out day to day.</p>
+            <div class="tm-gate">
+                {% for tier in tiers %}
+                    <div class="tm-gaterow">
+                        <span class="gk">{{ bits.tier_pill(tier) }}</span>
+                        <span class="gv">{{ tier.description }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div>
+            <span class="lbl">Permission &mdash; gates capability, including authority over people</span>
+            <p class="use" style="margin:0">Held by a <b>position</b>, never by a person directly. A person&rsquo;s
+            capabilities are their position&rsquo;s permission list, and there is no per-person override anywhere
+            in the model.</p>
+            <div class="tm-gate">
+                <div class="tm-gaterow">
+                    <span class="gk">Where it lives</span>
+                    <span class="gv"><code>team_position.permissions</code> &mdash; a JSON list of strings, one row per position, and a position belongs to a department.</span>
+                </div>
+                <div class="tm-gaterow">
+                    <span class="gk">Who checks it</span>
+                    <span class="gv"><code>PermissionVoter</code>: grant if the tier is Super Admin or Admin, else <code>position?-&gt;hasPermissionValue()</code>.</span>
+                </div>
+                <div class="tm-gaterow">
+                    <span class="gk"><span class="tm-mgr">{{ bits.icon_shield() }}team.manage</span></span>
+                    <span class="gv"><b>This is what makes somebody an administrator.</b> {{ teamManage.description }}</span>
+                </div>
+                <div class="tm-gaterow">
+                    <span class="gk">No position</span>
+                    <span class="gv">No capabilities. Not &ldquo;the defaults&rdquo; and not &ldquo;read only&rdquo; &mdash; <b>none</b>.</span>
+                </div>
+                <div class="tm-gaterow">
+                    <span class="gk">Where to change it</span>
+                    <span class="gv"><a href="{{ path('team_positions') }}">Positions &amp; permissions</a> &mdash; you change a position, and everyone holding it moves.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tm-correct">
+        {{ bits.icon_info() }}
+        <div><b>There is no Manager tier, and removing it was the improvement.</b> Administering the team used to
+        be a rung on the tier ladder &mdash; a second authority system running invisibly beside the matrix, which
+        nobody could grant, revoke or audit from the one screen built for exactly that. It is now
+        <code>team.manage</code>: an ordinary row in the catalogue, under the <b>Team</b> umbrella, granted by a
+        position like everything else. <b>&ldquo;A manager&rdquo; is now a position somebody composed</b> &mdash;
+        and it can have the row taken away this afternoon without touching anybody&rsquo;s account.</div>
+    </div>
+</div>

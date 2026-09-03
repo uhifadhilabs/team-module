@@ -1,1 +1,38 @@
-{# placeholder #}
+{# DEPT·B — one department at a time, chosen by a chip row that ALWAYS STATES
+   THE SCOPE. A filtered list that does not say what it is filtered to is a list
+   somebody reads as the whole thing. #}
+{% import '@UhifadhiTeam/positions/_bits.html.twig' as pm %}
+
+<div class="c" data-pm="dept-b">
+    <span class="tab"><span class="idx">DP&middot;B</span>Department-first<span class="src">&middot; one department at a time</span></span>
+
+    {% set chosen = app.request.query.get('department') %}
+    <div class="tm-tools">
+        <a class="fchip{{ chosen ? '' : ' on' }}" href="{{ path('team_positions') }}">All <span class="n">{{ positions|length }}</span></a>
+        {% for department in departments %}
+            <a class="fchip{{ chosen == department.uuidString ? ' on' : '' }}" href="{{ path('team_positions', {department: department.uuidString}) }}">
+                {{ department.name }} <span class="n">{{ department.positions|length }}</span>
+            </a>
+        {% endfor %}
+        <span class="tm-shown">
+            {%- if chosen -%}showing <b>one department</b> of {{ departments|length }}
+            {%- else -%}showing <b>every department</b>{% endif -%}
+        </span>
+    </div>
+
+    <div class="tm-scroll" style="margin-top:12px">
+        <table class="tbl">
+            <thead><tr><th>Position</th><th>Department</th><th>Holders</th><th></th></tr></thead>
+            <tbody>
+                {% for position in positions if not chosen or (position.department and position.department.uuidString == chosen) %}
+                    <tr>
+                        <td><b>{{ position.name }}</b></td>
+                        <td>{% if position.department %}<span class="dtag"><i class="dot"></i>{{ position.department.name }}</span>{% else %}<span class="dtag un"><i class="dot un"></i>none</span>{% endif %}</td>
+                        <td>{{ holders[position.uuidString]|default(0) }}</td>
+                        <td class="tm-acts"><a class="open-btn" href="{{ path('team_positions', {position: position.uuidString}) }}">Edit</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

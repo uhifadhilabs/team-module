@@ -1,0 +1,67 @@
+{# THE CARD EVERY RECOVERY SCREEN IS. Identical to the sign-in card, and that is
+   the whole design conviction: a person who has just failed to get in must not
+   be handed a second-looking product to recover in.
+
+   THE DOCUMENT RUNG, not the page frame — the theme, the typefaces, one plate on
+   the canvas, and nothing else. There is no sidebar to navigate and no top bar
+   to act from until there is somebody to act as, and a nav rendered for an
+   anonymous visitor leaks what an installation contains to whoever loads its
+   front door. #}
+{% extends '@UhifadhiShell/document.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset(constant('Uhifadhi\\Team\\UhifadhiTeamBundle::STYLESHEET')) }}">
+{% endblock %}
+
+{# No importmap: these screens have no Stimulus controller, and an anonymous
+   visitor should not be served the application's whole JavaScript entrypoint to
+   type two fields. #}
+{% block importmap %}{% endblock %}
+
+{% block body %}
+    <main class="auth">
+        <div class="auth-card">
+            {% block auth_card %}{% endblock %}
+            {% block auth_back %}
+                <a class="auth-back" href="{{ path('team_login') }}">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    Back to sign in
+                </a>
+            {% endblock %}
+        </div>
+    </main>
+{% endblock %}
+
+{% macro brand() %}
+    <div class="auth-brand">
+        {% include '@UhifadhiShell/_brand_mark.html.twig' with {size: 44} only %}
+        <b>UHIFADHI</b>
+    </div>
+{% endmacro %}
+
+{% macro rules(minLength) %}
+    <span class="lbl">the password must</span>
+    <ul class="auth-rules">
+        <li>
+            <span class="no"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg></span>
+            <span class="yes"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+            <span>be at least {{ minLength }} characters</span>
+        </li>
+    </ul>
+    {# ONE RULE, AND IT IS A LENGTH. No character classes: a composition rule
+       buys very little entropy and reliably produces "Password1!", while length
+       buys a great deal. Anything stronger — breach-list checks, a strength
+       meter's opinion — is an installation's own policy to add, and this module
+       does not pretend to have made it. The list is drawn as a list because it
+       will grow the day an installation adds one. #}
+{% endmacro %}
+
+{% macro error(message) %}
+    {% if message %}
+        <div class="auth-error">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+            <span>{{ message }}</span>
+        </div>
+    {% endif %}
+{% endmacro %}

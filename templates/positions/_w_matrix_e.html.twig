@@ -1,1 +1,84 @@
-{# placeholder #}
+{# PM·E — THE EFFECTIVE LEDGER. One person, every permission, and THE REASON on
+   every row: by tier, by position, or not held.
+
+   The only direction that answers "why can this person not do that", and the
+   only one that shows the two things the model is most often misread about —
+   the TIER BYPASS (a Super Admin's position decides nothing) and THE ZERO (a
+   Staff member with no position holds nothing at all).
+
+   IT EDITS NOTHING, so it is a companion to an editor rather than one. #}
+{% import '@UhifadhiTeam/positions/_bits.html.twig' as pm %}
+
+<div class="c" data-pm="e">
+    <span class="tab"><span class="idx">PM&middot;E</span>The effective ledger<span class="src">&middot; one person, and the reason on every row</span></span>
+    <p class="use" style="margin-top:2px">Every permission this installation has, against one person, with
+    <b>why</b> beside it. This is where the tier bypass stops being folklore: for somebody above the matrix every
+    row reads <i>by tier</i> and their position decides nothing at all.</p>
+
+    <form method="get" action="{{ path('team_positions') }}" class="tm-tools" style="margin-bottom:14px">
+        <input type="hidden" name="position" value="{{ selected ? selected.uuidString : '' }}">
+        <label class="tm-search" style="max-width:320px">
+            <select class="fld sel" name="who" onchange="this.form.submit()" aria-label="Whose ledger">
+                {% for person in people %}
+                    <option value="{{ person.uuidString }}"{{ app.request.query.get('who') == person.uuidString ? ' selected' : '' }}>{{ person.fullName }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <noscript><button class="fchip" type="submit">Show</button></noscript>
+    </form>
+
+    {% set who = people|filter(p => p.uuidString == app.request.query.get('who'))|first ?? people|first %}
+    {% if who %}
+        {% set byTier = who.teamRole.canManageContent %}
+        {% set held = who.position ? who.position.permissionValues : [] %}
+
+        <div class="pm-ledhead">
+            <b>{{ who.fullName }}</b>
+            <span class="tier">{{ who.teamRole.label }}</span>
+            {% if who.position %}
+                <span class="qual">
+                    {%- if who.position.department %}<span class="q">{{ who.position.department.name }}</span><span class="sep">/</span>{% endif -%}
+                    <span class="n">{{ who.position.name }}</span>
+                </span>
+            {% else %}
+                <span class="pm-nobody">{{ pm.icon_info() }} no position</span>
+            {% endif %}
+        </div>
+
+        {% if byTier %}
+            <p class="use"><b>Every row below says &ldquo;by tier&rdquo;, and the position column is decoration
+            for this person.</b> The voter grants a Super Admin or an Admin before it ever looks at a position, so
+            changing theirs changes nothing they can do. That is the single most misread rule in the model, and
+            this is the only screen that shows it.</p>
+        {% elseif who.position is null %}
+            <p class="use"><b>Every row below says &ldquo;not held&rdquo;, and that is the model&rsquo;s zero
+            rather than a fault.</b> {{ who.firstName }} is Staff with no position: verified, able to sign in, and
+            able to do nothing at all. Not &ldquo;the defaults&rdquo; and not &ldquo;read only&rdquo; &mdash;
+            none.</p>
+        {% endif %}
+
+        <div class="pm-eff">
+            {% for permission in catalogue %}
+                {% set has = byTier or permission.value in held %}
+                <div class="pm-effrow{{ has ? '' : ' off' }}">
+                    <span class="lhs">
+                        <b>{{ permission.label }}</b>
+                        <span class="perm">{{ permission.value }}</span>
+                        <span class="pm-desc">{{ permission.description }}</span>
+                    </span>
+                    <span class="pm-why {{ has ? (byTier ? 'tier' : 'pos') : 'no' }}">{{ has ? (byTier ? 'by tier' : 'by position') : 'not held' }}</span>
+                </div>
+            {% endfor %}
+            {% for value in held if value not in catalogue|map(p => p.value) %}
+                <div class="pm-effrow off">
+                    <span class="lhs">
+                        <b><span class="pm-orphname">no longer described</span></b>
+                        <span class="perm">{{ value }}</span>
+                        <span class="pm-desc">Held by the position and provided by nothing installed &mdash; it resolves to nothing.</span>
+                    </span>
+                    <span class="pm-why no">orphaned</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>

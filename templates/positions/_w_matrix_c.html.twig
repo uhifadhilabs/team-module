@@ -1,1 +1,52 @@
-{# placeholder #}
+{# PM·C — PERMISSION FIRST. The permission is what you open, and you tick who
+   holds it: the shape of the question an AUDIT asks, so "who can delete an
+   area" is one card rather than one row of eight.
+
+   It is the worst shape for building a new position, which needs visiting every
+   card to assemble one — that is the trade, stated rather than hidden.
+
+   THE FIX THE REVIEW ASKED FOR IS HERE: an umbrella is ONE BOUNDED GROUP with
+   its cards inside it, carrying its module's own colour. In the first draft the
+   headings were one more strip in a stack of identical boxes, so a reader could
+   not see where Patrols ended and Incidents began. #}
+{% import '@UhifadhiTeam/positions/_bits.html.twig' as pm %}
+
+<div class="c" data-pm="c">
+    <span class="tab"><span class="idx">PM&middot;C</span>Permission first<span class="src">&middot; who holds this one</span></span>
+    <p class="use" style="margin-top:2px">Shaped like the question an audit actually asks. Read-only for the same
+    reason the grid is: one card reaches every position at once.</p>
+
+    {% for umbrella, permissions in grouped %}
+        <div class="pm-qgroup {{ permissions[0].isCore ? 'pm-core' : 'pm-mod pm-mod-' ~ permissions[0].source }}">
+            <div class="pm-umb{{ permissions[0].isCore ? '' : ' pm-mod pm-mod-' ~ permissions[0].source }}">
+                <b>{{ umbrella }}</b>
+                {% if permissions[0].isCore %}
+                    <span class="pm-by core"><i></i>the host</span>
+                {% else %}
+                    <span class="pm-by {{ permissions[0].source }}"><i></i>{{ moduleNames[permissions[0].source]|default(permissions[0].source) }}</span>
+                {% endif %}
+            </div>
+            {% for permission in permissions %}
+                {% set holdingPositions = positions|filter(p => permission.value in p.permissionValues) %}
+                <div class="pm-qcard">
+                    <div class="pm-qhead">
+                        <b>{{ permission.label }}</b>
+                        <span class="perm">{{ permission.value }}</span>
+                        <span class="pm-reach">{{ pm.icon_people() }} {{ holdingPositions|length }} position{{ holdingPositions|length == 1 ? '' : 's' }}</span>
+                    </div>
+                    <em class="pm-desc">{{ permission.description }}</em>
+                    <div class="pm-qholders">
+                        {% for position in holdingPositions %}
+                            <a class="qual" href="{{ path('team_positions', {position: position.uuidString}) }}">
+                                {%- if position.department %}<span class="q">{{ position.department.name }}</span><span class="sep">/</span>{% endif -%}
+                                <span class="n">{{ position.name }}</span>
+                            </a>
+                        {% else %}
+                            <span class="pm-nobody">{{ pm.icon_info() }} no position grants this</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+</div>

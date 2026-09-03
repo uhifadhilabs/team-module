@@ -1,0 +1,111 @@
+{# THE MATRIX'S SHARED VOCABULARY.
+
+   THE FIVE RENDERINGS TAKE THEIR MARKS FROM HERE for the reason the surface
+   itself exists: they are five renderings of ONE array, and five copies of "how
+   a permission row is drawn" is five places for them to start disagreeing about
+   it. The design app unrolls them because a static page has no other way to be
+   looked at.
+
+   THE THREE HONEST STATES live here too — a module that declares nothing, a
+   value whose module is not installed, and an orphaned grant — because every
+   direction has to draw all three and none of them may draw them differently. #}
+
+{% macro icon_tick() %}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>{% endmacro %}
+{% macro icon_info() %}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>{% endmacro %}
+{% macro icon_people() %}<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>{% endmacro %}
+{% macro icon_plus() %}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>{% endmacro %}
+{% macro icon_save() %}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>{% endmacro %}
+{% macro icon_warn() %}<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>{% endmacro %}
+
+{# The umbrella heading, wearing its CONTRIBUTOR. Core rows say "the host";
+   everything else names the module that brought them, in that module's own
+   words, so this page never invents a name for somebody else's bundle. #}
+{% macro umbrella_head(umbrella, permissions, moduleNames, held) %}
+    {% import _self as pm %}
+    {%- set source = permissions[0].source -%}
+    {%- set core = permissions[0].isCore -%}
+    {%- set on = permissions|filter(p => p.value in held)|length -%}
+    <div class="pm-umb{{ core ? '' : ' pm-mod pm-mod-' ~ source }}">
+        <b>{{ umbrella }}</b>
+        {% if core %}
+            <span class="pm-by core"><i></i>the host</span>
+        {% else %}
+            <span class="pm-by {{ source }}"><i></i>{{ moduleNames[source]|default(source) }}</span>
+        {% endif %}
+        <span class="pm-all" style="margin-left:auto">{{ on }} of {{ permissions|length }}</span>
+    </div>
+{% endmacro %}
+
+{# ONE PERMISSION, AS A CHECKBOX ROW, with its sentence under its name — the
+   whole point of a description being required. A label wrapping a real
+   checkbox, so the matrix works with no JavaScript and posts what is ticked. #}
+{% macro row(permission, held) %}
+    {% import _self as pm %}
+    {%- set on = permission.value in held -%}
+    {%- set destructive = permission.value ends with '.delete' -%}
+    {%- set elevated = permission.value == 'team.manage' -%}
+    <label class="pm-row{{ on ? ' on' : '' }}{{ destructive ? ' destructive' : '' }}{{ elevated ? ' elevated' : '' }}">
+        <input type="checkbox" name="permissions[]" value="{{ permission.value }}"{{ on ? ' checked' : '' }} class="pm-box">
+        <span class="pm-tick">{{ pm.icon_tick() }}</span>
+        <span class="pm-t">
+            <b>{{ permission.label }}</b>
+            <span class="perm">{{ permission.value }}</span>
+            <em>{{ permission.description }}</em>
+        </span>
+        <span></span>
+    </label>
+{% endmacro %}
+
+{# AN INSTALLED MODULE THAT DECLARES NOTHING. Drawn, not skipped: hiding it
+   would read as "that module is not installed", which is a different and wrong
+   fact. #}
+{% macro silent_module(slug, name) %}
+    {% import _self as pm %}
+    <div class="pm-group pm-mod pm-mod-{{ slug }}">
+        <div class="pm-umb pm-mod pm-mod-{{ slug }}">
+            <b>{{ name }}</b>
+            <span class="pm-by {{ slug }}"><i></i>{{ slug }}-module</span>
+        </div>
+        <div style="padding:12px 13px">
+            <span class="pm-nobody">{{ pm.icon_info() }} Installed, and it declares no permissions. Nothing to grant, and nothing missing.</span>
+        </div>
+    </div>
+{% endmacro %}
+
+{# AN ORPHANED GRANT — still in a position's JSON, provided by nothing.
+
+   PRUNE, NOT PURGE. Uninstalling a module leaves the grants behind and stops
+   them resolving; removing them would have silently rewritten what somebody
+   granted. So they are drawn MUTED and ticked, and unticking one still works,
+   because it is a grant rather than a fixture.
+
+   THE HIDDEN FIELD IS LOAD-BEARING: it is what makes a save that does not touch
+   the orphan keep it, since the form posts only what is ticked. #}
+{% macro orphans(values, held) %}
+    {% import _self as pm %}
+    {%- set mine = values|filter(v => v in held) -%}
+    {% if mine|length %}
+        <div class="pm-group pm-mod-orphan">
+            <div class="pm-umb pm-mod-orphan">
+                <b>No longer provided</b>
+                <span class="pm-by next"><i></i>nothing installed declares these</span>
+            </div>
+            {% for value in mine %}
+                <label class="pm-row on muted">
+                    <input type="checkbox" name="permissions[]" value="{{ value }}" checked class="pm-box">
+                    <span class="pm-tick">{{ pm.icon_tick() }}</span>
+                    <span class="pm-t">
+                        <b><span class="pm-orphname">no longer described</span></b>
+                        <span class="perm">{{ value }}</span>
+                        <em>This position still holds it and <b>no installed module provides it</b> &mdash; the
+                        bundle that declared it has been removed. It is kept rather than deleted, because
+                        uninstalling a module must not silently rewrite what somebody granted. It resolves to
+                        nothing today, and it will start working again if that module comes back. Untick it to
+                        take it away for good.</em>
+                    </span>
+                    <span></span>
+                </label>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endmacro %}

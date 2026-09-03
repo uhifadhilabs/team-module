@@ -1,0 +1,59 @@
+{# POSITIONS AND PERMISSIONS — a widget surface, and the heart of this module. #}
+{% extends '@UhifadhiShell/page.html.twig' %}
+{% import '@UhifadhiTeam/team/_bits.html.twig' as bits %}
+{% import '@UhifadhiTeam/positions/_bits.html.twig' as pm %}
+
+{% block title %}Positions &amp; permissions{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset(constant('Uhifadhi\\Team\\UhifadhiTeamBundle::STYLESHEET')) }}">
+{% endblock %}
+
+{% block shell_page_tabs %}{% endblock %}
+
+{% block shell_breadcrumbs %}
+    <a href="{{ path('team_index') }}">uhifadhi</a> / <a href="{{ path('team_index') }}">team</a> / positions
+{% endblock %}
+
+{% block shell_page_title %}Positions &amp; permissions{% endblock %}
+
+{% block shell_page_subtitle %}
+    A <b>position</b> is a named bundle of permissions, and it is the only thing that grants a Staff member any
+    capability at all. <b>A position belongs to a department</b>, and its name is unique only inside it &mdash;
+    <span class="mono">Ecology / Analyst</span> and <span class="mono">Protection Service / Analyst</span> are two
+    different jobs that share a word, so nothing on this page ever writes a bare name. <b>Tier and permission are
+    different things</b>: tier decides who stands above this matrix, permissions decide what anybody may do
+    &mdash; and since the Manager tier was retired, <b>administering the team is itself one of the permissions on
+    this page</b>: <span class="mono">team.manage</span>, the seventh core case.
+{% endblock %}
+
+{% block shell_page_actions %}
+    {# CREATING ONE IS TWO FIELDS AND THE DEPARTMENT IS THE FIRST OF THEM. The
+       name is unique inside that department and nowhere else. #}
+    <form class="assign" method="post" action="{{ path('team_position_create') }}">
+        <input type="hidden" name="_token" value="{{ csrfToken }}">
+        <select name="department" class="sel" aria-label="Department">
+            <option value="">No department yet&hellip;</option>
+            {% for department in departments %}
+                <option value="{{ department.uuidString }}">{{ department.name }}</option>
+            {% endfor %}
+        </select>
+        <input type="text" name="name" class="fld" placeholder="Senior Ranger" aria-label="New position name" required>
+        <button class="cta" type="submit">{{ bits.icon_plus() }} New position</button>
+    </form>
+    <a class="tgl w-act" href="{{ path('team_index') }}">{{ bits.icon_back() }} Back to the team</a>
+    <a class="tgl w-act" href="{{ path('team_position_widgets') }}">{{ bits.icon_grid() }} Widget library</a>
+{% endblock %}
+
+{% block shell_page %}
+    <div class="w-grid">
+        {% for widget in widgets %}
+            {% if widget.on %}
+                <div data-w="{{ widget.id }}" class="w{{ widget.cols }}">
+                    {{ include('@UhifadhiTeam/positions/_w_' ~ widget.id ~ '.html.twig') }}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endblock %}

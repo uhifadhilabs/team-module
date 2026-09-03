@@ -1,1 +1,73 @@
-{# placeholder #}
+{# TM·F — THE ORG CHART.
+
+   Bands by the axis an organisation of this shape actually has. Tier sorts
+   1 + 1 + 10; department sorts evenly, which is the whole argument for this
+   direction over B — and shipping both is how the "tiers or departments?"
+   question was answered: it was refused. Tier survives here as a COLUMN rather
+   than being lost, and every holder of team.manage is still marked, because the
+   question B exists to answer must remain answerable however the page is
+   banded.
+
+   A DEPARTMENT IS REACHED THROUGH A POSITION, so anybody holding none falls
+   into an UNASSIGNED band — and that band has to be explained every time
+   somebody new reads the page, which is this direction's honest cost. It is
+   explained in place rather than left to be worked out. #}
+{% import '@UhifadhiTeam/team/_bits.html.twig' as bits %}
+
+<div class="c" data-tm data-tm-dir="f">
+    <span class="tab"><span class="idx">TM&middot;F</span>Roster<span class="src">&middot; the org chart</span></span>
+
+    <p class="use" style="margin:2px 0 14px">Banded by <b>department</b>, which is the axis an organisation of
+    this shape actually has &mdash; tier sorts almost everybody into one pile, and this does not. <b>Tier survives
+    as a column</b> rather than being lost, and every holder of <span class="mono">team.manage</span> is marked
+    wherever they sit.</p>
+
+    <div class="tm-scroll">
+        <table class="tbl">
+            <thead><tr><th>Person</th><th>Tier</th><th>Position</th><th>Ranger code</th><th>Account</th><th></th></tr></thead>
+            <tbody>
+                {% for department in departments %}
+                    {% set inDept = everybody|filter(p => p.position and p.position.department == department) %}
+                    <tr class="tm-deptrow"><td colspan="6"><div class="tm-deptband">
+                        <span class="dtag"><i class="dot"></i>{{ department.name }}</span>
+                        <span class="n">{{ inDept|length }} {{ inDept|length == 1 ? 'person' : 'people' }} &middot; {{ department.positions|length }} position{{ department.positions|length == 1 ? '' : 's' }}</span>
+                    </div></td></tr>
+                    {% for person in inDept %}
+                        <tr class="tm-memrow{{ person.isActive ? '' : ' tm-off' }}">
+                            <td class="tm-in">{{ bits.person(person, person == app.user) }}</td>
+                            <td>{{ bits.tier_pill(person.teamRole) }}</td>
+                            <td>{{ bits.position_cell(person, path('team_positions')) }}</td>
+                            <td>{{ bits.ranger_code(person) }}</td>
+                            <td>{{ bits.account_cell(person) }}</td>
+                            <td class="tm-acts">{{ bits.open_button(person) }}</td>
+                        </tr>
+                    {% else %}
+                        <tr class="tm-memrow inner"><td colspan="6"><span class="tm-nopos">{{ bits.icon_info() }}nobody works in this department yet</span></td></tr>
+                    {% endfor %}
+                {% endfor %}
+
+                {# THE UNASSIGNED BAND, and the sentence beside it is not
+                   decoration: a reader arriving here for the first time will
+                   otherwise read it as a department called "Unassigned". #}
+                {% set unassigned = everybody|filter(p => p.position is null or p.position.department is null) %}
+                {% if unassigned|length %}
+                    <tr class="tm-deptrow"><td colspan="6"><div class="tm-deptband">
+                        <span class="dtag un"><i class="dot un"></i>Unassigned</span>
+                        <span class="n">{{ unassigned|length }} {{ unassigned|length == 1 ? 'person' : 'people' }}</span>
+                        <span class="say">not a department &mdash; a department is reached through a position, so anybody holding none, or holding one no department owns yet, lands here</span>
+                    </div></td></tr>
+                    {% for person in unassigned %}
+                        <tr class="tm-memrow{{ person.isActive ? '' : ' tm-off' }}">
+                            <td class="tm-in">{{ bits.person(person, person == app.user) }}</td>
+                            <td>{{ bits.tier_pill(person.teamRole) }}</td>
+                            <td>{{ bits.position_cell(person, path('team_positions')) }}</td>
+                            <td>{{ bits.ranger_code(person) }}</td>
+                            <td>{{ bits.account_cell(person) }}</td>
+                            <td class="tm-acts">{{ bits.open_button(person) }}</td>
+                        </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>

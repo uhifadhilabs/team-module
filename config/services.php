@@ -14,12 +14,20 @@ declare(strict_types=1);
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Uhifadhi\Team\Command\CreateUserCommand;
+use Uhifadhi\Team\Controller\InviteController;
+use Uhifadhi\Team\Controller\MemberController;
+use Uhifadhi\Team\Controller\PasswordResetController;
+use Uhifadhi\Team\Controller\PositionController;
+use Uhifadhi\Team\Controller\PositionWidgetsController;
 use Uhifadhi\Team\Controller\SecurityController;
+use Uhifadhi\Team\Controller\TeamController;
+use Uhifadhi\Team\Controller\TeamWidgetsController;
 use Uhifadhi\Team\Repository\DepartmentRepository;
 use Uhifadhi\Team\Repository\PositionRepository;
 use Uhifadhi\Team\Repository\UserRepository;
 use Uhifadhi\Team\Security\ActiveUserChecker;
 use Uhifadhi\Team\Security\PermissionVoter;
+use Uhifadhi\Team\Service\Mail;
 use Uhifadhi\Team\Service\PermissionCatalogue;
 use Uhifadhi\Team\Service\SuperAdminInvariant;
 use Uhifadhi\Team\Service\TeamOverview;
@@ -54,6 +62,14 @@ use Uhifadhi\Widget\Registry\WidgetSurfaceInterface;
  *   team.widget_surface.*       the roster and the matrix, as dashboard surfaces
  *   team.command.create_user    the bootstrap console command
  *   team.controller.security    the sign-in screen
+ *   team.controller.team        the roster
+ *   team.controller.team_widgets  its widget library
+ *   team.controller.member      one person's record
+ *   team.controller.position    the permission matrix
+ *   team.controller.position_widgets  its widget library
+ *   team.controller.invite      both ways of adding somebody
+ *   team.controller.reset       forgot / reset / accept, on the document rung
+ *   team.mail                   the two letters, and whether they can be sent
  *
  * Controllers extend nothing and take their collaborators explicitly, patterned
  * on FrameworkBundle's own TemplateController (see
@@ -165,6 +181,150 @@ return static function (ContainerConfigurator $container): void {
             service('doctrine.orm.entity_manager'),
         ])
         ->tag('console.command');
+
+    /*
+     * THE TEAM PAGE — the roster surface. Gated on team.manage by an attribute
+     * on the action, so the gate is a permission this installation's matrix can
+     * grant and revoke rather than a tier nobody can audit.
+     */
+    $services->set('team.controller.team', TeamController::class)
+        ->args([
+            service('twig'),
+            service(UserRepository::class),
+            service(PositionRepository::class),
+            service(DepartmentRepository::class),
+            service('team.overview'),
+            service('widget.service'),
+            service('security.token_storage'),
+        ])
+        ->tag('controller.service_arguments');
+    $services->alias(TeamController::class, 'team.controller.team')->public();
+
+    /*
+     * THE ROSTER'S WIDGET LIBRARY — chrome around the widget module's shared
+     * preset component. It takes the roster controller itself, because the
+     * library previews the REAL widgets on REAL data and a second, thinner
+     * context for the preview would be the one place the two screens could
+     * disagree about what a widget shows.
+     */
+    $services->set('team.controller.team_widgets', TeamWidgetsController::class)
+        ->args([
+            service('twig'),
+            service('router'),
+            service('widget.service'),
+            service('widget.endpoint'),
+            service('team.controller.team'),
+        ])
+        ->tag('controller.service_arguments');
+    $services->alias(TeamWidgetsController::class, 'team.controller.team_widgets')->public();
+
+    /*
+     * ONE PERSON'S RECORD, and the writes that change it. There is no delete
+     * route and there will not be one: accounts are deactivated, never removed.
+     */
+    $services->set('team.controller.member', MemberController::class)
+        ->args([
+            service('twig'),
+            service(UserRepository::class),
+            service(PositionRepository::class),
+            service('team.permissions'),
+            service('team.super_admin_invariant'),
+            service('doctrine.orm.entity_manager'),
+            service('security.csrf.token_manager'),
+            service('router'),
+            service('security.token_storage'),
+        ])
+        ->tag('controller.service_arguments');
+    $services->alias(MemberController::class, 'team.controller.member')->public();
+
+    /*
+     * POSITIONS AND PERMISSIONS — the matrix surface, and the one screen that
+     * writes a grant.
+     */
+    $services->set('team.controller.position', PositionController::class)
+        ->args([
+            service('twig'),
+            service(PositionRepository::class),
+            service(DepartmentRepository::class),
+            service(UserRepository::class),
+            service('team.permissions'),
+            service('doctrine.orm.entity_manager'),
+            service('security.csrf.token_manager'),
+            service('router'),
+            service('security.token_storage'),
+            service('widget.service'),
+        ])
+        ->tag('controller.service_arguments');
+    $services->alias(PositionController::class, 'team.controller.position')->public();
+
+    $services->set('team.controller.position_widgets', PositionWidgetsController::class)
+        ->args([
+            service('twig'),
+            service('router'),
+            service('widget.service'),
+            service('widget.endpoint'),
+            service('team.controller.position'),
+        ])
+        ->tag('controller.service_arguments');
+    $services->alias(PositionWidgetsController::class, 'team.controller.position_widgets')->public();
+
+    /*
+     * THE TWO LETTERS THIS MODULE SENDS, and the one question every screen that
+     * offers to send one asks first.
+     *
+     * THE MAILER IS OPTIONAL AND nullOnInvalid() IS THE WHOLE MECHANISM:
+     * symfony/mailer is a suggestion rather than a requirement, so an
+     * installation that never sends mail does not carry it — and where the
+     * package is absent, OR present with no transport configured, the service
+     * simply is not in the container and this is constructed with null. One
+     * check covers both, which is right, because from a screen's point of view
+     * they are the same fact.
+     */
+    $services->set('team.mail', Mail::class)
+        ->args([
+            service('mailer.mailer')->nullOnInvalid(),
+            param('team.mail_from'),
+            param('team.installation_name'),
+        ]);
+
+    /*
+     * ADDING SOMEBODY — both ways, side by side. One needs nothing from the
+     * deployment; the other is offered and refused where there is no mailer.
+     */
+    $services->set('team.controller.invite', InviteController::class)
+        ->args([
+            service('twig'),
+            service(UserRepository::class),
+            service(PositionRepository::class),
+            service('security.user_password_hasher'),
+            service('doctrine.orm.entity_manager'),
+            service('security.csrf.token_manager'),
+            service('router'),
+            service('security.token_storage'),
+            service('team.mail'),
+        ])
+        ->tag('controller.service_arguments');
+    $services->alias(InviteController::class, 'team.controller.invite')->public();
+
+    /*
+     * THE SELF-SERVICE SCREENS. Public by route and by design: they are the
+     * three a stranger reaches with nobody to ask, so they are the one part of
+     * this module that must work with no session at all.
+     */
+    $services->set('team.controller.reset', PasswordResetController::class)
+        ->args([
+            service('twig'),
+            service(UserRepository::class),
+            service('security.user_password_hasher'),
+            service('doctrine.orm.entity_manager'),
+            service('security.csrf.token_manager'),
+            service('router'),
+            service('security.token_storage'),
+            service('team.mail'),
+            param('team.after_sign_in_path'),
+        ])
+        ->tag('controller.service_arguments');
+    $services->alias(PasswordResetController::class, 'team.controller.reset')->public();
 
     /*
      * The sign-in screen. Registered unconditionally: this bundle requires

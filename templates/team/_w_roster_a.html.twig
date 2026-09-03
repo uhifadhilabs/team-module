@@ -1,1 +1,132 @@
-{# placeholder #}
+{# TM·A — THE TABLE. The smallest change from a plain list, and the direction
+   that survives growth: one row per person, one column per fact, filters above.
+   The only direction that still reads at three hundred people, and the only one
+   in which nothing about the shape of the organisation is visible.
+
+   THE TOOL ROW IS A GET FORM, and that is the whole mechanism: the filter state
+   lives in the query string, so a filtered roster is bookmarkable, shareable and
+   survives the back button. The tier pills are LINKS that modify those params,
+   not JavaScript toggles — the form works with no JavaScript at all, which is
+   the point. A debounced auto-submit is an optional enhancement later, never a
+   requirement.
+
+   IT ALWAYS ENDS BY SAYING WHAT IS SHOWN. A filtered list that does not state
+   its filter is a list somebody reads as the whole roster.
+
+   FIRST RUN HAS NO TOOL ROW. A table with one row and a filter bar filtering
+   nothing is a table pretending to be a list. The one row is still a table row,
+   because it is still the roster. #}
+{% import '@UhifadhiTeam/team/_bits.html.twig' as bits %}
+
+<div class="c" data-tm data-tm-dir="a">
+    <span class="tab"><span class="idx">TM&middot;A</span>Roster<span class="src">&middot; the table</span></span>
+
+    {% if not overview.isFirstRun %}
+        <form class="tm-tools" method="get" action="{{ path('team_index') }}">
+            <label class="tm-search">
+                {{ bits.icon_search() }}
+                <input type="search" name="q" value="{{ query.q }}" placeholder="Name, email or ranger code" aria-label="Search the roster">
+            </label>
+
+            {# THE TIER CHIPS COUNT OVER THE WHOLE ROSTER, never the filtered one:
+               a chip reading "Admin 0" because somebody is searching for a name
+               is a chip lying about the installation. #}
+            <a class="fchip{{ query.tier is null ? ' on' : '' }}" href="{{ path('team_index', query.toParams({tier: null, page: null})) }}">All <span class="n">{{ overview.people }}</span></a>
+            {% for tier in tiers %}
+                <a class="fchip{{ query.tier == tier ? ' on' : '' }}" href="{{ path('team_index', query.toParams({tier: tier.value, page: null})) }}">{{ tier.label }} <span class="n">{{ tierCounts[tier.value] }}</span></a>
+            {% endfor %}
+
+            {# GROUPED BY DEPARTMENT, and it has to be: two of an installation's
+               positions may be called "Analyst", and a flat list would offer the
+               same word twice with no way to tell which is which. The optgroup is
+               not decoration here, it is the disambiguation. #}
+            <select class="fld sel" name="position" aria-label="Filter by position">
+                <option value="">Any position</option>
+                {% for department, positions in groupedPositions %}
+                    {% if department is not empty %}
+                        <optgroup label="{{ department }}">
+                            {% for position in positions %}
+                                <option value="{{ position.uuidString }}"{{ query.position == position.uuidString ? ' selected' : '' }}>{{ position.name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    {% endif %}
+                {% endfor %}
+                {% if groupedPositions[''] is defined %}
+                    <optgroup label="No department yet">
+                        {% for position in groupedPositions[''] %}
+                            <option value="{{ position.uuidString }}"{{ query.position == position.uuidString ? ' selected' : '' }}>{{ position.name }}</option>
+                        {% endfor %}
+                    </optgroup>
+                {% endif %}
+                <option value="none"{{ query.position == 'none' ? ' selected' : '' }}>&mdash; no position &mdash;</option>
+            </select>
+
+            {# A SELECT RATHER THAN MORE CHIPS, because this is two independent
+               axes rather than one more facet of tier. A deactivated person stays
+               in every list by ruling, so the list needs a way to say "just the
+               active ones" — and, as importantly, a way to find the switched-off
+               ones again, which is the whole reason they were not deleted. #}
+            <select class="fld sel" name="state" aria-label="Filter by account state">
+                <option value="">Any state</option>
+                {% for state in states %}
+                    <option value="{{ state.value }}"{{ query.state == state ? ' selected' : '' }}>{{ state.label }}</option>
+                {% endfor %}
+            </select>
+
+            <button class="fchip" type="submit">Filter</button>
+            <span class="tm-shown">showing <b>{{ page.items|length }}</b> of {{ page.total }}</span>
+        </form>
+    {% endif %}
+
+    <div class="tm-scroll">
+        <table class="tbl">
+            <thead><tr><th>Person</th><th>Tier</th><th>Position</th><th>Ranger code</th><th>Account</th><th></th></tr></thead>
+            <tbody>
+                {% for person in page.items %}
+                    <tr{{ person.isActive ? '' : ' class="tm-off"' }}>
+                        <td>{{ bits.person(person, person == app.user) }}</td>
+                        <td>{{ bits.tier_pill(person.teamRole) }}</td>
+                        <td>{{ bits.position_cell(person, path('team_positions')) }}</td>
+                        <td>{{ bits.ranger_code(person) }}</td>
+                        <td>{{ bits.account_cell(person) }}</td>
+                        <td class="tm-acts">{{ bits.open_button(person) }}</td>
+                    </tr>
+                {% else %}
+                    {# A FILTER THAT MATCHES NOBODY IS A RESULT, not an error, and
+                       it says which filter produced it — otherwise it reads as an
+                       installation with nobody in it. #}
+                    <tr><td colspan="6">
+                        <div class="tm-nores">
+                            {{ bits.icon_search() }}
+                            <span>Nobody matches {% if query.q %}&ldquo;{{ query.q }}&rdquo;{% else %}these filters{% endif %}.
+                            <a href="{{ path('team_index') }}">Show the whole roster</a>.</span>
+                        </div>
+                    </td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# THE PAGER, DRAWN IN THE STATE IT IS ACTUALLY IN. Twelve people is one
+       page, so there are no arrows — a disabled ‹ › on page 1 of 1 is chrome
+       pretending there is somewhere to go. The page size is stated instead,
+       which is the fact that tells you when a second page appears. #}
+    <div class="rdf-foot">
+        <span>{{ page.total }} {{ page.total == 1 ? 'person' : 'people' }} &middot; {{ page.perPage }} per page</span>
+        {% if page.isMultiPage %}
+            <span class="rdf-page">
+                {% if page.hasPrevious %}<a href="{{ path('team_index', query.toParams({page: page.page - 1})) }}">&lsaquo;</a>{% endif %}
+                page <span class="pg">{{ page.page }}</span> of {{ page.pages }}
+                {% if page.hasNext %}<a href="{{ path('team_index', query.toParams({page: page.page + 1})) }}">&rsaquo;</a>{% endif %}
+            </span>
+        {% else %}
+            <span class="rdf-page">page <span class="pg">{{ page.page }}</span> of {{ page.pages }}</span>
+        {% endif %}
+    </div>
+
+    {% if overview.isFirstRun %}
+        <p class="use" style="margin-top:13px">One account, and it is yours. A Super Admin needs no position &mdash;
+        the tier passes every permission check on its own &mdash; which is why the position cell reads
+        <b>everything, by tier</b> rather than a number. Nobody you add will have that.</p>
+    {% endif %}
+</div>

@@ -77,6 +77,12 @@ final readonly class PermissionCatalogue
                     $declared->umbrella,
                     $declared->action,
                     $declared->description,
+                    // No capability role, ever.
+                    null,
+                    // WHO BROUGHT IT. The matrix prints this beside the umbrella
+                    // heading, so uninstalling a bundle is a visible cause
+                    // rather than a mystery about rows that vanished.
+                    $provider->slug(),
                 );
             }
         }
@@ -95,6 +101,46 @@ final readonly class PermissionCatalogue
     public function values(): array
     {
         return array_map(static fn (Permission $p): string => $p->value, $this->all());
+    }
+
+    /**
+     * INSTALLED MODULES THAT DECLARE NOTHING — the common case, and a state the
+     * matrix draws rather than skips.
+     *
+     * Most modules gate nothing beyond what the host already does. Leaving them
+     * off the page would read as "that module is not installed", which is a
+     * different and wrong fact; the matrix says instead that the module is here
+     * and has nothing to grant, which is the truth and is reassuring rather
+     * than confusing.
+     *
+     * @return list<string> the slugs, in registration order
+     */
+    public function silentModules(): array
+    {
+        $silent = [];
+        foreach ($this->moduleProviders as $provider) {
+            if ([] === $provider->permissions()) {
+                $silent[] = $provider->slug();
+            }
+        }
+
+        return $silent;
+    }
+
+    /**
+     * The label a module's group wears — its own name, from its own provider,
+     * so the matrix never invents a word for somebody else's module.
+     *
+     * @return array<string, string> slug => display name
+     */
+    public function moduleNames(): array
+    {
+        $names = [];
+        foreach ($this->moduleProviders as $provider) {
+            $names[$provider->slug()] = $provider->name();
+        }
+
+        return $names;
     }
 
     public function has(string $value): bool

@@ -1,1 +1,30 @@
-{# placeholder #}
+{# DEPT·D — one flat list where EVERY POSITION CARRIES ITS DEPARTMENT IN ITS
+   NAME. No banding at all: the qualified name does the disambiguating, which is
+   also how the name is written everywhere else in the product. #}
+<div class="c" data-pm="dept-d">
+    <span class="tab"><span class="idx">DP&middot;D</span>Department-first<span class="src">&middot; qualified names, one flat list</span></span>
+    <p class="use" style="margin-top:2px">No bands. Every row is the <b>fully qualified name</b> &mdash;
+    &ldquo;Ecology / Analyst&rdquo; &mdash; which is how a position is written everywhere else in this product,
+    so this is the direction that matches the vocabulary rather than reorganising around it.</p>
+
+    <div class="tm-scroll">
+        <table class="tbl">
+            <thead><tr><th>Position</th><th>Holders</th><th>Permissions</th><th></th></tr></thead>
+            <tbody>
+                {% for position in positions %}
+                    <tr>
+                        <td>
+                            <span class="qual">
+                                {%- if position.department %}<span class="q">{{ position.department.name }}</span><span class="sep">/</span>{% else %}<span class="q un">unassigned</span><span class="sep">/</span>{% endif -%}
+                                <span class="n">{{ position.name }}</span>
+                            </span>
+                        </td>
+                        <td>{{ holders[position.uuidString]|default(0) }}</td>
+                        <td>{{ position.permissionValues|length }}</td>
+                        <td class="tm-acts"><a class="open-btn" href="{{ path('team_positions', {position: position.uuidString}) }}">Edit</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

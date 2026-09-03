@@ -1,1 +1,73 @@
-{# placeholder #}
+{# PM·A — THE GRID. Positions across, permissions down, a box at every
+   intersection, so "who may delete an area" is one row read left to right.
+
+   Every position added is another column, and past a dozen the table is a
+   horizontal scroll nobody reads accurately — which is the cost, and the
+   reason B rather than A is the shipped direction.
+
+   THE GRID IS READ-ONLY. Every other direction edits one position at a time and
+   can therefore post one position's permissions; a grid would have to post a
+   whole matrix, and a save that rewrites nine positions at once is a save
+   nobody can undo confidently. It links each column to its own editor instead. #}
+{% import '@UhifadhiTeam/positions/_bits.html.twig' as pm %}
+
+<div class="c" data-pm="a">
+    <span class="tab"><span class="idx">PM&middot;A</span>The grid<span class="src">&middot; every position, every permission</span></span>
+    <p class="use" style="margin-top:2px">One row per permission and one column per position, so a single row
+    answers <b>who may do this</b>. It reads across rather than down, which no other direction does. <b>It does
+    not edit:</b> a save here would rewrite every position at once, and that is not an action anybody can undo
+    confidently &mdash; each column heading is a link to that position&rsquo;s own checklist.</p>
+
+    {% if positions is empty %}
+        <p class="use"><b>The grid opens on nothing at all</b>, which is exactly the weakness that made B the
+        shipped direction: there are no positions yet, so there are no columns. <a href="{{ path('team_positions') }}">Make the first one.</a></p>
+    {% else %}
+        <div class="pm-gridscroll">
+            <table class="tbl pm-grid">
+                <thead>
+                    <tr>
+                        <th>Permission</th>
+                        {% for position in positions %}
+                            <th>
+                                <a href="{{ path('team_positions', {position: position.uuidString}) }}" class="qual">
+                                    {%- if position.department %}<span class="q">{{ position.department.name }}</span><span class="sep">/</span>{% endif -%}
+                                    <span class="n">{{ position.name }}</span>
+                                </a>
+                            </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for umbrella, permissions in grouped %}
+                        <tr class="tm-bandrow"><td colspan="{{ positions|length + 1 }}"><div class="tm-band">
+                            <b>{{ umbrella }}</b>
+                            {% if permissions[0].isCore %}
+                                <span class="pm-by core"><i></i>the host</span>
+                            {% else %}
+                                <span class="pm-by {{ permissions[0].source }}"><i></i>{{ moduleNames[permissions[0].source]|default(permissions[0].source) }}</span>
+                            {% endif %}
+                        </div></td></tr>
+                        {% for permission in permissions %}
+                            <tr>
+                                <td>
+                                    <b>{{ permission.label }}</b>
+                                    <span class="perm">{{ permission.value }}</span>
+                                    <em class="pm-desc">{{ permission.description }}</em>
+                                </td>
+                                {% for position in positions %}
+                                    <td class="pm-cell">
+                                        {%- if permission.value in position.permissionValues -%}
+                                            <span class="pm-tick on">{{ pm.icon_tick() }}</span>
+                                        {%- else -%}
+                                            <span class="pm-tick"></span>
+                                        {%- endif -%}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>

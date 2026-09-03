@@ -1,1 +1,51 @@
-{# placeholder #}
+{# DEPT·E — a department rail beside a single-department pane. SCALES FURTHEST
+   of the five: the rail stays one screen tall however many departments an
+   organisation grows, where every other department-first layout gets longer. #}
+{% import '@UhifadhiTeam/positions/_bits.html.twig' as pm %}
+
+<div class="c" data-pm="dept-e">
+    <span class="tab"><span class="idx">DP&middot;E</span>Department-first<span class="src">&middot; the rail</span></span>
+
+    {% set chosen = app.request.query.get('department') %}
+    {% set current = departments|filter(d => d.uuidString == chosen)|first ?? departments|first %}
+
+    <div class="split">
+        <div class="dept-rail">
+            <span class="lbl">departments &middot; {{ departments|length }}</span>
+            {% for department in departments %}
+                <a class="rail-item{{ current and current.id == department.id ? ' on' : '' }}"
+                   href="{{ path('team_positions', {department: department.uuidString}) }}">
+                    <i class="dot"></i>
+                    <span class="rn">{{ department.name }}</span>
+                    <span class="rc">{{ department.positions|length }}</span>
+                </a>
+            {% endfor %}
+        </div>
+        <div class="panes">
+            <div class="pane on">
+                {% if current %}
+                    <div class="pm-head"><span class="hl"><span class="dtag"><i class="dot"></i>{{ current.name }}</span></span></div>
+                    <div class="tm-scroll">
+                        <table class="tbl">
+                            <thead><tr><th>Position</th><th>Holders</th><th>Permissions</th><th></th></tr></thead>
+                            <tbody>
+                                {% for position in current.positions %}
+                                    <tr>
+                                        <td><b>{{ position.name }}</b></td>
+                                        <td>{{ holders[position.uuidString]|default(0) }}</td>
+                                        <td>{{ position.permissionValues|length }}</td>
+                                        <td class="tm-acts"><a class="open-btn" href="{{ path('team_positions', {position: position.uuidString}) }}">Edit</a></td>
+                                    </tr>
+                                {% else %}
+                                    <tr><td colspan="4"><span class="pm-nobody">{{ pm.icon_info() }} this department owns no positions yet</span></td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <span class="pm-nobody">{{ pm.icon_info() }} there are no departments yet</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

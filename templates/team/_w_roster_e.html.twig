@@ -1,1 +1,81 @@
-{# placeholder #}
+{# TM·E — ATTENTION FIRST.
+
+   Everything needing a human decision above everything that does not, which is
+   the right shape for an installation somebody opens once a week: you arrive,
+   you see what changed, you leave.
+
+   THIS DIRECTION CARRIES ITS OWN ATTENTION PANE, so its preset does not also
+   load the separate one — two copies of the same three rows on one page is the
+   page saying everything twice.
+
+   In a settled organisation it spends the top of the page saying that nothing
+   is wrong, and that is the cost. The settled state is drawn honestly rather
+   than hidden: one line, and then the roster. #}
+{% import '@UhifadhiTeam/team/_bits.html.twig' as bits %}
+
+<div class="c" data-tm data-tm-dir="e">
+    <span class="tab"><span class="idx">TM&middot;E</span>Roster<span class="src">&middot; attention first</span></span>
+
+    {% if overview.needsAttention %}
+        <div class="tm-esplit">
+            <span class="lbl">Waiting on a decision &mdash; {{ overview.attentionCount }}</span>
+            <div class="tm-att">
+                {% for person in overview.neverSignedIn %}
+                    <div class="tm-attrow w">
+                        {{ bits.icon_mail() }}
+                        <div class="at">
+                            <b>{{ person.fullName }} has never signed in</b>
+                            <p>{% if person.wasInvited %}Invited by {{ person.invitedBy ? person.invitedBy.fullName : 'somebody since removed' }}, {{ bits.ago(person.invitedAt) }}.{% else %}Created with a password and never invited, so there is no link outstanding.{% endif %}</p>
+                        </div>
+                        <div class="ad"><a class="softbtn" href="{{ path('team_member', {uuid: person.uuidString}) }}">Open</a></div>
+                    </div>
+                {% endfor %}
+                {% for person in overview.holdNothing %}
+                    <div class="tm-attrow w">
+                        {{ bits.icon_info() }}
+                        <div class="at">
+                            <b>{{ person.fullName }} holds nothing</b>
+                            <p>Staff with no position: they can sign in and reach no page behind it.</p>
+                        </div>
+                        <div class="ad"><a class="softbtn acc" href="{{ path('team_member', {uuid: person.uuidString}) }}">Give them a position</a></div>
+                    </div>
+                {% endfor %}
+                {% if overview.soleSuperAdmin %}
+                    <div class="tm-attrow r standing">
+                        {{ bits.icon_warn() }}
+                        <div class="at">
+                            <b>{{ overview.soleSuperAdmin.fullName }} is the only Super Admin</b>
+                            <p>No second owner and no break-glass. A standing risk rather than a task &mdash; it
+                            has no done, so it has no button.</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <div class="tm-settled">
+            {{ bits.icon_check() }}
+            <span>Nothing is waiting on a decision: everybody has signed in, everybody holds a position, and
+            there is more than one Super Admin. This direction spends its top on that sentence when it is true,
+            which is the cost of putting the decisions first.</span>
+        </div>
+    {% endif %}
+
+    <span class="lbl" style="margin-top:16px;display:block">The settled roster</span>
+    <div class="tm-scroll">
+        <table class="tbl">
+            <thead><tr><th>Person</th><th>Tier</th><th>Position</th><th>Account</th><th></th></tr></thead>
+            <tbody>
+                {% for person in everybody %}
+                    <tr class="{{ person.isActive ? '' : 'tm-off' }}">
+                        <td>{{ bits.person(person, person == app.user) }}</td>
+                        <td>{{ bits.tier_pill(person.teamRole) }}</td>
+                        <td>{{ bits.position_cell(person, path('team_positions')) }}</td>
+                        <td>{{ bits.account_cell(person) }}</td>
+                        <td class="tm-acts">{{ bits.open_button(person) }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

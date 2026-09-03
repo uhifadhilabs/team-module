@@ -1,1 +1,41 @@
-{# placeholder #}
+{# PM·RISK — TWO STANDING RISKS, and both are properties of shipped code rather
+   than of anybody's configuration. Neither has a button, because neither has a
+   done that a button could reach. #}
+{% import '@UhifadhiTeam/positions/_bits.html.twig' as pm %}
+
+<div class="c">
+    <span class="tab"><span class="idx">PM&middot;RISK</span>Standing risks<span class="src">&middot; nothing here is dismissible</span></span>
+    <div class="tm-att">
+        {% if soleSuperAdmin %}
+            <div class="tm-attrow r standing">
+                {{ pm.icon_warn() }}
+                <div class="at">
+                    <b>One Super Admin, and no recovery path</b>
+                    <p>The model has no break-glass account, no second owner flag and no audit trail. If that one
+                    account is lost the installation is administered from a database client or not at all. The
+                    code refuses to let it be demoted or deactivated, which stops the accident and does not fix
+                    the exposure &mdash; grant the tier to a successor.</p>
+                </div>
+            </div>
+        {% endif %}
+        {% if orphans is not empty %}
+            <div class="tm-attrow w standing">
+                {{ pm.icon_warn() }}
+                <div class="at">
+                    <b>{{ orphans|length }} grant{{ orphans|length == 1 ? '' : 's' }} no installed module provides</b>
+                    <p>A bundle that declared {% for value in orphans|keys %}<span class="perm">{{ value }}</span>{% endfor %}
+                    has been removed, and positions still hold the values. They resolve to nothing today and would
+                    start working again if the module came back &mdash; which is why they were pruned rather than
+                    purged. Untick one on its position to take it away for good.</p>
+                </div>
+            </div>
+        {% endif %}
+        {% if not soleSuperAdmin and orphans is empty %}
+            <div class="tm-settled">
+                {{ pm.icon_info() }}
+                <span>Neither standing risk applies: more than one Super Admin can sign in, and every grant on
+                every position is provided by something installed.</span>
+            </div>
+        {% endif %}
+    </div>
+</div>

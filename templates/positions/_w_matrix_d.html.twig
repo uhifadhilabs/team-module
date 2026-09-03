@@ -1,1 +1,59 @@
-{# placeholder #}
+{# PM·D — UMBRELLA PACKS. One pack per umbrella, each naming its contributor and
+   what uninstalling it would cost.
+
+   It makes the matrix's REAL BEHAVIOUR the visible thing: that the catalogue
+   grows and shrinks with the installed bundles. No single screen ever shows one
+   position whole, which is the cost. #}
+{% import '@UhifadhiTeam/positions/_bits.html.twig' as pm %}
+
+<div class="c" data-pm="d">
+    <span class="tab"><span class="idx">PM&middot;D</span>Umbrella packs<span class="src">&middot; the catalogue as it grows</span></span>
+    <p class="use" style="margin-top:2px">One pack per umbrella. The point of this direction is the thing every
+    other one leaves implicit: <b>the list of permissions is not fixed</b>, and each pack says who brought it and
+    what its removal would cost.</p>
+
+    {# THE LEGEND, because a page of coloured marks has to say what the marks
+       MEAN rather than assume it. #}
+    <div class="pm-legend">
+        <span><span class="pm-by core"><i></i>the host</span> ships with the product and never leaves</span>
+        <span><span class="pm-by patrols"><i></i>a module</span> arrived with a bundle, and goes with it</span>
+        <span><span class="pm-by next"><i></i>not installed</span> in the catalogue as an example; cannot be granted</span>
+    </div>
+
+    {% for umbrella, permissions in grouped %}
+        <div class="pm-pack {{ permissions[0].isCore ? 'pm-core' : 'pm-mod pm-mod-' ~ permissions[0].source }}">
+            <div class="pm-umb{{ permissions[0].isCore ? '' : ' pm-mod pm-mod-' ~ permissions[0].source }}">
+                <b>{{ umbrella }}</b>
+                {% if permissions[0].isCore %}
+                    <span class="pm-by core"><i></i>the host</span>
+                {% else %}
+                    <span class="pm-by {{ permissions[0].source }}"><i></i>{{ moduleNames[permissions[0].source]|default(permissions[0].source) }}</span>
+                {% endif %}
+                <span class="pm-all" style="margin-left:auto">{{ permissions|length }} permission{{ permissions|length == 1 ? '' : 's' }}</span>
+            </div>
+            {% for permission in permissions %}
+                {% set holdingPositions = positions|filter(p => permission.value in p.permissionValues) %}
+                <div class="pm-packrow">
+                    <span class="pm-t">
+                        <b>{{ permission.label }}</b>
+                        <span class="perm">{{ permission.value }}</span>
+                        <em>{{ permission.description }}</em>
+                    </span>
+                    <span class="pm-reach">{{ pm.icon_people() }} {{ holdingPositions|length }}</span>
+                </div>
+            {% endfor %}
+            <div class="pm-packfoot">
+                {%- if permissions[0].isCore -%}
+                    Ships with the product. Nothing can remove these rows.
+                {%- else -%}
+                    Uninstall {{ moduleNames[permissions[0].source]|default(permissions[0].source) }} and these rows leave this page on the next request.
+                    <b>Grants already written stay in the positions</b> and stop resolving &mdash; pruned, not purged.
+                {%- endif -%}
+            </div>
+        </div>
+    {% endfor %}
+
+    {% for slug in silentModules %}
+        {{ pm.silent_module(slug, moduleNames[slug]|default(slug)) }}
+    {% endfor %}
+</div>
