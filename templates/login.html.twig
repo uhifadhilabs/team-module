@@ -1,0 +1,90 @@
+{# THE DOCUMENT RUNG, deliberately — not the page frame.
+
+   A stranger gets the theme and the typefaces and no furniture at all. There is
+   no sidebar to navigate and no top bar to act from until there is somebody to
+   act as, and a nav rendered for an anonymous visitor is a nav that leaks what
+   an installation contains to whoever loads its front door.
+
+   That is why this page extends `document.html.twig` and not `page.html.twig`:
+   the shell's three rungs exist so a page can step onto the one it needs, and
+   this one needs the bottom. #}
+{% extends '@UhifadhiShell/document.html.twig' %}
+
+{% block title %}Sign in{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {# This module's own sheet, by the bundle's constant rather than a literal:
+       the card is not the shell's furniture, so its rules ship here. #}
+    <link rel="stylesheet" href="{{ asset(constant('Uhifadhi\\Team\\UhifadhiTeamBundle::STYLESHEET')) }}">
+{% endblock %}
+
+{# NO IMPORTMAP. The shell's document emits `importmap('app')` by default, which
+   is right for a page inside an installation and wrong for this one: the sign-in
+   screen has no Stimulus controller, and an anonymous visitor should not be
+   served the application's whole JavaScript entrypoint to type two fields. The
+   socket is filled with nothing, which is what the socket is for. #}
+{% block importmap %}{% endblock %}
+
+{% block body %}
+    <main class="auth">
+        <div class="auth-card">
+            <form class="c" method="post" action="{{ path('team_login') }}">
+                <div class="auth-brand">
+                    {% include '@UhifadhiShell/_brand_mark.html.twig' with {size: 44} only %}
+                    <b>UHIFADHI</b>
+                </div>
+
+                {# Configured, not written here: `team.sign_in_lede` (see
+                   TeamConfiguration). A deployment says who it is in its own
+                   config/packages/team.yaml rather than by patching a template
+                   out of the vendor tree. #}
+                <p class="auth-lede">{{ sign_in_lede }}</p>
+
+                {% if error %}
+                    {# A refusal, said out loud and said the same way every time.
+                       The message is the framework's own translated key — never
+                       our paraphrase, and never a hint about which half was
+                       wrong. #}
+                    <div class="auth-error" role="alert">
+                        <span>{{ error.messageKey|trans(error.messageData, 'security') }}</span>
+                    </div>
+                {% endif %}
+
+                <div class="auth-field">
+                    <label for="username">Email</label>
+                    {# The field names are `form_login`'s defaults. They are the
+                       firewall's contract, not this template's choice: rename
+                       one here and the POST authenticates nobody. #}
+                    <input class="fld" type="email" id="username" name="_username"
+                           value="{{ last_username }}" autocomplete="email"
+                           placeholder="you@example.test" required autofocus>
+                </div>
+
+                <div class="auth-field">
+                    <label for="password">Password</label>
+                    <input class="fld" type="password" id="password" name="_password"
+                           autocomplete="current-password" placeholder="••••••••••" required>
+                </div>
+
+                {# `enable_csrf: true` on the firewall makes this token REQUIRED,
+                   and "authenticate" is the token id Symfony's form_login
+                   authenticator checks. #}
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+                {# The checkbox is rendered unconditionally and does nothing at
+                   all unless the installation's firewall has a `remember_me`
+                   key — the recipe writes one, a host is free to delete it. That
+                   is the honest failure direction: a box that is ignored, rather
+                   than a firewall this bundle pretends to configure. #}
+                <div class="auth-row">
+                    <label class="auth-remember">
+                        <input type="checkbox" name="_remember_me"> Remember me for a week
+                    </label>
+                </div>
+
+                <button class="cta" type="submit">Sign in</button>
+            </form>
+        </div>
+    </main>
+{% endblock %}

@@ -1,0 +1,94 @@
+{
+    "name": "uhifadhi/team-module",
+    "description": "Team: who an installation's people are and how they sign in — the user account, the sign-in screen, the position that bundles permissions, and the permission catalogue every module's declarations fold into.",
+    "type": "symfony-bundle",
+    "keywords": [
+        "identity",
+        "authentication",
+        "authorization",
+        "permissions",
+        "team",
+        "conservation",
+        "symfony",
+        "uhifadhi"
+    ],
+    "license": "AGPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Ezekiel Mjema",
+            "homepage": "https://github.com/eemjema"
+        }
+    ],
+    "require": {
+        "php": ">=8.4",
+        "doctrine/dbal": "^4.0",
+        "doctrine/doctrine-bundle": "^3.0",
+        "doctrine/orm": "^3.5",
+        "symfony/config": "^7.3 || ^8.0",
+        "symfony/dependency-injection": "^7.3 || ^8.0",
+        "symfony/framework-bundle": "^7.3 || ^8.0",
+        "symfony/http-foundation": "^7.3 || ^8.0",
+        "symfony/http-kernel": "^7.3 || ^8.0",
+        "symfony/security-bundle": "^7.3 || ^8.0",
+        "symfony/uid": "^7.3 || ^8.0",
+        "twig/twig": "^3.12",
+        "uhifadhi/module-contracts": "^0.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Uhifadhi\\Team\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Uhifadhi\\Team\\Tests\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "phpstan/phpstan": "^2.2",
+        "phpunit/phpunit": "^13.2",
+        "symfony/asset": "^7.3 || ^8.0",
+        "symfony/asset-mapper": "^7.3 || ^8.0",
+        "symfony/browser-kit": "^7.3 || ^8.0",
+        "symfony/css-selector": "^7.3 || ^8.0",
+        "symfony/twig-bundle": "^7.3 || ^8.0",
+        "uhifadhi/shell-module": "^0.4"
+    },
+    "suggest": {
+        "uhifadhi/shell-module": "The page frame the sign-in screen renders in; without it the module ships no styling of its own."
+    },
+    "scripts": {
+        "cs:fix": "php-cs-fixer fix",
+        "cs:check": "php-cs-fixer fix --dry-run --diff",
+        "phpstan": "phpstan analyse --no-progress --memory-limit=1G",
+        "test": "phpunit",
+        "check": [
+            "@cs:check",
+            "@phpstan",
+            "@test"
+        ]
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.1-dev"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "repositories": [
+        {
+            "name": "module-contracts",
+            "type": "vcs",
+            "url": "https://github.com/uhifadhilabs/module-contracts"
+        },
+        {
+            "name": "shell-module",
+            "type": "vcs",
+            "url": "https://github.com/uhifadhilabs/shell-module"
+        }
+    ]
+}
