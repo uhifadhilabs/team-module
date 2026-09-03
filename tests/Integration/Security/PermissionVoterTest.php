@@ -20,12 +20,18 @@ use Uhifadhi\Team\Entity\User;
 use Uhifadhi\Team\Enum\PermissionEnum;
 use Uhifadhi\Team\Enum\TeamRoleEnum;
 use Uhifadhi\Team\Security\PermissionVoter;
+use Uhifadhi\Team\Service\PermissionCatalogue;
 use Uhifadhi\Team\Tests\Integration\IntegrationTestCase;
 
 /**
- * WHO HOLDS WHAT. Admin and above hold every permission by tier; everyone else
- * — Manager included — holds exactly their position's, module-declared values
- * among them. Anything outside the catalogue is none of this voter's business.
+ * WHO HOLDS WHAT. Super Admin and Admin hold every permission by tier; Staff —
+ * which is now everybody else — hold exactly their position's, module-declared
+ * values among them. Anything outside the catalogue is none of this voter's
+ * business.
+ *
+ * `team.manage` is decided here like any other row, which is the whole of what
+ * retiring the Manager tier bought: administering the team is a permission a
+ * position grants and this voter answers for, not a column beside the matrix.
  */
 final class PermissionVoterTest extends IntegrationTestCase
 {
@@ -41,6 +47,15 @@ final class PermissionVoterTest extends IntegrationTestCase
             new UsernamePasswordToken($user, 'main', $user->getRoles()),
             null,
             $attributes,
+        );
+    }
+
+    /** @param list<string> $values */
+    private function positionGranting(string $name, array $values): Position
+    {
+        return (new Position())->setName($name)->setPermissionValues(
+            $values,
+            $this->service(PermissionCatalogue::class)->values(),
         );
     }
 
@@ -60,20 +75,40 @@ final class PermissionVoterTest extends IntegrationTestCase
         self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($admin, ['surveys.record']));
     }
 
-    public function testAManagerHoldsOnlyTheirPosition(): void
+    /**
+     * WHAT THE MANAGER TIER BECAME. A Staff member whose position carries
+     * `team.manage` administers the team, and holds nothing else they were not
+     * given. This is the test the retired tier's own test turned into.
+     */
+    public function testAStaffMemberAdministersTheTeamWhenTheirPositionSaysSo(): void
     {
-        $position = (new Position())->setName('Warden')->setPermissions([PermissionEnum::AreaView]);
-        $manager = (new User())->setEmail('m@example.test')->setFirstName('M')->setLastName('G')
-            ->setPassword('x')->setTeamRole(TeamRoleEnum::Manager)->setPosition($position);
+        $position = $this->positionGranting('Warden', [
+            PermissionEnum::AreaView->value,
+            PermissionEnum::TeamManage->value,
+        ]);
+        $grace = $this->staffWith($position);
 
-        self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($manager, ['area.view']));
-        self::assertSame(VoterInterface::ACCESS_DENIED, $this->vote($manager, ['area.delete']));
+        self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($grace, ['team.manage']));
+        self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($grace, ['area.view']));
+        // And nothing beyond it: the tier grants her nothing at all.
+        self::assertSame(VoterInterface::ACCESS_DENIED, $this->vote($grace, ['area.delete']));
+    }
+
+    /** Take the row off the position and the authority goes with it, in one click. */
+    public function testRevokingTeamManageEndsTheAuthority(): void
+    {
+        $position = $this->positionGranting('Warden', [PermissionEnum::TeamManage->value]);
+        $grace = $this->staffWith($position);
+        self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($grace, ['team.manage']));
+
+        $position->setPermissionValues([], $this->service(PermissionCatalogue::class)->values());
+
+        self::assertSame(VoterInterface::ACCESS_DENIED, $this->vote($grace, ['team.manage']));
     }
 
     public function testStaffHoldExactlyTheirPositionIncludingAModulesDeclaration(): void
     {
-        $position = (new Position())->setName('Recorder')
-            ->setPermissionValues(['area.view', 'surveys.record']);
+        $position = $this->positionGranting('Recorder', ['area.view', 'surveys.record']);
 
         self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($this->staffWith($position), ['area.view']));
         self::assertSame(VoterInterface::ACCESS_GRANTED, $this->vote($this->staffWith($position), ['surveys.record']));

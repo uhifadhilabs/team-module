@@ -18,16 +18,21 @@ use PHPUnit\Framework\TestCase;
 use Uhifadhi\Team\Enum\PermissionEnum;
 
 /**
- * THE CATALOGUE IS SIX, AND THE LIST IS WRITTEN OUT HERE.
+ * THE CATALOGUE IS SEVEN, AND THE LIST IS WRITTEN OUT HERE.
  *
  * Not counted — spelled. A permission is a power somebody holds, so adding one
- * is a decision, and a test that only counted would let the seventh arrive by
- * accident and the wrong sixth be swapped in silently.
+ * is a decision, and a test that only counted would let the eighth arrive by
+ * accident and the wrong seventh be swapped in silently.
+ *
+ * THE SEVENTH IS `team.manage`, and it is what the retired Manager tier became.
+ * Administering the team used to be answered by the tier column; it is now an
+ * ordinary row in the matrix under its own umbrella, which is what makes "who
+ * administers this installation" a question with a countable answer.
  */
 #[CoversClass(PermissionEnum::class)]
 final class PermissionEnumTest extends TestCase
 {
-    public function testTheCatalogueIsExactlyTheSixNamedPermissions(): void
+    public function testTheCatalogueIsExactlyTheSevenNamedPermissions(): void
     {
         self::assertSame([
             'area.view',
@@ -36,6 +41,7 @@ final class PermissionEnumTest extends TestCase
             'area.delete',
             'module.view',
             'module.create',
+            'team.manage',
         ], array_map(static fn (PermissionEnum $p): string => $p->value, PermissionEnum::all()));
     }
 
@@ -75,12 +81,52 @@ final class PermissionEnumTest extends TestCase
         self::assertSame('Modules · Add', PermissionEnum::ModuleCreate->label());
     }
 
-    public function testTheTwoUmbrellasAreTheOnlyOnes(): void
+    /**
+     * The Team umbrella is the new one, and it carries exactly one row. An
+     * umbrella with one permission is not a mistake: the umbrella is the coarse
+     * region an installation's access_control can name (`ROLE_TEAM` keeps
+     * `/team` shut), and the granular row is what the voter decides.
+     */
+    public function testTeamManageIsTheSeventhUnderItsOwnUmbrella(): void
+    {
+        self::assertSame('Team', PermissionEnum::TeamManage->umbrella());
+        self::assertSame('Manage', PermissionEnum::TeamManage->action());
+        self::assertSame('ROLE_TEAM', PermissionEnum::TeamManage->capabilityRole());
+        self::assertSame('Team · Manage', PermissionEnum::TeamManage->label());
+    }
+
+    public function testTheThreeUmbrellasAreTheOnlyOnes(): void
     {
         $umbrellas = array_values(array_unique(
             array_map(static fn (PermissionEnum $p): string => $p->umbrella(), PermissionEnum::all()),
         ));
 
-        self::assertSame(['Areas', 'Modules'], $umbrellas);
+        self::assertSame(['Areas', 'Modules', 'Team'], $umbrellas);
+    }
+
+    /**
+     * EVERY PERMISSION CARRIES ITS SENTENCE, the core seven exactly as the
+     * declared ones do. The matrix prints it under the name, so a core row that
+     * had none would be the one row on the page an administrator cannot read —
+     * and the rule this release states is that there are no such rows.
+     */
+    public function testEveryCorePermissionExplainsItself(): void
+    {
+        foreach (PermissionEnum::all() as $permission) {
+            self::assertNotSame(
+                '',
+                trim($permission->description()),
+                $permission->value.' is a power somebody can be granted with no sentence saying what it does.',
+            );
+        }
+    }
+
+    /**
+     * The sentence is about the holder and not about the mechanism. Spot-checked
+     * on the one permission whose meaning is easiest to state wrongly.
+     */
+    public function testTheSentenceSaysWhatHoldingItLetsSomebodyDo(): void
+    {
+        self::assertStringContainsString('team', strtolower(PermissionEnum::TeamManage->description()));
     }
 }

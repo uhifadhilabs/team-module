@@ -18,9 +18,11 @@ use Uhifadhi\ModuleContracts\ModuleProviderInterface;
 use Uhifadhi\ModuleContracts\ModuleProviderTrait;
 
 /**
- * Any installed module bundle, played by a fixture: it DECLARES one permission.
- * The catalogue must carry it beside the core seven, and the voter must decide
- * it — that is the whole of what declaring buys a module.
+ * Any installed module bundle, played by a fixture: it DECLARES one permission,
+ * with the sentence every declaration now has to carry. The catalogue must hold
+ * it beside the core seven, the matrix must print its sentence like any other,
+ * and the voter must decide it — that is the whole of what declaring buys a
+ * module.
  */
 final class DeclaringModuleProvider implements ModuleProviderInterface
 {
@@ -43,6 +45,11 @@ final class DeclaringModuleProvider implements ModuleProviderInterface
 
     public function permissions(): array
     {
-        return [new ModulePermission('surveys.record', 'Surveys', 'Record')];
+        return [new ModulePermission(
+            'surveys.record',
+            'Surveys',
+            'Record',
+            'Enter a survey from the field and attach its counts to an area.',
+        )];
     }
 }

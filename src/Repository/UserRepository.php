@@ -16,6 +16,7 @@ namespace Uhifadhi\Team\Repository;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Uhifadhi\Team\Entity\User;
+use Uhifadhi\Team\Enum\TeamRoleEnum;
 
 /**
  * @extends ServiceEntityRepository<User>
@@ -52,12 +53,48 @@ final class UserRepository extends ServiceEntityRepository
     }
 
     /**
-     * The roster the field app caches at sign-in: everyone who can be named as
-     * a patrol team member. Ordered by name so the phone's picker is stable.
+     * How many people could still sign in and administer this installation at
+     * the top tier. The number the sole-Super-Admin invariant turns on
+     * ({@see \Uhifadhi\Team\Service\SuperAdminInvariant}).
+     *
+     * ACTIVE ONLY, deliberately: a Super Admin who left in March cannot fix
+     * anything, so counting them would let the last usable account be
+     * deactivated on the strength of one that is not.
+     */
+    public function countActiveSuperAdmins(): int
+    {
+        return (int) $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->andWhere('u.teamRole = :tier')
+            ->andWhere('u.isActive = true')
+            ->setParameter('tier', TeamRoleEnum::SuperAdmin->value)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Whether this installation has anybody at all — the question the bootstrap
+     * command asks to decide whether the account it is about to make is the
+     * first, and therefore a Super Admin by default.
+     */
+    public function isEmpty(): bool
+    {
+        return 0 === (int) $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Everyone who can be named as a patrol team member — the roster the field
+     * app caches at sign-in. Ordered by name so the phone's picker is stable.
+     *
+     * NOT the /team page's list: that one searches, filters and pages, and it
+     * is {@see findPage()} over a {@see \Uhifadhi\Team\Model\RosterQuery}.
      *
      * @return list<User>
      */
-    public function findRoster(): array
+    public function findAllByName(): array
     {
         /** @var list<User> $users */
         $users = $this->createQueryBuilder('u')

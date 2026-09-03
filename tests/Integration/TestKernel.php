@@ -99,6 +99,9 @@ final class TestKernel extends Kernel
                 'main' => [
                     'lazy' => true,
                     'provider' => 'team_user_provider',
+                    // Exactly as the README tells an installation to write it: a
+                    // deactivated account is refused at the door, with a reason.
+                    'user_checker' => 'team.user_checker',
                     'form_login' => [
                         'login_path' => 'team_login',
                         'check_path' => 'team_login',
@@ -112,7 +115,9 @@ final class TestKernel extends Kernel
                 ],
             ],
             'role_hierarchy' => [
-                'ROLE_ADMIN' => ['ROLE_MANAGER', 'ROLE_AREAS', 'ROLE_MODULES'],
+                // No ROLE_MANAGER: the tier that emitted it is gone, and what it
+                // stood for is the team.manage permission under ROLE_TEAM.
+                'ROLE_ADMIN' => ['ROLE_AREAS', 'ROLE_MODULES', 'ROLE_TEAM'],
                 'ROLE_SUPER_ADMIN' => ['ROLE_ADMIN', 'ROLE_ALLOWED_TO_SWITCH'],
             ],
             'access_control' => [
@@ -157,6 +162,8 @@ final class TestKernel extends Kernel
             \Uhifadhi\Team\Security\PermissionVoter::class => 'team.permission_voter',
             \Uhifadhi\Team\Repository\UserRepository::class => \Uhifadhi\Team\Repository\UserRepository::class,
             \Uhifadhi\Team\Repository\PositionRepository::class => \Uhifadhi\Team\Repository\PositionRepository::class,
+            \Uhifadhi\Team\Repository\DepartmentRepository::class => \Uhifadhi\Team\Repository\DepartmentRepository::class,
+            \Uhifadhi\Team\Service\SuperAdminInvariant::class => 'team.super_admin_invariant',
         ] as $class => $serviceId) {
             $container->services()->alias('test_public.'.$class, $serviceId)->public();
         }

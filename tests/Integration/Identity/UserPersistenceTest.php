@@ -20,6 +20,7 @@ use Uhifadhi\Team\Entity\User;
 use Uhifadhi\Team\Enum\PermissionEnum;
 use Uhifadhi\Team\Enum\TeamRoleEnum;
 use Uhifadhi\Team\Repository\UserRepository;
+use Uhifadhi\Team\Service\PermissionCatalogue;
 use Uhifadhi\Team\Tests\Integration\IntegrationTestCase;
 
 /**
@@ -85,8 +86,10 @@ final class UserPersistenceTest extends IntegrationTestCase
 
     public function testRolesAreTheTiersPlusThePositionsCapabilityRoles(): void
     {
-        $position = (new Position())->setName('Analyst')
-            ->setPermissions([PermissionEnum::AreaView, PermissionEnum::ModuleView]);
+        $position = (new Position())->setName('Analyst')->setPermissionValues(
+            [PermissionEnum::AreaView->value, PermissionEnum::ModuleView->value],
+            $this->service(PermissionCatalogue::class)->values(),
+        );
 
         $staff = (new User())->setEmail('staff@example.test')->setFirstName('S')->setLastName('T')
             ->setPassword('x')->setTeamRole(TeamRoleEnum::Staff)->setPosition($position);

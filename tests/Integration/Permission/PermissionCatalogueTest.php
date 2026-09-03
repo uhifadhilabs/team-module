@@ -18,9 +18,12 @@ use Uhifadhi\Team\Service\PermissionCatalogue;
 use Uhifadhi\Team\Tests\Integration\IntegrationTestCase;
 
 /**
- * ONE CATALOGUE, TWO SOURCES. The six permissions this module owns, then
+ * ONE CATALOGUE, TWO SOURCES. The seven permissions this module owns, then
  * whatever the installed modules declared through the seam's tag — in that
  * order, because core always precedes and a module may never shadow it.
+ *
+ * EVERY ENTRY CARRIES ITS SENTENCE, whichever side declared it. The matrix
+ * prints it under the name, and it does not ask where the row came from.
  */
 final class PermissionCatalogueTest extends IntegrationTestCase
 {
@@ -29,7 +32,7 @@ final class PermissionCatalogueTest extends IntegrationTestCase
         return $this->service(PermissionCatalogue::class);
     }
 
-    public function testTheCoreSixComeFirstInEnumOrder(): void
+    public function testTheCoreSevenComeFirstInEnumOrder(): void
     {
         $values = array_map(
             static fn (Permission $p): string => $p->value,
@@ -38,15 +41,15 @@ final class PermissionCatalogueTest extends IntegrationTestCase
 
         self::assertSame([
             'area.view', 'area.create', 'area.edit', 'area.delete',
-            'module.view', 'module.create',
-        ], \array_slice($values, 0, 6));
+            'module.view', 'module.create', 'team.manage',
+        ], \array_slice($values, 0, 7));
     }
 
     public function testAModulesDeclarationJoinsTheCatalogue(): void
     {
         // The kernel registers one module bundle declaring "surveys.record".
         self::assertTrue($this->catalogue()->has('surveys.record'));
-        self::assertCount(7, $this->catalogue()->all());
+        self::assertCount(8, $this->catalogue()->all());
     }
 
     public function testAModuleDeclarationNeverCarriesACapabilityRole(): void
@@ -67,8 +70,35 @@ final class PermissionCatalogueTest extends IntegrationTestCase
     {
         $grouped = $this->catalogue()->groupedByUmbrella();
 
-        self::assertSame(['Areas', 'Modules', 'Surveys'], array_keys($grouped));
+        self::assertSame(['Areas', 'Modules', 'Team', 'Surveys'], array_keys($grouped));
         self::assertCount(4, $grouped['Areas']);
+    }
+
+    /**
+     * The sentence survives the fold, from both sides. A catalogue that carried
+     * descriptions for its own seven and dropped the modules' would produce a
+     * matrix where the rows an administrator understands least are the ones
+     * with nothing written under them.
+     */
+    public function testEveryEntryCarriesItsSentenceWhicheverSideDeclaredIt(): void
+    {
+        foreach ($this->catalogue()->all() as $permission) {
+            self::assertNotSame('', trim($permission->description), $permission->value.' has no sentence.');
+        }
+
+        foreach ($this->catalogue()->all() as $permission) {
+            if ('surveys.record' === $permission->value) {
+                self::assertSame(
+                    'Enter a survey from the field and attach its counts to an area.',
+                    $permission->description,
+                    'A module\'s own words reach the matrix unchanged.',
+                );
+
+                return;
+            }
+        }
+
+        self::fail('The declared permission is not in the catalogue.');
     }
 
     public function testAnUnknownValueIsFilteredOutOnWrite(): void

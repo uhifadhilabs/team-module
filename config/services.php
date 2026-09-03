@@ -14,10 +14,13 @@ declare(strict_types=1);
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Uhifadhi\Team\Controller\SecurityController;
+use Uhifadhi\Team\Repository\DepartmentRepository;
 use Uhifadhi\Team\Repository\PositionRepository;
 use Uhifadhi\Team\Repository\UserRepository;
+use Uhifadhi\Team\Security\ActiveUserChecker;
 use Uhifadhi\Team\Security\PermissionVoter;
 use Uhifadhi\Team\Service\PermissionCatalogue;
+use Uhifadhi\Team\Service\SuperAdminInvariant;
 
 /*
  * The bundle's static service wiring.
@@ -38,9 +41,11 @@ use Uhifadhi\Team\Service\PermissionCatalogue;
  * The ids are the published surface. They are private, as a reusable bundle's
  * should be; anything that wants one aliases it.
  *
- *   team.permissions        the catalogue: this bundle's seven + what modules declared
- *   team.permission_voter   who holds which of them
- *   team.controller.security  the sign-in screen
+ *   team.permissions            the catalogue: this bundle's seven + what modules declared
+ *   team.permission_voter       who holds which of them
+ *   team.super_admin_invariant  the refusal that keeps one active Super Admin
+ *   team.user_checker           the sign-in refusal for a deactivated account
+ *   team.controller.security    the sign-in screen
  *
  * Controllers extend nothing and take their collaborators explicitly, patterned
  * on FrameworkBundle's own TemplateController (see
@@ -65,6 +70,10 @@ return static function (ContainerConfigurator $container): void {
         ->args([service('doctrine')])
         ->tag('doctrine.repository_service');
 
+    $services->set(DepartmentRepository::class)
+        ->args([service('doctrine')])
+        ->tag('doctrine.repository_service');
+
     /*
      * THE CATALOGUE, reading the module providers LIVE from the container in
      * registration order — which is what makes uninstalling a bundle take its
@@ -86,6 +95,23 @@ return static function (ContainerConfigurator $container): void {
     $services->set('team.permission_voter', PermissionVoter::class)
         ->args([service('team.permissions')])
         ->tag('security.voter');
+
+    /*
+     * THE SOLE-ACTIVE-SUPER-ADMIN INVARIANT. Every write path that lowers a
+     * tier or deactivates an account asks this first, so the refusal happens
+     * before anything is stored rather than after.
+     */
+    $services->set('team.super_admin_invariant', SuperAdminInvariant::class)
+        ->args([service(UserRepository::class)]);
+
+    /*
+     * The sign-in refusal for a deactivated account. NOT tagged: a user checker
+     * is named by the FIREWALL (`user_checker:`), which is the installation's
+     * file — so the service is registered and public here, and the README's
+     * security block names its id. A tag would have been this bundle deciding
+     * a firewall's shape for every installation that has one.
+     */
+    $services->set('team.user_checker', ActiveUserChecker::class)->public();
 
     /*
      * The sign-in screen. Registered unconditionally: this bundle requires

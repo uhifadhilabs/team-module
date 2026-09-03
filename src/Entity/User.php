@@ -19,6 +19,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Uhifadhi\ModuleContracts\Entity\UserInterface as ModuleUserInterface;
 use Uhifadhi\Team\Entity\Trait\TimestampableTrait;
 use Uhifadhi\Team\Entity\Trait\UuidTrait;
+use Uhifadhi\Team\Enum\PermissionEnum;
 use Uhifadhi\Team\Enum\TeamRoleEnum;
 use Uhifadhi\Team\Repository\UserRepository;
 
@@ -100,10 +101,63 @@ class User implements ModuleUserInterface, PasswordAuthenticatedUserInterface, U
     #[ORM\Column(enumType: TeamRoleEnum::class)]
     private TeamRoleEnum $teamRole = TeamRoleEnum::Staff;
 
-    /** The position a Staff user holds; Super Admin / Admin / Manager hold everything by tier. */
+    /** The position a Staff user holds; Super Admin and Admin hold everything by tier. */
     #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Position $position = null;
+
+    /**
+     * WHETHER THIS PERSON MAY STILL SIGN IN, and the reason there is no delete.
+     *
+     * "This ranger left in March" and "this ranger never existed" are different
+     * facts, and a DELETE makes them one operation — it would take the author
+     * off every patrol they ever recorded. So leaving is deactivation: the flag
+     * goes false, {@see $disabledAt} records when, the row stays in every list
+     * under an inactive filter, and coming back is one click. Nothing in this
+     * module destroys an account.
+     */
+    #[ORM\Column]
+    private bool $isActive = true;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $disabledAt = null;
+
+    /**
+     * RESERVED, AND NOTHING WRITES IT. A future recycle bin — removed records
+     * listed on a surface of their own, with an explicit purge — is a design
+     * this release does not draw. The column is here so that design is not
+     * foreclosed by a schema with nowhere to put the marker, which is a cheaper
+     * thing to carry than a migration on a table full of people.
+     *
+     * It is NOT the deactivation flag under another name. Deactivation is a
+     * state an account lives in and comes back from; this would mark one on its
+     * way out of the product entirely.
+     */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $deletedAt = null; // @phpstan-ignore property.unusedType (reserved: nothing writes it yet — see above)
+
+    /**
+     * HOW THE ACCOUNT CAME TO EXIST — two nullable columns, and the null is
+     * meaningful rather than missing. An account created with a password by an
+     * administrator in the room was never invited by anybody, so both stay
+     * null and the roster reads "created directly · no invitation". An invited
+     * one reads "invited by Naomi Kileo · 3 days ago". Two kinds of
+     * never-signed-in account, wanting two different things done about them.
+     *
+     * The line is shown only beside "never signed in": once somebody has signed
+     * in, the invitation has done its job and stops being news.
+     */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $invitedAt = null;
+
+    /**
+     * Self-referencing and nullable, with the FK nulled rather than cascading:
+     * the person who invited somebody may themselves be deactivated later, and
+     * an account must never be deleted because of who introduced it.
+     */
+    #[ORM\ManyToOne(targetEntity: self::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?self $invitedBy = null;
 
     #[ORM\Column]
     private ?string $password = null;
@@ -189,9 +243,19 @@ class User implements ModuleUserInterface, PasswordAuthenticatedUserInterface, U
 
     /**
      * Stored roles + ROLE_USER, then the tier's roles and — for Staff — the capability role of
-     * each permission in their position. Super Admin / Admin / Manager hold every permission by
+     * each CORE permission in their position. Super Admin and Admin hold every permission by
      * tier (role_hierarchy + the voter's canManageContent()); Staff open only their position's
      * umbrellas here, with the granular action checked by {@see \Uhifadhi\Team\Security\PermissionVoter}.
+     *
+     * A MODULE-DECLARED PERMISSION MINTS NO ROLE, which is why the loop below
+     * resolves each stored value through the core enum and skips what is not
+     * one. Declaring is not granting: a module may make a value assignable and
+     * may never open a URL region an installation's access_control names.
+     *
+     * There is no ROLE_MANAGER. The tier that emitted it is gone, and what it
+     * used to stand for is `team.manage` — an ordinary permission, whose
+     * umbrella role is ROLE_TEAM and which reaches this list through a position
+     * like every other capability.
      *
      * @return list<string>
      */
@@ -208,16 +272,14 @@ class User implements ModuleUserInterface, PasswordAuthenticatedUserInterface, U
             case TeamRoleEnum::Admin:
                 $roles[] = 'ROLE_ADMIN';
                 break;
-            case TeamRoleEnum::Manager:
             case TeamRoleEnum::Staff:
-                // Manager and Staff are position-driven: their capability roles come from
-                // the assigned Position, nothing by tier.
-                if (TeamRoleEnum::Manager === $this->teamRole) {
-                    $roles[] = 'ROLE_MANAGER';
-                }
+                // Position-driven: nothing by tier at all.
                 if (null !== $this->position) {
-                    foreach ($this->position->getPermissions() as $permission) {
-                        $roles[] = $permission->capabilityRole();
+                    foreach ($this->position->getPermissionValues() as $value) {
+                        $core = PermissionEnum::tryFrom($value);
+                        if (null !== $core) {
+                            $roles[] = $core->capabilityRole();
+                        }
                     }
                 }
                 break;
@@ -258,6 +320,80 @@ class User implements ModuleUserInterface, PasswordAuthenticatedUserInterface, U
         $this->position = $position;
 
         return $this;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->isActive;
+    }
+
+    /**
+     * The way somebody leaves. Not a delete, and there is no delete: everything
+     * this person recorded keeps its author, they stay on every list under the
+     * inactive filter, and {@see reactivate()} is one click.
+     *
+     * The sole-active-Super-Admin invariant is NOT checked here. An entity
+     * cannot count its own siblings, and an invariant that only holds when the
+     * caller remembers to ask is not one — so the check lives in
+     * {@see \Uhifadhi\Team\Service\SuperAdminInvariant}, which every write path
+     * in this module goes through.
+     */
+    public function deactivate(?\DateTimeImmutable $at = null): static
+    {
+        $this->isActive = false;
+        $this->disabledAt = $at ?? new \DateTimeImmutable();
+
+        return $this;
+    }
+
+    public function reactivate(): static
+    {
+        $this->isActive = true;
+        // Cleared rather than kept: a stale "disabled at" on an active account
+        // is a fact that reads as true and is not.
+        $this->disabledAt = null;
+
+        return $this;
+    }
+
+    public function getDisabledAt(): ?\DateTimeImmutable
+    {
+        return $this->disabledAt;
+    }
+
+    /** Reserved for a recycle bin this release does not draw — see the property. */
+    public function getDeletedAt(): ?\DateTimeImmutable
+    {
+        return $this->deletedAt;
+    }
+
+    public function getInvitedAt(): ?\DateTimeImmutable
+    {
+        return $this->invitedAt;
+    }
+
+    public function getInvitedBy(): ?self
+    {
+        return $this->invitedBy;
+    }
+
+    /**
+     * Records that this account came from an invitation, and from whom. Both
+     * facts are written together because half of them is not a fact: "invited
+     * three days ago" by nobody is not something a screen can print.
+     */
+    public function markInvitedBy(self $inviter, ?\DateTimeImmutable $at = null): static
+    {
+        $this->invitedBy = $inviter;
+        $this->invitedAt = $at ?? new \DateTimeImmutable();
+
+        return $this;
+    }
+
+    /** Whether this account came from an invitation at all — the null that the roster reads. */
+    public function wasInvited(): bool
+    {
+        return null !== $this->invitedAt;
     }
 
     public function getPassword(): ?string
