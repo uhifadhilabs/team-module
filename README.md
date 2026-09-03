@@ -146,7 +146,10 @@ doctrine:
 ```
 
 Write it once. Every module that points at a person resolves through it, and a
-module installed later needs nothing further. **What stops without it is the
+module installed later needs nothing further. **Merge it into the block already
+there** — that file opens with `doctrine:`, and a second `doctrine:` key in the
+same file is not valid YAML; `resolve_target_entities` goes under the existing
+`orm:`, beside `mappings`. **What stops without it is the
 schema, not the boot**: the container compiles and the kernel starts, but
 `doctrine:migrations:diff` reports `Class
 'Uhifadhi\ModuleContracts\Entity\UserInterface' does not exist` — the same
