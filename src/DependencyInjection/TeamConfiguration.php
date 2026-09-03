@@ -17,8 +17,8 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 
 /**
- * The bundle's semantic configuration — how a host configures identity in
- * config/packages/team.yaml:
+ * The module's semantic configuration — how an installation configures identity
+ * in config/packages/team.yaml:
  *
  *   team:
  *     after_sign_in_path: /
@@ -27,10 +27,10 @@ use Symfony\Component\Config\Definition\Builder\NodeDefinition;
  * TWO KEYS, AND NEITHER OF THEM IS SECURITY. What a deployment usually wants to
  * change about signing in — who may reach what, how long a session lives,
  * whether there is a remember-me cookie — is not here and cannot be: it is
- * `security.yaml`, which belongs to the installing project (see the bundle
- * class). What IS here is the two things the SCREEN needs and a firewall has no
- * opinion about: where a signed-in visitor is bounced to, and the sentence the
- * card says under the mark.
+ * the security configuration, which belongs to the installing project (see the
+ * bundle class). What IS here is the two things the SCREEN needs and a firewall
+ * has no opinion about: where a signed-in visitor is bounced to, and the
+ * sentence the card says under the mark.
  *
  * The tree is closed, so an invented key fails loudly.
  *

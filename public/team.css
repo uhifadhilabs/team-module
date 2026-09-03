@@ -67,8 +67,9 @@
 
 /* THE FIELD, and it lives here rather than in the shell on purpose. The shell
    owns what every page shows — plates, chips, the CTA — and a text input is not
-   that: this is the only screen in the module that has one. A host with forms of
-   its own defines .fld again and wins, because its own sheet loads after this. */
+   that: this is the only screen in the module that has one. An installation with
+   forms of its own defines .fld again and wins, because its sheet loads after
+   this one. */
 .fld {
     background: rgb(var(--c-raised));
     border: 1px solid var(--c-ln2);

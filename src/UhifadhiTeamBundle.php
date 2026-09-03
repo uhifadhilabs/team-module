@@ -32,14 +32,14 @@ use Uhifadhi\Team\DependencyInjection\TeamConfiguration;
  * application configuration by Symfony's own design — `security.yaml` lives in
  * the installing project, because only that project knows which of its paths
  * are public. This bundle's Flex recipe WRITES that file, pointed at the user
- * provider and the routes below; a host is free to edit it afterwards, and
- * every host does. There is no separate security module and there is nothing
+ * provider and the routes below; an installation is free to edit it afterwards,
+ * and every one does. There is no separate security module and there is nothing
  * for one to hold.
  *
- * ZERO-CONFIG. Registering the bundle maps its own entities (no host doctrine
- * block for team_user / team_position), wires its own services and registers
- * its voter. The recipe adds the two things a bundle genuinely cannot write
- * for itself: the firewall, and the routes.
+ * ZERO-CONFIG. Registering the bundle maps its own entities (no doctrine block
+ * for team_user / team_position in the installing project), wires its own
+ * services and registers its voter. The recipe adds the two things a module
+ * genuinely cannot write for itself: the firewall, and the routes.
  */
 final class UhifadhiTeamBundle extends AbstractBundle
 {
@@ -47,7 +47,7 @@ final class UhifadhiTeamBundle extends AbstractBundle
      * WHERE THIS BUNDLE'S OWN VOCABULARY IS SERVED FROM. The sign-in card is
      * the shell's document plus this sheet — the shell draws frames and knows
      * nothing about a login form, so the card's rules ship here. Stated once,
-     * as a constant, because templates/login.html.twig links it and a host
+     * as a constant, because templates/login.html.twig links it and anyone
      * theming the screen has to be able to name it.
      */
     public const string STYLESHEET = 'bundles/uhifadhiteam/team.css';
@@ -62,8 +62,8 @@ final class UhifadhiTeamBundle extends AbstractBundle
 
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
     {
-        // Zero-config persistence: the bundle maps its own entities, so hosts
-        // never write a doctrine mappings block for team_* tables.
+        // Zero-config persistence: the bundle maps its own entities, so an
+        // installation never writes a doctrine mappings block for team_* tables.
         if ($builder->hasExtension('doctrine')) {
             $container->extension('doctrine', [
                 'orm' => [

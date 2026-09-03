@@ -29,9 +29,9 @@ use Uhifadhi\Team\Repository\PositionRepository;
  * A POSITION'S NAME IS UNIQUE ACROSS THE INSTALLATION, and that is a narrower rule than the
  * one this model will end up with. The rule it wants is department-scoped — Ecology and
  * Protection Service may each own an "Analyst", sharing a word and nothing else — but a
- * department is a lens somebody else's ring owns, and a bundle cannot scope a name by an
- * entity it does not have. Org-wide unique is the honest rule for a deployment with no
- * departments yet, and widening it later is one migration that drops an index and adds two.
+ * department is a lens another module owns, and this one cannot scope a name by an entity it
+ * does not have. Org-wide unique is the honest rule for an installation with no departments
+ * yet, and widening it later is one migration that drops an index and adds two.
  */
 #[ORM\Entity(repositoryClass: PositionRepository::class)]
 #[ORM\Table(name: 'team_position')]
@@ -67,7 +67,7 @@ class Position
      * A department is an organizational lens over an installation's people — it re-orders
      * what its holders see and grants nothing — and the entity belongs to the ring that
      * introduces it, not to identity. A ManyToOne written here first would have made this
-     * bundle the owner of a concept it does not model, and every host installing it would
+     * module the owner of a concept it does not model, and every installation would
      * have inherited an always-null column. The column arrives with the departments, in the
      * one migration that also fixes the name-uniqueness rule (see the class banner).
      */
@@ -133,7 +133,7 @@ class Position
 
     /**
      * @param list<string> $values catalogue-validated by the caller
-     *                             (see PermissionCatalogueService::knownValues)
+     *                             (see PermissionCatalogue::knownValues)
      */
     public function setPermissionValues(array $values): static
     {

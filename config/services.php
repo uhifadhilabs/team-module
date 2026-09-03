@@ -23,7 +23,7 @@ use Uhifadhi\Team\Service\PermissionCatalogue;
  * The bundle's static service wiring.
  *
  * PHP (not YAML) on purpose: a reusable bundle must not force symfony/yaml onto
- * hosts, and FQCN references stay refactor-safe and phpstan-checked. Imported by
+ * an installation, and FQCN references stay refactor-safe and phpstan-checked. Imported by
  * UhifadhiTeamBundle::loadExtension(), which keeps only the config-DRIVEN bits.
  *
  * Everything below is defined EXPLICITLY — no autowire(), no autoconfigure(),
@@ -36,7 +36,7 @@ use Uhifadhi\Team\Service\PermissionCatalogue;
  *   — https://symfony.com/doc/current/bundles/best_practices.html
  *
  * The ids are the published surface. They are private, as a reusable bundle's
- * should be; a host that wants one aliases it.
+ * should be; anything that wants one aliases it.
  *
  *   team.permissions        the catalogue: this bundle's seven + what modules declared
  *   team.permission_voter   who holds which of them
@@ -90,8 +90,8 @@ return static function (ContainerConfigurator $container): void {
     /*
      * The sign-in screen. Registered unconditionally: this bundle requires
      * symfony/security-bundle outright, unlike a module that merely benefits
-     * from one — a team module in a host with no firewall would be a user table
-     * nobody can ever become.
+     * from one — a team module in an installation with no firewall would be a
+     * user table nobody can ever become.
      *
      * The alias is what makes `SecurityController::login` resolvable from the
      * attribute route: Symfony's controller resolver looks the class name up in

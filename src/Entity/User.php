@@ -28,7 +28,8 @@ use Uhifadhi\Team\Repository\UserRepository;
  *
  * THE TABLE IS `team_user`, not `user`. Every module bundle prefixes its tables with its own
  * name, and identity is no exception: an installation's schema has to say which package owns
- * a table, and `user` is additionally a reserved word every host would have had to quote.
+ * a table, and `user` is additionally a reserved word every installation would have
+ * had to quote.
  *
  * ADDRESSED BY UUID. The sequential id is Doctrine's business; anything outside this bundle —
  * a URL, an API payload, another module's foreign key surface — uses the uuid.
@@ -49,9 +50,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * The web sign-in identifier, and the property the security provider looks a user up by.
      * Unique at the DATABASE, not by a validation constraint: a reusable bundle must not force
-     * symfony/validator and the doctrine bridge onto every host that installs it, and a unique
-     * index is the guard that holds whether or not anything validated first. A host that wants
-     * the friendly "an account already exists" message adds #[UniqueEntity] on its own form.
+     * symfony/validator and the doctrine bridge onto every installation, and a unique index
+     * is the guard that holds whether or not anything validated first. An installation that
+     * wants the friendly "an account already exists" message adds #[UniqueEntity] on its form.
      */
     #[ORM\Column(length: 180, unique: true)]
     private ?string $email = null;
