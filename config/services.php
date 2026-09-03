@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Uhifadhi\Team\Command\CreateUserCommand;
 use Uhifadhi\Team\Controller\SecurityController;
 use Uhifadhi\Team\Repository\DepartmentRepository;
 use Uhifadhi\Team\Repository\PositionRepository;
@@ -45,6 +46,7 @@ use Uhifadhi\Team\Service\SuperAdminInvariant;
  *   team.permission_voter       who holds which of them
  *   team.super_admin_invariant  the refusal that keeps one active Super Admin
  *   team.user_checker           the sign-in refusal for a deactivated account
+ *   team.command.create_user    the bootstrap console command
  *   team.controller.security    the sign-in screen
  *
  * Controllers extend nothing and take their collaborators explicitly, patterned
@@ -112,6 +114,21 @@ return static function (ContainerConfigurator $container): void {
      * a firewall's shape for every installation that has one.
      */
     $services->set('team.user_checker', ActiveUserChecker::class)->public();
+
+    /*
+     * THE BOOTSTRAP COMMAND — how the first administrator of a fresh
+     * installation exists, before there is anybody who could add them through
+     * the product. Tagged by hand like everything else here; a reusable bundle
+     * is not autoconfigured, and an untagged command is one `bin/console` never
+     * lists.
+     */
+    $services->set('team.command.create_user', CreateUserCommand::class)
+        ->args([
+            service(UserRepository::class),
+            service('security.user_password_hasher'),
+            service('doctrine.orm.entity_manager'),
+        ])
+        ->tag('console.command');
 
     /*
      * The sign-in screen. Registered unconditionally: this bundle requires

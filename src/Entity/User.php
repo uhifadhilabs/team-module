@@ -60,6 +60,20 @@ class User implements ModuleUserInterface, PasswordAuthenticatedUserInterface, U
     use TimestampableTrait;
     use UuidTrait;
 
+    /**
+     * The one rule this module enforces on a password, stated once so the three
+     * doors into an account cannot disagree about it: the bootstrap command, the
+     * invitation-acceptance screen and the reset screen all check this number,
+     * and the two screens print it.
+     *
+     * TWELVE, and nothing else. No character classes: a composition rule buys
+     * very little entropy and reliably produces "Password1!", while length buys
+     * a great deal. Everything stronger than a floor — breach-list checks, a
+     * strength meter's opinion — is an installation's own policy to add, and
+     * this module does not pretend to have made it.
+     */
+    public const int PASSWORD_MIN_LENGTH = 12;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
