@@ -128,9 +128,8 @@ final class TestKernel extends Kernel
             ],
         ]);
 
-        $container->extension('twig', [
-            'paths' => [__DIR__.'/Fixtures/templates'],
-        ]);
+        // No extra twig paths: every template this module renders is its own,
+        // reached through the @UhifadhiTeam namespace the bundle registers.
 
         $container->extension('ux_icons', [
             'icon_dir' => __DIR__.'/Fixtures/icons',
