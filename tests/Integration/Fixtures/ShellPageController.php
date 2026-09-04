@@ -21,9 +21,14 @@ use Twig\Environment;
  * installation happens to be on when it is not on one of this module's.
  *
  * The sidebar suite needs one, because the interesting questions about a nav row
- * are asked from OFF it: does an anonymous visitor see it, does a colleague
- * without team.manage see it, and is it lit when it should not be. A suite that
- * could only ever ask from /team would answer none of the three.
+ * are asked from OFF it: does a colleague without team.manage see it, and is it
+ * lit when it should not be. A suite that could only ever ask from /team would
+ * answer neither.
+ *
+ * IT SITS BEHIND THE FIREWALL LIKE EVERY OTHER PAGE. The documented
+ * access_control is default-closed, so this page is reachable by a signed-in
+ * viewer and by nobody else — which is why the anonymous case in that suite is
+ * a redirect to /login rather than a sidebar with nothing in it.
  *
  * The template is built inline rather than shipped as a file, so the test kernel
  * keeps its promise of adding no twig paths: every template this bundle renders
