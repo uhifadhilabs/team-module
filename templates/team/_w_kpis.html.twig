@@ -28,7 +28,7 @@
 {% else %}
     <div class="grid w-flush dp-kstrip">
         <div class="c kpi">
-            <span class="tab"><span class="idx">TM&middot;K1</span>People</span>
+            <span class="tab">People</span>
             <b class="disp">{{ overview.people }}</b>
             <span class="sub">{{ overview.active }} active{% if overview.deactivated %} &middot; <span class="fog">{{ overview.deactivated }} deactivated</span>{% endif %}</span>
         </div>
@@ -39,13 +39,13 @@
            position name in the table below is a link to it. A KPI sub-line says
            what the number is made of; it is not navigation. #}
         <div class="c kpi">
-            <span class="tab"><span class="idx">TM&middot;K2</span>Positions</span>
+            <span class="tab">Positions</span>
             <b class="disp">{{ overview.positions }}</b>
             <span class="sub">{{ overview.departments }} department{{ overview.departments == 1 ? '' : 's' }} &middot; {{ overview.positionsHeld }} of {{ overview.positions }} held</span>
         </div>
 
         <div class="c kpi">
-            <span class="tab"><span class="idx">TM&middot;K3</span>Never signed in</span>
+            <span class="tab">Never signed in</span>
             <b class="disp">{{ overview.neverSignedIn|length }}</b>
             <span class="sub">
                 {%- if overview.neverSignedIn is empty -%}<span class="fog">everybody has arrived</span>
@@ -59,7 +59,7 @@
         </div>
 
         <div class="c kpi">
-            <span class="tab"><span class="idx">TM&middot;K4</span>Hold nothing</span>
+            <span class="tab">Hold nothing</span>
             <b class="disp">{{ overview.holdNothing|length }}</b>
             <span class="sub">
                 {%- if overview.holdNothing is empty -%}<span class="fog">everybody holds a position</span>
@@ -77,7 +77,7 @@
            hold carries team.manage. One number, two mechanisms, and the sub-line
            has to name both or the number is unreadable. #}
         <div class="c kpi hot">
-            <span class="tab"><span class="idx">TM&middot;K5</span>Can administer</span>
+            <span class="tab">Can administer</span>
             <b class="disp">{{ overview.administrators }}<em>of {{ overview.people }}</em></b>
             <span class="sub">{{ overview.administratorsByTier }} by tier &middot; {{ overview.administratorsByPermission }} by <span class="mono">team.manage</span></span>
         </div>

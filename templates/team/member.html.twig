@@ -7,7 +7,7 @@
 
 {% block stylesheets %}
     {{ parent() }}
-    <link rel="stylesheet" href="{{ asset(constant('Uhifadhi\\Team\\UhifadhiTeamBundle::STYLESHEET')) }}">
+    {{ include('@UhifadhiTeam/_stylesheets.html.twig') }}
 {% endblock %}
 
 {% block shell_page_tabs %}{% endblock %}
@@ -61,7 +61,7 @@
 
 {# ─── MB·01 · THE ACCOUNT ─────────────────────────────────────────────── #}
 <div class="c">
-    <span class="tab"><span class="idx">MB&middot;01</span>The account<span class="src">&middot; two booleans, and what each of them gates</span></span>
+    <span class="tab">The account<span class="src">&middot; two booleans, and what each of them gates</span></span>
 
     {% if not member.isActive %}
         <div class="mb-state off">
@@ -103,7 +103,7 @@
 
 {# ─── MB·02 · THE RECORD ──────────────────────────────────────────────── #}
 <div class="c" style="margin-top:18px">
-    <span class="tab"><span class="idx">MB&middot;02</span>The record<span class="src">&middot; exactly the columns team_user has</span></span>
+    <span class="tab">The record<span class="src">&middot; exactly the columns team_user has</span></span>
 
     <form class="mb-form" id="member-form" method="post" action="{{ path('team_member_update', {uuid: member.uuidString}) }}" style="margin-top:14px">
         <input type="hidden" name="_token" value="{{ csrfToken }}">
@@ -134,7 +134,7 @@
 
 {# ─── MB·03 · TIER ────────────────────────────────────────────────────── #}
 <div class="c" style="margin-top:18px">
-    <span class="tab"><span class="idx">MB&middot;03</span>Tier<span class="src">&middot; who stands above the matrix</span></span>
+    <span class="tab">Tier<span class="src">&middot; who stands above the matrix</span></span>
 
     <p class="use" style="margin-top:2px">Three cards rather than a dropdown, because the words do not explain
     themselves and this list is <b>shorter than it used to be</b>. There was a fourth tier, <i>Manager</i>, and it
@@ -191,7 +191,7 @@
 
 {# ─── MB·04 · POSITION ────────────────────────────────────────────────── #}
 <div class="c" style="margin-top:18px">
-    <span class="tab"><span class="idx">MB&middot;04</span>Position<span class="src">&middot; the one control that changes what this person may do</span></span>
+    <span class="tab">Position<span class="src">&middot; the one control that changes what this person may do</span></span>
 
     <p class="use" style="margin-top:2px">A position is assigned, never composed here. There is deliberately <b>no
     per-person permission</b> on this page, because the shipped model has no such thing &mdash; authority lives on
@@ -255,7 +255,7 @@
 
 {# ─── MB·05 · ACCOUNT ACTIONS ─────────────────────────────────────────── #}
 <div class="c" style="margin-top:18px">
-    <span class="tab"><span class="idx">MB&middot;05</span>Account actions<span class="src">&middot; and the one that does not exist</span></span>
+    <span class="tab">Account actions<span class="src">&middot; and the one that does not exist</span></span>
 
     <div class="mb-danger" style="margin-top:6px">
         {% if mayImpersonate and not isSelf %}

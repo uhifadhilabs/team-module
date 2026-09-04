@@ -10,7 +10,7 @@
 {% import '@UhifadhiTeam/positions/_bits.html.twig' as pm %}
 
 <div class="c" data-pm="e">
-    <span class="tab"><span class="idx">PM&middot;E</span>The effective ledger<span class="src">&middot; one person, and the reason on every row</span></span>
+    <span class="tab">The effective ledger<span class="src">&middot; one person, and the reason on every row</span></span>
     <p class="use" style="margin-top:2px">Every permission this installation has, against one person, with
     <b>why</b> beside it. This is where the tier bypass stops being folklore: for somebody above the matrix every
     row reads <i>by tier</i> and their position decides nothing at all.</p>
@@ -35,7 +35,7 @@
         {% set byTier = who.teamRole.canManageContent %}
         {% set held = who.position ? who.position.permissionValues : [] %}
 
-        <div class="pm-ledhead">
+        <div class="pm-subject">
             <b>{{ who.fullName }}</b>
             <span class="tier">{{ who.teamRole.label }}</span>
             {% if who.position %}

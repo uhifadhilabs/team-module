@@ -12,7 +12,7 @@
 {% import '@UhifadhiTeam/positions/_bits.html.twig' as pm %}
 
 <div class="c" data-pm="c">
-    <span class="tab"><span class="idx">PM&middot;C</span>Permission first<span class="src">&middot; who holds this one</span></span>
+    <span class="tab">Permission first<span class="src">&middot; who holds this one</span></span>
     <p class="use" style="margin-top:2px">Shaped like the question an audit actually asks. Read-only for the same
     reason the grid is: one card reaches every position at once.</p>
 
@@ -28,14 +28,14 @@
             </div>
             {% for permission in permissions %}
                 {% set holdingPositions = positions|filter(p => permission.value in p.permissionValues) %}
-                <div class="pm-qcard">
+                <div class="pm-q">
                     <div class="pm-qhead">
                         <b>{{ permission.label }}</b>
                         <span class="perm">{{ permission.value }}</span>
                         <span class="pm-reach">{{ pm.icon_people() }} {{ holdingPositions|length }} position{{ holdingPositions|length == 1 ? '' : 's' }}</span>
                     </div>
-                    <em class="pm-desc">{{ permission.description }}</em>
-                    <div class="pm-qholders">
+                    <em class="pm-qdesc">{{ permission.description }}</em>
+                    <div class="pm-holders">
                         {% for position in holdingPositions %}
                             <a class="qual" href="{{ path('team_positions', {position: position.uuidString}) }}">
                                 {%- if position.department %}<span class="q">{{ position.department.name }}</span><span class="sep">/</span>{% endif -%}

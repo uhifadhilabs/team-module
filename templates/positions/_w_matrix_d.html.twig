@@ -7,7 +7,7 @@
 {% import '@UhifadhiTeam/positions/_bits.html.twig' as pm %}
 
 <div class="c" data-pm="d">
-    <span class="tab"><span class="idx">PM&middot;D</span>Umbrella packs<span class="src">&middot; the catalogue as it grows</span></span>
+    <span class="tab">Umbrella packs<span class="src">&middot; the catalogue as it grows</span></span>
     <p class="use" style="margin-top:2px">One pack per umbrella. The point of this direction is the thing every
     other one leaves implicit: <b>the list of permissions is not fixed</b>, and each pack says who brought it and
     what its removal would cost.</p>
@@ -33,7 +33,7 @@
             </div>
             {% for permission in permissions %}
                 {% set holdingPositions = positions|filter(p => permission.value in p.permissionValues) %}
-                <div class="pm-packrow">
+                <div class="pm-prow">
                     <span class="pm-t">
                         <b>{{ permission.label }}</b>
                         <span class="perm">{{ permission.value }}</span>
@@ -42,7 +42,7 @@
                     <span class="pm-reach">{{ pm.icon_people() }} {{ holdingPositions|length }}</span>
                 </div>
             {% endfor %}
-            <div class="pm-packfoot">
+            <div class="pm-cost">
                 {%- if permissions[0].isCore -%}
                     Ships with the product. Nothing can remove these rows.
                 {%- else -%}

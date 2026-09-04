@@ -4,18 +4,18 @@
 
 <div class="grid w-flush dp-kstrip">
     <div class="c kpi">
-        <span class="tab"><span class="idx">PM&middot;K1</span>Positions</span>
+        <span class="tab">Positions</span>
         <b class="disp">{{ positions|length }}</b>
         <span class="sub">across {{ departments|length }} department{{ departments|length == 1 ? '' : 's' }}</span>
     </div>
     <div class="c kpi">
-        <span class="tab"><span class="idx">PM&middot;K2</span>Placement</span>
+        <span class="tab">Placement</span>
         {% set unheld = positions|filter(p => (holders[p.uuidString]|default(0)) == 0)|length %}
         <b class="disp">{{ positions|length - unheld }}<em>of {{ positions|length }}</em></b>
         <span class="sub">{% if unheld %}{{ unheld }} held by nobody &mdash; created before their first person{% else %}every position has somebody in it{% endif %}</span>
     </div>
     <div class="c kpi">
-        <span class="tab"><span class="idx">PM&middot;K3</span>Grantable</span>
+        <span class="tab">Grantable</span>
         <b class="disp">{{ catalogue|length }}</b>
         {% set core = catalogue|filter(p => p.isCore)|length %}
         <span class="sub">{{ core }} the host&rsquo;s &middot; {{ catalogue|length - core }} from installed modules</span>
@@ -24,7 +24,7 @@
        sake: it is the installation's single point of failure, and the matrix is
        where somebody is in a position to fix it. #}
     <div class="c kpi{{ soleSuperAdmin ? ' hot' : '' }}">
-        <span class="tab"><span class="idx">PM&middot;K4</span>Above the matrix</span>
+        <span class="tab">Above the matrix</span>
         <b class="disp">{{ soleSuperAdmin ? '1' : '2+' }}</b>
         <span class="sub">{% if soleSuperAdmin %}one Super Admin, and no recovery path if it is lost{% else %}more than one Super Admin &mdash; ownership is transferable{% endif %}</span>
     </div>
