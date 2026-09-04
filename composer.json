@@ -60,11 +60,11 @@
         "symfony/css-selector": "^7.3 || ^8.0",
         "symfony/mailer": "^7.3 || ^8.0",
         "symfony/twig-bundle": "^7.3 || ^8.0",
-        "uhifadhi/shell-module": "^0.4"
+        "uhifadhi/shell-module": "^0.4 || ^0.5"
     },
     "suggest": {
         "symfony/mailer": "Needed by the two paths that send a link — invite-by-email and password reset. Without it those paths are offered and refused, in writing, rather than hidden; everything else works.",
-        "uhifadhi/shell-module": "The page frame the sign-in screen renders in; without it the module ships no styling of its own."
+        "uhifadhi/shell-module": "The page frame these screens render in, and the sidebar this module contributes its one Team row to; without it the module ships no styling of its own and has nowhere to put a row."
     },
     "scripts": {
         "cs:fix": "php-cs-fixer fix",
@@ -82,7 +82,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "0.3-dev"
+            "dev-main": "0.4-dev"
         }
     },
     "minimum-stability": "stable",

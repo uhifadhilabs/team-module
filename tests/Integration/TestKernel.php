@@ -19,6 +19,7 @@ use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Bundle\SecurityBundle\SecurityBundle;
 use Symfony\Bundle\TwigBundle\TwigBundle;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 use Symfony\UX\Icons\UXIconsBundle;
@@ -27,6 +28,7 @@ use Uhifadhi\Shell\UhifadhiShellBundle;
 use Uhifadhi\Team\Entity\User;
 use Uhifadhi\Team\Tests\Integration\Fixtures\DeclaringModuleProvider;
 use Uhifadhi\Team\Tests\Integration\Fixtures\GuardedController;
+use Uhifadhi\Team\Tests\Integration\Fixtures\ShellPageController;
 use Uhifadhi\Team\Tests\Integration\Fixtures\SilentModuleProvider;
 use Uhifadhi\Team\UhifadhiTeamBundle;
 use Uhifadhi\Widget\UhifadhiWidgetBundle;
@@ -172,6 +174,12 @@ final class TestKernel extends Kernel
         // The thing behind the firewall (see configureRoutes).
         $container->services()->set(GuardedController::class)->public();
 
+        // A page in the shell's frame that is NOT this module's, so the sidebar
+        // suite can ask what a viewer sees from somewhere else.
+        $container->services()->set(ShellPageController::class)
+            ->args([new Reference('twig')])
+            ->public();
+
         // The framework's own hasher, made reachable: a suite proving a stored
         // password verifies has to use the same service the firewall does.
         $container->services()->alias('test_public.hasher', 'security.user_password_hasher')->public();
@@ -200,6 +208,11 @@ final class TestKernel extends Kernel
         // /login" is a fact this suite can assert rather than assume.
         $routes->add('guarded', '/_guarded')
             ->controller(GuardedController::class);
+
+        // Somewhere else in the shell, open to anybody, so the sidebar suite can
+        // ask what an anonymous visitor and a colleague without team.manage see.
+        $routes->add('elsewhere', '/_elsewhere')
+            ->controller(ShellPageController::class);
 
         // The front door every installation has (the skeleton points `/` at the
         // shell's welcome page). It exists here because the firewall's

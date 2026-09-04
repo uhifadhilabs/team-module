@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Uhifadhi\Shell\Contract\NavigationSourceInterface;
 use Uhifadhi\Team\Command\CreateUserCommand;
 use Uhifadhi\Team\Controller\InviteController;
 use Uhifadhi\Team\Controller\MemberController;
@@ -31,6 +32,7 @@ use Uhifadhi\Team\Service\Mail;
 use Uhifadhi\Team\Service\PermissionCatalogue;
 use Uhifadhi\Team\Service\SuperAdminInvariant;
 use Uhifadhi\Team\Service\TeamOverview;
+use Uhifadhi\Team\Shell\TeamNavigation;
 use Uhifadhi\Team\Widget\PositionWidgets;
 use Uhifadhi\Team\Widget\TeamWidgets;
 use Uhifadhi\Widget\Registry\WidgetSurfaceInterface;
@@ -70,6 +72,7 @@ use Uhifadhi\Widget\Registry\WidgetSurfaceInterface;
  *   team.controller.invite      both ways of adding somebody
  *   team.controller.reset       forgot / reset / accept, on the document rung
  *   team.mail                   the two letters, and whether they can be sent
+ *   team.navigation             the Team row in the shell's sidebar, where there is a shell
  *
  * Controllers extend nothing and take their collaborators explicitly, patterned
  * on FrameworkBundle's own TemplateController (see
@@ -119,6 +122,33 @@ return static function (ContainerConfigurator $container): void {
     $services->set('team.permission_voter', PermissionVoter::class)
         ->args([service('team.permissions')])
         ->tag('security.voter');
+
+    /*
+     * THE ROW IN THE SIDEBAR — the half of "a module registers with the seam and
+     * renders in the shell" that is rendering, and the one thing a module can
+     * only do by hand.
+     *
+     * REGISTERED ONLY WHERE THERE IS A SHELL. uhifadhi/shell-module is a
+     * suggestion of this bundle rather than a requirement, and a service whose
+     * class implements an interface nobody installed is a container that will
+     * not compile. The guard costs nothing — neither ::class constant loads a
+     * class — and it is what keeps the shell soft.
+     *
+     * THE TAG STRING IS WRITTEN OUT, exactly as the seam's is a few lines above,
+     * and for the same reason: reading UhifadhiShellBundle::NAV_TAG would load
+     * the shell's bundle class, and this file has to be readable in an
+     * installation that has no shell at all.
+     */
+    if (interface_exists(NavigationSourceInterface::class)) {
+        $services->set('team.navigation', TeamNavigation::class)
+            ->args([
+                service('router'),
+                service('security.token_storage'),
+                service('security.authorization_checker'),
+                service('request_stack'),
+            ])
+            ->tag('shell.nav_section');
+    }
 
     /*
      * THE SOLE-ACTIVE-SUPER-ADMIN INVARIANT. Every write path that lowers a
