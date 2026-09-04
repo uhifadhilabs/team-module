@@ -265,6 +265,23 @@ final class PositionMatrixTest extends WebTestCaseWithSchema
         self::assertStringContainsString('Ecology already has a position called', $crawler->html());
     }
 
+    /**
+     * BOTH WIDGET LIBRARIES RENDER. Asserted because they were the one pair of
+     * routes no other test opened, and a real install found them broken: the
+     * library's action URLs carry a placeholder uuid, and Requirement::UUID
+     * refuses a nil one, so the router threw at RENDER time and took the whole
+     * page down. A route that is never requested is a route that is untested.
+     */
+    public function testBothWidgetLibrariesRender(): void
+    {
+        $this->administrator();
+
+        foreach (['/team/widgets', '/team/positions/widgets'] as $url) {
+            $this->client->request('GET', $url);
+            self::assertResponseIsSuccessful($url.' does not render.');
+        }
+    }
+
     /** A write with no token is refused rather than performed. */
     public function testASaveWithoutACsrfTokenIsRefused(): void
     {

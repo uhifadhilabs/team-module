@@ -48,6 +48,9 @@ use Uhifadhi\Widget\Service\WidgetService;
  */
 final readonly class TeamWidgetsController
 {
+    /** A structurally valid uuid that addresses nothing — see {@see urls()}. */
+    private const string PLACEHOLDER_UUID = '00000000-0000-4000-8000-000000000000';
+
     public function __construct(
         private Environment $twig,
         private UrlGeneratorInterface $router,
@@ -169,7 +172,18 @@ final readonly class TeamWidgetsController
         );
     }
 
-    /** @return array<string, string> */
+    /**
+     * The library's action URLs, with two PLACEHOLDERS the browser substitutes:
+     * `__ID__` for a built-in preset's id, and a uuid for a saved one.
+     *
+     * THE PLACEHOLDER UUID HAS TO BE A VALID UUID. The routes constrain it with
+     * Requirement::UUID, and a router asked to generate a URL from a value the
+     * route refuses THROWS — so the obvious nil uuid takes the whole page down
+     * at render time rather than at click time. It is a v4-shaped nil instead:
+     * structurally valid, and addressing nothing.
+     *
+     * @return array<string, string>
+     */
     private function urls(): array
     {
         return [
@@ -178,9 +192,9 @@ final readonly class TeamWidgetsController
             'preset' => $this->router->generate('team_widgets_preset', ['presetId' => '__ID__']),
             'copy' => $this->router->generate('team_widgets_preset_copy', ['presetId' => '__ID__']),
             'presets' => $this->router->generate('team_widgets_preset_create'),
-            'apply' => $this->router->generate('team_widgets_preset_apply', ['presetUuid' => '00000000-0000-0000-0000-000000000000']),
-            'rename' => $this->router->generate('team_widgets_preset_rename', ['presetUuid' => '00000000-0000-0000-0000-000000000000']),
-            'delete' => $this->router->generate('team_widgets_preset_delete', ['presetUuid' => '00000000-0000-0000-0000-000000000000']),
+            'apply' => $this->router->generate('team_widgets_preset_apply', ['presetUuid' => self::PLACEHOLDER_UUID]),
+            'rename' => $this->router->generate('team_widgets_preset_rename', ['presetUuid' => self::PLACEHOLDER_UUID]),
+            'delete' => $this->router->generate('team_widgets_preset_delete', ['presetUuid' => self::PLACEHOLDER_UUID]),
             'dashboard' => $this->router->generate('team_index'),
         ];
     }

@@ -24,7 +24,9 @@
         <table class="tbl">
             <thead><tr><th>Position</th><th>Department</th><th>Holders</th><th></th></tr></thead>
             <tbody>
-                {% for position in positions if not chosen or (position.department and position.department.uuidString == chosen) %}
+                {# The inline `for … if` was removed in Twig 3. #}
+                {% set shown = chosen ? positions|filter(p => p.department and p.department.uuidString == chosen) : positions %}
+                {% for position in shown %}
                     <tr>
                         <td><b>{{ position.name }}</b></td>
                         <td>{% if position.department %}<span class="dtag"><i class="dot"></i>{{ position.department.name }}</span>{% else %}<span class="dtag un"><i class="dot un"></i>none</span>{% endif %}</td>

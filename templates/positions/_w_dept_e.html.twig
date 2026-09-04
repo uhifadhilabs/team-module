@@ -7,7 +7,10 @@
     <span class="tab"><span class="idx">DP&middot;E</span>Department-first<span class="src">&middot; the rail</span></span>
 
     {% set chosen = app.request.query.get('department') %}
-    {% set current = departments|filter(d => d.uuidString == chosen)|first ?? departments|first %}
+    {# Not `??`: Twig's null-coalesce is the `defined` test, which only works on
+       a simple variable and not on the result of a filter. #}
+    {% set picked = departments|filter(d => d.uuidString == chosen)|first %}
+    {% set current = picked ? picked : departments|first %}
 
     <div class="split">
         <div class="dept-rail">

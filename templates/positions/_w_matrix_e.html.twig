@@ -27,7 +27,10 @@
         <noscript><button class="fchip" type="submit">Show</button></noscript>
     </form>
 
-    {% set who = people|filter(p => p.uuidString == app.request.query.get('who'))|first ?? people|first %}
+    {# `?? ` will not do here: Twig's null-coalesce is the `defined` test, and
+       that only works on a simple variable — not on the result of a filter. #}
+    {% set chosenWho = people|filter(p => p.uuidString == app.request.query.get('who'))|first %}
+    {% set who = chosenWho ? chosenWho : people|first %}
     {% if who %}
         {% set byTier = who.teamRole.canManageContent %}
         {% set held = who.position ? who.position.permissionValues : [] %}
@@ -69,7 +72,10 @@
                     <span class="pm-why {{ has ? (byTier ? 'tier' : 'pos') : 'no' }}">{{ has ? (byTier ? 'by tier' : 'by position') : 'not held' }}</span>
                 </div>
             {% endfor %}
-            {% for value in held if value not in catalogue|map(p => p.value) %}
+            {# The inline `for … if` was removed in Twig 3; the filter is the
+               replacement, and it is clearer about what is being dropped. #}
+            {% set knownValues = catalogue|map(p => p.value) %}
+            {% for value in held|filter(v => v not in knownValues) %}
                 <div class="pm-effrow off">
                     <span class="lhs">
                         <b><span class="pm-orphname">no longer described</span></b>
