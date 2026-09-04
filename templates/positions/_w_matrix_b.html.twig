@@ -64,6 +64,21 @@
                 {% if selected %}
                     {% set held = selected.permissionValues %}
                     {% set reaches = holders[selected.uuidString]|default(0) %}
+                    {# RENAME IS A SECOND, SEPARATE WRITE ON THE SAME PANE, and
+                       forms do not nest — so it is a sibling of the permissions
+                       form and the header's controls join it by `form=`, which
+                       is exactly what that attribute is for. Neither form can
+                       post the other's fields.
+
+                       DELETE IS NOT DRAWN. The design puts it here beside
+                       Rename, and what becomes of the people holding a deleted
+                       position is a question nobody has answered — so it waits
+                       for that ruling rather than being made by accident. #}
+                    <form id="pm-rename-{{ selected.uuidString }}" method="post"
+                          action="{{ path('team_position_rename', {uuid: selected.uuidString}) }}">
+                        <input type="hidden" name="_token" value="{{ csrfToken }}">
+                    </form>
+
                     <form class="pane on" method="post" action="{{ path('team_position_permissions', {uuid: selected.uuidString}) }}">
                         <input type="hidden" name="_token" value="{{ csrfToken }}">
 
@@ -72,6 +87,16 @@
                                 {% if selected.department %}<span class="dtag"><i class="dot"></i>{{ selected.department.name }}</span>{% endif %}
                                 <b>{{ selected.name }}</b>
                                 <span class="pm-reach">{{ pm.icon_people() }} reaches {{ reaches }} {{ reaches == 1 ? 'person' : 'people' }}</span>
+                            </span>
+                            <span class="hr">
+                                {# The design draws a bare Rename button; the route
+                                   needs a name and a static page had nowhere to put
+                                   the field that collects one, so the field it
+                                   submits is here, carrying the name it is about. #}
+                                <input class="fld pm-rename" type="text" name="name" required
+                                       value="{{ selected.name }}" aria-label="Rename this position"
+                                       form="pm-rename-{{ selected.uuidString }}">
+                                <button class="softbtn" type="submit" form="pm-rename-{{ selected.uuidString }}">Rename</button>
                             </span>
                         </div>
 
@@ -88,7 +113,12 @@
                                reader can see where one module's permissions end
                                and the next module's begin at arm's length. #}
                             {% for umbrella, permissions in grouped %}
-                                <div class="pm-group {{ permissions[0].isCore ? 'pm-core' : 'pm-mod pm-mod-' ~ permissions[0].source }}">
+                                {# THE GROUP IS THE SCOPE, not the heading: the
+                                   select-all button is in the heading and the
+                                   boxes are its siblings, so only the bounded
+                                   group can see both. #}
+                                <div class="pm-group {{ permissions[0].isCore ? 'pm-core' : 'pm-mod pm-mod-' ~ permissions[0].source }}"
+                                     data-controller="uhifadhi--team-module--permission-group">
                                     {{ pm.umbrella_head(umbrella, permissions, moduleNames, held) }}
                                     {% for permission in permissions %}
                                         {{ pm.row(permission, held) }}
