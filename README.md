@@ -33,6 +33,7 @@ A [uhifadhi](https://github.com/uhifadhilabs) platform bundle.
   - [One installation always keeps one Super Admin](#one-installation-always-keeps-one-super-admin)
   - [Both ways of adding somebody ship](#both-ways-of-adding-somebody-ship)
   - [The self-service screens](#the-self-service-screens)
+- [The row in the sidebar](#the-row-in-the-sidebar)
 - [The first administrator](#the-first-administrator)
 - [The sign-in screen](#the-sign-in-screen)
 - [The schema](#the-schema)
@@ -154,9 +155,11 @@ and this module's `User` **is** its answer. Seven questions: `getId()`,
 `getFullName()`, `getRangerCode()`. It implemented all seven before it declared
 the interface, because the surface was measured against the modules that read it.
 
-**Nothing closes that loop by hand — this module closes it.** Registering the
-bundle prepends the resolution, so a fresh installation writes no
-`doctrine.yaml` and `doctrine:migrations:diff` works immediately:
+**Whoever knows the answer states the resolution.** That is the fleet's rule:
+the package that provides the entity is the package that names it, and an
+installation writes a `resolve_target_entities` line only when it wants to
+disagree. Registering this bundle prepends the answer to the user contract, so a
+fresh installation writes no `doctrine.yaml`:
 
 ```yaml
 # what the bundle prepends for you — you do not write this
@@ -195,9 +198,12 @@ Your class has to answer the contract's seven questions and be in the mapping
 chain. That the override wins is tested, not assumed
 (`tests/Integration/Identity/ResolveTargetEntitiesTest`).
 
-**The seam's `AreaInterface` is still yours**, and for the opposite reason: only
-your installation knows what it calls an area, so no package can answer that one
-for you. See `config/packages/seam.yaml`.
+**The seam's `AreaInterface` works the same way, and it is answered by
+[`uhifadhi/area-module`](https://github.com/uhifadhilabs/area-module)** — the same
+rule, the other live instance of it: team knows its `User`, area knows its
+`AreaOfInterest`, and each prepends its own. With both installed, a bare
+installation reaches `doctrine:migrations:diff` with **zero doctrine edits**. It
+used to be the fleet's oldest hand-step, and it is gone.
 
 **It is not Symfony's `UserInterface`.** That one answers "who is signed in" and
 still comes from the token storage; this one answers "who is this record about".
@@ -381,6 +387,44 @@ With no mailer, that screen says the installation cannot send email yet rather
 than swallowing the request. A silently discarded reset is the worst failure the
 flow has.
 
+## The row in the sidebar
+
+Screens nobody can find are screens nobody has. Where an installation has
+[`uhifadhi/shell-module`](https://github.com/uhifadhilabs/shell-module), this
+module contributes **one row** to its sidebar and nothing else:
+
+| | |
+| --- | --- |
+| Section | **Organization**, at position `20` |
+| Row | **Team**, `lucide:users`, linking `team_index` |
+| Lit on | `/team` and everything under it, the permission matrix included |
+| Visible to | holders of **`team.manage`**, and nobody else |
+
+**One row for two screens**, because the design settled it that way: `/team` and
+`/team/positions` are one place in the product, so the matrix lights the Team row
+rather than adding a second. What is below that is the page's business.
+
+**It is a nav source, not a seam module.** The shell's `NavigationSourceInterface`
+(tagged `shell.nav_section`) is documented to accept exactly this from a bundle —
+"the rare platform-wide row that belongs to nobody's area" — and the other thing
+a module can be, a per-area capability registered through the seam's
+`ModuleProviderInterface`, is wrong here by construction: the seam's ledger is an
+area-by-module table, and an installation's people are not an area's. A team that
+had to be switched on per area would be a roster that existed four times.
+
+**Gating is this module's job, not the shell's.** The shell holds no
+authorization service and asks nothing about the viewer, so the row is **absent**
+for anybody without `team.manage` — never hidden, because a hidden row leaks its
+existence to whoever reads the HTML. It is the same permission the screens behind
+it are gated on, so the sidebar cannot offer a door that closes in somebody's
+face. An anonymous visitor gets nothing at all.
+
+**Nothing to wire.** Registering the bundle registers the source; there is no
+menu file, and no shell means no row rather than a container that will not
+compile. Two things can take the row away and both are yours: revoking
+`team.manage`, and unmounting the routes — an installation that deletes
+`config/routes/team.yaml` loses this row rather than every page in the product.
+
 ## The first administrator
 
 A fresh installation is a closed loop: the invite screen is behind `team.manage`,
@@ -482,6 +526,7 @@ src/
   Security/PermissionVoter.php  Security/ActiveUserChecker.php
   Service/PermissionCatalogue.php  Service/SuperAdminInvariant.php
   Service/TeamOverview.php  Service/Mail.php
+  Shell/TeamNavigation.php              the one row this module puts in the sidebar
   Widget/TeamWidgets.php  Widget/PositionWidgets.php
   UhifadhiTeamBundle.php
 config/services.php                     explicit wiring, no autowire
@@ -681,11 +726,12 @@ in); this module adds no database configuration of its own beyond mapping its th
 entities and answering the user contract, both of which it does for you.
 
 Note that `doctrine:migrations:diff` walks **all** mapped metadata, so the
-**seam's** own `resolve_target_entities` step (`config/packages/seam.yaml`) still
-has to be done first — otherwise the diff stops on
-`Uhifadhi\Seam\Entity\AreaInterface` before it ever reaches `team_user`. That one
-is genuinely yours: only your installation knows what it calls an area, so no
-package can answer it for you. The `UserInterface` half needs nothing.
+**seam's** `AreaInterface` has to be answered too — otherwise the diff stops on
+`Uhifadhi\Seam\Entity\AreaInterface` before it ever reaches `team_user`. That is
+not your homework either: install
+[`uhifadhi/area-module`](https://github.com/uhifadhilabs/area-module) and it
+prepends that resolution the same way this module prepends the user one. Neither
+half needs a line from you.
 
 ## Make the first administrator
 
@@ -709,6 +755,11 @@ a console command and not a screen.
   here and offers the two useful next steps.
 - **`/team/positions` answers 200** for that same person, and its shipped
   direction's empty state is the control that makes the first position.
+- **The sidebar has an Organization section with a Team row in it**, for that
+  same person and for nobody else — see
+  [The row in the sidebar](#the-row-in-the-sidebar). Before this module, a fresh
+  installation's sidebar was empty and the shell's welcome page said so; now it
+  says one true thing.
 - **`/` is unchanged** — still whatever your installation had there (the
   skeleton's welcome page), and still public: the `access_control` above leaves
   the front door open, because deciding otherwise is an installation's decision
