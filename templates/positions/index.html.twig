@@ -7,7 +7,7 @@
 
 {% block stylesheets %}
     {{ parent() }}
-    <link rel="stylesheet" href="{{ asset(constant('Uhifadhi\\Team\\UhifadhiTeamBundle::STYLESHEET')) }}">
+    {{ include('@UhifadhiTeam/_stylesheets.html.twig') }}
 {% endblock %}
 
 {% block shell_page_tabs %}{% endblock %}
@@ -47,11 +47,15 @@
 {% endblock %}
 
 {% block shell_page %}
+    {# See the team page: these are the widget module's cell classes, and the
+       span is `.w-span-N` because bare `w-N` is Tailwind's width scale. #}
     <div class="w-grid">
         {% for widget in widgets %}
             {% if widget.on %}
-                <div data-w="{{ widget.id }}" class="w{{ widget.cols }}">
-                    {{ include('@UhifadhiTeam/positions/_w_' ~ widget.id ~ '.html.twig') }}
+                <div data-w="{{ widget.id }}" class="w-cell w-span-{{ widget.cols }}">
+                    <div class="w-inner">
+                        {{ include('@UhifadhiTeam/positions/_w_' ~ widget.id ~ '.html.twig') }}
+                    </div>
                 </div>
             {% endif %}
         {% endfor %}

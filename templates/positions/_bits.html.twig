@@ -45,7 +45,7 @@
     {%- set destructive = permission.value ends with '.delete' -%}
     {%- set elevated = permission.value == 'team.manage' -%}
     <label class="pm-row{{ on ? ' on' : '' }}{{ destructive ? ' destructive' : '' }}{{ elevated ? ' elevated' : '' }}">
-        <input type="checkbox" name="permissions[]" value="{{ permission.value }}"{{ on ? ' checked' : '' }} class="pm-box">
+        <input type="checkbox" name="permissions[]" value="{{ permission.value }}"{{ on ? ' checked' : '' }} class="pm-check">
         <span class="pm-tick">{{ pm.icon_tick() }}</span>
         <span class="pm-t">
             <b>{{ permission.label }}</b>
@@ -92,7 +92,7 @@
             </div>
             {% for value in mine %}
                 <label class="pm-row on muted">
-                    <input type="checkbox" name="permissions[]" value="{{ value }}" checked class="pm-box">
+                    <input type="checkbox" name="permissions[]" value="{{ value }}" checked class="pm-check">
                     <span class="pm-tick">{{ pm.icon_tick() }}</span>
                     <span class="pm-t">
                         <b><span class="pm-orphname">no longer described</span></b>

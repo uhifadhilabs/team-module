@@ -146,6 +146,145 @@
 
 
 /* ==========================================================================
+   THE PLATFORM PRIMITIVES THE SHELL DOES NOT SHIP YET.
+   Ported from the design workspace's vendor/uhifadhi.css and vendor/nav.css.
+   --------------------------------------------------------------------------
+   THIS BLOCK IS ON LOAN AND SHOULD LEAVE. Every rule below belongs to
+   uhifadhi/shell-module: they are the card's tab, the KPI plate, the register
+   table, the avatar and the two quiet buttons — the vocabulary the DESIGN
+   SYSTEM shares across every surface in the platform, which is exactly why the
+   design workspace keeps them in a vendor sheet and every module's own sheet
+   says "not repeated here".
+
+   The shell ships `.c`, `.chip`, `.cta`, `.grid` and the tokens, and stops.
+   These were assumed present, were not, and the result was a live /team page
+   whose KPI plates rendered as one line of running text and whose card headers
+   rendered as a stray run of words. Restating them here is the module fixing
+   its own screens without a shell release; when the shell absorbs them this
+   block deletes wholesale and nothing else in this file moves.
+
+   Unscoped on purpose, exactly as the shell would write them: this sheet only
+   loads on this module's pages, and a scoped copy would fork the vocabulary
+   rather than stand in for it.
+   ========================================================================== */
+
+/* ---- THE CARD'S TAB — a widget says what it is on its own top edge -------
+   A card header is not a heading inside the plate: it is a small mono pill that
+   straddles the border, which is what makes a screen of cards scannable. The
+   trailing `.src` is the qualifier — "Roster · the table" — set in sentence
+   case so the two halves read as label and note rather than as one shout. */
+.c > .tab {
+    position: absolute; top: -9px; left: 13px; z-index: 2;
+    background: rgb(var(--c-cv)); border: 1px solid var(--c-ln2); border-radius: 7px;
+    padding: 3px 10px;
+    font-family: var(--font-mono); font-size: 9.5px; font-weight: 600;
+    letter-spacing: .18em; text-transform: uppercase; color: rgb(var(--c-fog));
+    display: flex; gap: 8px; align-items: center;
+    white-space: nowrap; max-width: 92%; overflow: hidden;
+}
+.c > .tab .src { letter-spacing: .03em; color: rgb(var(--c-dim)); text-transform: none; }
+
+/* The line under a widget that says what it is FOR. Prose, so it is set at
+   reading size and not in the tab's mono. */
+.use { font-size: 12.5px; color: rgb(var(--c-fog)); margin: 10px 2px 4px; line-height: 1.55; }
+.use b { color: rgb(var(--c-tx)); }
+
+/* ---- THE KPI PLATE — a label on the tab, one number, one sub-line --------
+   The number is display type at 30px and BLOCK, which is the whole composition:
+   as an inline run the label, the count and the sub-line collapse into a
+   sentence ("People 2 2 active") that states a number nobody can find. */
+.kpi b, .kpi .disp {
+    font-family: var(--font-display); font-size: 30px; font-weight: 700; letter-spacing: -.035em;
+    display: block; line-height: 1; font-variant-numeric: tabular-nums;
+}
+/* The unit or denominator, which is not the number and must not be read as it. */
+.kpi b em, .kpi .disp em {
+    font-style: normal; font-size: 13px; color: rgb(var(--c-fog)); font-weight: 500; margin-left: 4px;
+}
+.kpi .sub {
+    font-family: var(--font-mono); font-size: 9.5px; color: rgb(var(--c-dim));
+    margin-top: 8px; display: flex; align-items: center; gap: 9px;
+}
+/* One plate in a strip may be the one that matters. Exactly one. */
+.kpi.hot b, .kpi.hot .disp { color: rgb(var(--c-acc)); }
+
+/* A KPI strip is not the page's four-up grid: the same strip has to sit in
+   twelve columns and in six, so the plates fold on their own content width. */
+.dp-kstrip { grid-template-columns: repeat(auto-fit, minmax(196px, 1fr)); }
+
+/* ---- THE REGISTER TABLE -------------------------------------------------
+   Header cells are mono small-caps and LEFT aligned; the browser's centred bold
+   default is the single loudest thing on an unstyled page. */
+table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+table.tbl th {
+    font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase;
+    color: rgb(var(--c-fog)); text-align: left; padding: 8px 10px;
+    border-bottom: 1px solid var(--c-ln2); font-weight: 600;
+}
+table.tbl td {
+    padding: 9px 10px;
+    border-bottom: 1px dashed color-mix(in srgb, rgb(var(--c-fog)) 18%, transparent);
+    font-variant-numeric: tabular-nums;
+}
+table.tbl tr:hover td { background: color-mix(in srgb, rgb(var(--c-acc)) 4%, transparent); }
+table.tbl a { color: rgb(var(--c-acc)); text-decoration: none; font-weight: 600; }
+table.tbl .num { text-align: right; font-family: var(--font-mono); font-size: 12px; }
+
+/* ---- THE PAGER, and the foot it sits in --------------------------------- */
+.rdf-foot {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 8px 14px; border-top: 1px solid var(--c-ln2);
+    color: rgb(var(--c-fog)); font-size: 10.5px; font-family: var(--font-mono);
+}
+.rdf-page { display: inline-flex; align-items: center; gap: 6px; }
+.rdf-page a, .rdf-page button {
+    background: none; border: 1px solid var(--c-ln2); color: rgb(var(--c-fog)); border-radius: 6px;
+    width: 22px; height: 22px; cursor: pointer; font-size: 12px; line-height: 1;
+    display: inline-flex; align-items: center; justify-content: center; text-decoration: none;
+}
+.rdf-page a:hover, .rdf-page button:hover { border-color: rgb(var(--c-fog)); color: rgb(var(--c-tx)); }
+.rdf-page .pg { color: rgb(var(--c-tx)); font-weight: 700; }
+
+/* ---- THE PERSON MARK, and the two quiet buttons -------------------------
+   `.avatar.sm` is already below in the positions block; this is the base it
+   modifies, without which initials render as bare text beside a name. */
+.avatar {
+    width: 30px; height: 30px; border-radius: 9px;
+    background: rgb(var(--c-acc)); color: rgb(var(--c-accT));
+    font-family: var(--font-display); font-weight: 700; font-size: 12px;
+    display: grid; place-items: center; flex-shrink: 0;
+}
+/* The always-visible row affordance, so a register row reads as openable. */
+.open-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: .06em;
+    color: rgb(var(--c-acc)); text-decoration: none; white-space: nowrap;
+    border: 1px solid color-mix(in srgb, rgb(var(--c-acc)) 45%, transparent);
+    border-radius: 7px; padding: 4px 10px; background: none; cursor: pointer;
+}
+table.tbl tr:hover .open-btn {
+    background: rgb(var(--c-acc)); color: rgb(var(--c-accT)); border-color: rgb(var(--c-acc));
+}
+/* The secondary to .cta: same row, deliberately quieter. */
+.tgl {
+    border: 1px solid var(--c-ln2); background: none; color: rgb(var(--c-fog));
+    border-radius: 8px; padding: 5px 11px; font-size: 11px; cursor: pointer;
+    font-family: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 7px;
+}
+.tgl:hover { color: rgb(var(--c-tx)); border-color: rgb(var(--c-fog)); }
+.tgl svg { width: 15px; height: 15px; flex: none; }
+
+/* ---- THE COLOUR WORDS ----------------------------------------------------
+   Four single letters the design uses inline to colour one word in a sentence.
+   They are the palette's own names, not a utility set. */
+.g { color: rgb(var(--c-ok)); }
+.w { color: rgb(var(--c-warn)); }
+.r { color: rgb(var(--c-fail)); }
+.d { color: rgb(var(--c-dim)); }
+.muted { color: rgb(var(--c-dim)); }
+
+
+/* ==========================================================================
    TEAM · POSITIONS — the qualified name, the department marks
    Ported from vendor/positions.css.
    ========================================================================== */
@@ -359,6 +498,24 @@ table.tbl tr.gh + tr.prow td { padding-top: 12px; }
 /* The archive revealed these on hover; a row that navigates must show its action
    without being hovered, so they sit in the flow, always visible. */
 .pacts { display: flex; gap: 6px; justify-content: flex-end; }
+
+/* C, ON THE PLATFORM'S CARD. The design drew its own `.dcard`; this direction
+   ships on `.c` instead, so the department rides the card's tab and the rows
+   are `.pitem`'s composition without `.plist`'s padding — the plate already
+   has it. Same reading, one less boundary. */
+.pm-deptcard { display: flex; flex-direction: column; }
+.pm-deptrow {
+    display: flex; flex-direction: column; gap: 5px; padding: 11px 0; text-decoration: none;
+    border-bottom: 1px dashed color-mix(in srgb, rgb(var(--c-fog)) 18%, transparent);
+}
+.pm-deptrow:last-child { border-bottom: 0; }
+.pm-deptrow b { font-size: 14px; font-weight: 600; color: rgb(var(--c-tx)); }
+.pm-deptrow:hover b { color: rgb(var(--c-acc)); }
+.pm-deptrow .rh {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px; letter-spacing: .07em;
+    text-transform: uppercase; color: rgb(var(--c-dim));
+}
+.pm-deptrow .pm-held0 { font-style: italic; }
 .addpos {
     display: flex; align-items: center; gap: 8px; width: 100%; background: none; cursor: pointer;
     border: 0; border-top: 1px dashed var(--c-ln2); padding: 12px 15px; color: rgb(var(--c-acc));
@@ -555,7 +712,10 @@ html.dark .pm-by.roster i { background: #7FA6F0; }
 .pm-colh {
     display: flex; flex-direction: column; gap: 5px; align-items: flex-start;
     padding: 12px 10px; min-width: 96px; max-width: 132px;
+    text-decoration: none; color: inherit;
 }
+.pm-colh b { white-space: normal; }
+.pm-colh:hover b { color: rgb(var(--c-acc)); }
 .pm-colh b { font-size: 12px; font-weight: 600; line-height: 1.3; color: rgb(var(--c-tx)); }
 .pm-colh .held {
     font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9px;
@@ -601,6 +761,10 @@ html.dark .pm-by.roster i { background: #7FA6F0; }
     background: repeating-linear-gradient(135deg,
         transparent 0 6px, color-mix(in srgb, rgb(var(--c-fog)) 8%, transparent) 6px 12px);
 }
+/* A IS READ-ONLY (ruled). The mark is the same mark, but nothing here is a
+   control, so it offers neither a pointer nor a hover it cannot honour. */
+.pm-box.pm-ro { cursor: default; }
+.pm-box.pm-ro:hover { background: none; }
 .pm-box.bypass { cursor: not-allowed; }
 .pm-box.bypass:hover { background: none; }
 .pm-box.bypass i { border-style: dashed; background: none; color: rgb(var(--c-dim)); }
@@ -633,6 +797,24 @@ html.dark .pm-by.roster i { background: #7FA6F0; }
 }
 .pm-row .pm-tick svg { width: 12px; height: 12px; }
 .pm-row.on .pm-tick { background: rgb(var(--c-acc)); border-color: rgb(var(--c-acc)); color: rgb(var(--c-accT)); }
+/* THE ROW IS A LABEL AND THE CHECKBOX IS REAL — the design drew a box, and a
+   drawn box that posts nothing is a drawn box. The input carries the state and
+   submits it; `.pm-tick` is what a person sees. Without this the browser draws
+   its own checkbox NEXT TO the drawn one — two controls in a three-column grid,
+   which pushed the label into the actions column and made every permission row
+   read as a pair of boxes.
+   `:has()` mirrors the tick the moment it is clicked; `.on` is the same state
+   rendered server-side, so the row is correct with JavaScript off and with the
+   stylesheet's :has() unsupported. */
+.pm-row { position: relative; }
+.pm-row > .pm-check {
+    position: absolute; width: 1px; height: 1px; margin: 0; padding: 0;
+    opacity: 0; pointer-events: none; appearance: none;
+}
+.pm-row:has(> .pm-check:checked) .pm-tick {
+    background: rgb(var(--c-acc)); border-color: rgb(var(--c-acc)); color: rgb(var(--c-accT));
+}
+.pm-row:focus-within .pm-tick { outline: 2px solid rgb(var(--c-acc)); outline-offset: 2px; }
 .pm-row .pm-t { min-width: 0; }
 .pm-row .pm-t b { display: block; font-size: 13px; font-weight: 600; color: rgb(var(--c-tx)); line-height: 1.35; }
 .pm-row .pm-t .perm { margin: 4px 0 0; }
@@ -1097,6 +1279,16 @@ html.dark .pm-mod-roster { --pm-edge: #7FA6F0; }
 
 /* B · `.pm-row .pm-t em` was already declared for this and was waiting for the
    ruling. Nothing to add. */
+
+/* THE DESCRIPTION WHEREVER IT IS NOT IN A ROW. A/C/E and the member record all
+   print the catalogue's own sentence outside `.pm-row`, where the `<em>` would
+   otherwise run on inline behind the machine name. One rule, three surfaces —
+   the description reads the same everywhere it appears, which is the point of
+   the permission carrying one at all. */
+.pm-desc {
+    display: block; font-style: normal; font-size: 11.5px; color: rgb(var(--c-dim));
+    line-height: 1.55; margin-top: 4px; max-width: 68ch;
+}
 
 /* C · a line under the question, above the holders. */
 .pm-qdesc {
@@ -1679,6 +1871,13 @@ tr.tm-bandrow.vacant .tm-band b { color: rgb(var(--c-fog)); }
    The split is the argument: a weekly visitor wants the decisions, not the
    roster. The settled list is still whole and still below — nothing is hidden,
    it is only demoted. */
+/* E puts the decisions ABOVE the roster, so the two halves need a seam and the
+   top half needs its own caption. The design used the widget's tab for that;
+   this one carries a labelled block, because the tab already says which
+   direction the widget is. */
+.tm-esplit { margin-bottom: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--c-ln); }
+.tm-esplit > .lbl { margin-bottom: 11px; }
+
 .tm-att { display: flex; flex-direction: column; gap: 9px; }
 .tm-attrow {
     display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px;
@@ -2157,7 +2356,12 @@ body[data-life="off"] .mb-band .avatar { opacity: .6; }
     border-radius: 12px; padding: 14px 15px;
     font-size: 12.5px; color: rgb(var(--c-fog)); line-height: 1.65;
 }
-.mb-grant svg { flex: none; color: rgb(var(--c-warn)); margin-top: 2px; }
+/* `flex: none` alone was the whole bug: an inline SVG with a viewBox and no
+   intrinsic size stretches to its container, so this 17px warning mark rendered
+   as a 900px triangle that pushed the paragraph off the card. Every icon on
+   these surfaces is sized by the rule that places it — this one had no size at
+   all. */
+.mb-grant svg { flex: none; width: 17px; height: 17px; color: rgb(var(--c-warn)); margin-top: 2px; }
 .mb-grant b { color: rgb(var(--c-tx)); }
 
 /* ==========================================================================

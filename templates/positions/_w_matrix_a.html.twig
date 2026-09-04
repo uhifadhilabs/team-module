@@ -22,16 +22,28 @@
         <p class="use"><b>The grid opens on nothing at all</b>, which is exactly the weakness that made B the
         shipped direction: there are no positions yet, so there are no columns. <a href="{{ path('team_positions') }}">Make the first one.</a></p>
     {% else %}
-        <div class="pm-gridscroll">
+        <div class="pm-scroll">
             <table class="tbl pm-grid">
                 <thead>
                     <tr>
-                        <th>Permission</th>
+                        {# THE PINNED COLUMN. `.pm-rowh` is what makes the permission
+                           column stick while the positions scroll under it, and what
+                           gives it the width the description needs — a grid whose row
+                           header scrolls away is a grid of anonymous ticks. #}
+                        <th class="pm-rowh"><span class="lbl" style="margin:0">permission</span></th>
+                        {# A COLUMN HEAD STACKS: department, then name, then who holds it.
+                           Written inline as a `.qual` it was one long nowrap run per
+                           column, and eight of them ran into each other and off the
+                           right of the card — the grid's whole head was unreadable.
+                           `.pm-colh` is the design's own block for this and bounds the
+                           column's width, which is what lets eight positions fit. #}
                         {% for position in positions %}
+                            {% set held = holders[position.uuidString]|default(0) %}
                             <th>
-                                <a href="{{ path('team_positions', {position: position.uuidString}) }}" class="qual">
-                                    {%- if position.department %}<span class="q">{{ position.department.name }}</span><span class="sep">/</span>{% endif -%}
-                                    <span class="n">{{ position.name }}</span>
+                                <a class="pm-colh" href="{{ path('team_positions', {position: position.uuidString}) }}">
+                                    <span class="pm-dept"><i class="dot"></i>{{ position.department ? position.department.name : 'no department' }}</span>
+                                    <b>{{ position.name }}</b>
+                                    <span class="held">{% if held %}{{ held }} {{ held == 1 ? 'person' : 'people' }}{% else %}nobody yet{% endif %}</span>
                                 </a>
                             </th>
                         {% endfor %}
@@ -47,20 +59,29 @@
                                 <span class="pm-by {{ permissions[0].source }}"><i></i>{{ moduleNames[permissions[0].source]|default(permissions[0].source) }}</span>
                             {% endif %}
                         </div></td></tr>
+                        {# THE TWO MARKS THAT ARE PROPERTIES OF THE PERMISSION, not of a
+                           layout: the one core permission that destroys something, and
+                           the one that grants authority over other people. B carries
+                           them on `.pm-row`; the grid carries them on the row. #}
                         {% for permission in permissions %}
-                            <tr>
-                                <td>
-                                    <b>{{ permission.label }}</b>
-                                    <span class="perm">{{ permission.value }}</span>
-                                    <em class="pm-desc">{{ permission.description }}</em>
+                            <tr class="{{ permission.value ends with '.delete' ? 'destructive' : '' }}{{ permission.value == 'team.manage' ? ' elevated' : '' }}">
+                                <td class="pm-rowh">
+                                    <div class="pm-name">
+                                        <b>{{ permission.label }}</b>
+                                        <span class="perm">{{ permission.value }}</span>
+                                        <em>{{ permission.description }}</em>
+                                    </div>
                                 </td>
+                                {# THE INTERSECTION, in the design's own vocabulary: `.pm-box` is the
+                                   whole-cell mark and the `<i>` inside it is the drawn box. It is a
+                                   span and not a button here because THIS DIRECTION IS READ-ONLY —
+                                   the ruled deviation for A and C — so `.pm-ro` takes back the hover
+                                   and the pointer a clickable cell would offer and cannot honour. #}
                                 {% for position in positions %}
-                                    <td class="pm-cell">
-                                        {%- if permission.value in position.permissionValues -%}
-                                            <span class="pm-tick on">{{ pm.icon_tick() }}</span>
-                                        {%- else -%}
-                                            <span class="pm-tick"></span>
-                                        {%- endif -%}
+                                    <td>
+                                        <span class="pm-box pm-ro{{ permission.value in position.permissionValues ? ' on' : '' }}">
+                                            <i>{{ pm.icon_tick() }}</i>
+                                        </span>
                                     </td>
                                 {% endfor %}
                             </tr>

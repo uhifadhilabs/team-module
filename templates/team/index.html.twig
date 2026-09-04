@@ -15,7 +15,7 @@
 
 {% block stylesheets %}
     {{ parent() }}
-    <link rel="stylesheet" href="{{ asset(constant('Uhifadhi\\Team\\UhifadhiTeamBundle::STYLESHEET')) }}">
+    {{ include('@UhifadhiTeam/_stylesheets.html.twig') }}
 {% endblock %}
 
 {# The team page is not inside an area, so it fills the tab socket with nothing
@@ -41,11 +41,19 @@
 {% endblock %}
 
 {% block shell_page %}
+    {# THE CELL CLASSES ARE THE WIDGET MODULE'S, not this module's shorthand.
+       Its grid is `.w-grid > .w-cell.w-span-N`, and the span is deliberately
+       NOT spelled `.w-12`: bare `w-<number>` is Tailwind's width scale, so a
+       host compiling Tailwind would render a full-width widget 48 pixels wide.
+       This page wrote `.w12`, which is nobody's class at all — every widget
+       took one of twelve columns. #}
     <div class="w-grid">
         {% for widget in widgets %}
             {% if widget.on %}
-                <div data-w="{{ widget.id }}" class="w{{ widget.cols }}">
-                    {{ include('@UhifadhiTeam/team/_w_' ~ widget.id ~ '.html.twig') }}
+                <div data-w="{{ widget.id }}" class="w-cell w-span-{{ widget.cols }}">
+                    <div class="w-inner">
+                        {{ include('@UhifadhiTeam/team/_w_' ~ widget.id ~ '.html.twig') }}
+                    </div>
                 </div>
             {% endif %}
         {% endfor %}
