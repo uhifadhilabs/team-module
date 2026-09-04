@@ -685,6 +685,14 @@ security:
     # somebody the remember_me key above signed back in from a cookie, which is
     # the whole point of having configured it. Use IS_AUTHENTICATED_FULLY on any
     # path you want a freshly typed password for.
+    #
+    # These attributes are Symfony's, not this module's, and both halves of the
+    # ladder are documented on https://symfony.com/doc/current/security.html:
+    # "Checking to see if a User is Logged In" says somebody logged in only by a
+    # remember-me cookie holds IS_AUTHENTICATED_REMEMBERED but NOT
+    # IS_AUTHENTICATED_FULLY, and "Allowing Unsecured Access" is where
+    # PUBLIC_ACCESS is the documented attribute for an exception path. Read both
+    # before you move a path from one rung to another.
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/reset-password, roles: PUBLIC_ACCESS }
