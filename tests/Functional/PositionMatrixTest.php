@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Uhifadhi\Team\Tests\Functional;
 
+use Symfony\Component\DomCrawler\Field\ChoiceFormField;
 use Uhifadhi\Team\Entity\Position;
 use Uhifadhi\Team\Enum\PermissionEnum;
 
@@ -147,6 +148,55 @@ final class PositionMatrixTest extends WebTestCaseWithSchema
         $crawler = $this->client->followRedirect();
         self::assertStringContainsString('reaches 1 person', $crawler->html());
         unset($naomi);
+    }
+
+    /**
+     * THE WHOLE GESTURE, THROUGH THE PAGE ITSELF: open the matrix, tick a box,
+     * press the button the page actually renders, and come back to find it
+     * held.
+     *
+     * EVERY OTHER SAVE TEST HERE HAND-BUILDS ITS POST, and that is exactly how
+     * a matrix nobody could save shipped green: the endpoint, the token, the
+     * redirect and the persistence were all correct, and the screen was
+     * unusable because the button was not reachable. A test that never asks
+     * the page for its own form cannot see that.
+     */
+    public function testTickingABoxAndPressingSaveOnTheRenderedPageGrantsIt(): void
+    {
+        $this->administrator();
+        $ranger = $this->position('Ranger', $this->department('Protection Service'), []);
+        $this->em->flush();
+
+        $url = '/team/positions?position='.$ranger->getUuidString();
+        $crawler = $this->client->request('GET', $url);
+
+        // The page's own control, found the way a person finds it.
+        $form = $crawler->filter('form.pane')->selectButton('Save')->form();
+
+        /** @var list<ChoiceFormField> $boxes */
+        $boxes = $form['permissions'];
+        foreach ($boxes as $box) {
+            if (['area.view'] === $box->availableOptionValues()) {
+                $box->tick();
+            }
+        }
+
+        $this->client->submit($form);
+
+        self::assertResponseRedirects();
+
+        $this->em->clear();
+        $stored = $this->em->getRepository(Position::class)->findOneBy(['name' => 'Ranger']);
+        self::assertInstanceOf(Position::class, $stored);
+        self::assertSame(['area.view'], $stored->getPermissionValues(), 'The tick did not survive the save.');
+
+        // And it comes back ticked, so a reload shows what was granted.
+        $reloaded = $this->client->request('GET', $url);
+        self::assertCount(
+            1,
+            $reloaded->filter('input.pm-check[value="area.view"][checked]'),
+            'The saved grant is not drawn as held when the page is reloaded.',
+        );
     }
 
     /** A MODULE-DECLARED PERMISSION ROUND-TRIPS — the bug the old setter had. */

@@ -60,7 +60,7 @@
         "symfony/css-selector": "^7.3 || ^8.0",
         "symfony/mailer": "^7.3 || ^8.0",
         "symfony/twig-bundle": "^7.3 || ^8.0",
-        "uhifadhi/shell-module": "^0.4 || ^0.5"
+        "uhifadhi/shell-module": "^0.6"
     },
     "suggest": {
         "symfony/mailer": "Needed by the two paths that send a link — invite-by-email and password reset. Without it those paths are offered and refused, in writing, rather than hidden; everything else works.",
