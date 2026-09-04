@@ -115,18 +115,18 @@ final class SidebarRowTest extends WebTestCaseWithSchema
     }
 
     /**
-     * AND A STRANGER SEES NOTHING AT ALL. The nav is read live per render and
-     * there is no viewer to ask, so there is nothing to draw — which is also
-     * why the sign-in card, which renders on the document rung with no sidebar
-     * at all, was never the place this leaked.
+     * AND A STRANGER NEVER GETS AS FAR AS A SIDEBAR. Under the documented
+     * posture the front door is closed: everything that is not the sign-in
+     * screen or one of the recovery paths sends an anonymous visitor to
+     * `/login`, so the question "what does a stranger see in the nav" has one
+     * answer and it is "the sign-in card". The row cannot leak from a page a
+     * stranger cannot reach.
      */
-    public function testAnAnonymousVisitorSeesNoRow(): void
+    public function testAnAnonymousVisitorNeverReachesAPageWithASidebar(): void
     {
-        $crawler = $this->client->request('GET', '/_elsewhere');
+        $this->client->request('GET', '/_elsewhere');
 
-        self::assertResponseIsSuccessful();
-        self::assertCount(0, $crawler->filter('nav.nav a.nav-item'));
-        self::assertStringNotContainsString('Organization', (string) $this->client->getResponse()->getContent());
+        self::assertResponseRedirects('http://localhost/login');
     }
 
     /** The sign-in screen still shows no navigation, deliberately. */

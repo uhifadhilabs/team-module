@@ -121,6 +121,15 @@ final class TestKernel extends Kernel
                         'path' => 'team_logout',
                         'target' => 'team_login',
                     ],
+                    // Mirrored from the README because the ladder below names
+                    // IS_AUTHENTICATED_REMEMBERED: a rule that admits a
+                    // remember-me cookie is only honestly exercised by a
+                    // firewall that can issue one.
+                    'remember_me' => [
+                        'secret' => '%kernel.secret%',
+                        'lifetime' => 604800,
+                        'always_remember_me' => false,
+                    ],
                 ],
             ],
             'role_hierarchy' => [
@@ -129,9 +138,15 @@ final class TestKernel extends Kernel
                 'ROLE_ADMIN' => ['ROLE_AREAS', 'ROLE_MODULES', 'ROLE_TEAM'],
                 'ROLE_SUPER_ADMIN' => ['ROLE_ADMIN', 'ROLE_ALLOWED_TO_SWITCH'],
             ],
+            // DEFAULT-CLOSED, exactly as the README's ladder is: the three
+            // paths a stranger has to reach are named, and the catch-all shuts
+            // everything else. `/_guarded` needs no rule of its own any more —
+            // the catch-all is what guards it, which is the point.
             'access_control' => [
                 ['path' => '^/login', 'roles' => 'PUBLIC_ACCESS'],
-                ['path' => '^/_guarded', 'roles' => 'ROLE_USER'],
+                ['path' => '^/reset-password', 'roles' => 'PUBLIC_ACCESS'],
+                ['path' => '^/invite/', 'roles' => 'PUBLIC_ACCESS'],
+                ['path' => '^/', 'roles' => 'IS_AUTHENTICATED_REMEMBERED'],
             ],
         ]);
 

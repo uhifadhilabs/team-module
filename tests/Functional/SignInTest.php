@@ -145,6 +145,44 @@ final class SignInTest extends WebTestCase
         self::assertResponseRedirects('http://localhost/login');
     }
 
+    /**
+     * THE FRONT DOOR IS ONE OF THE GUARDED PAGES. This installation is a
+     * back-of-house application: once identity is installed there is no page of
+     * it a stranger is meant to read, `/` included. The catch-all rule in the
+     * documented `access_control` is what makes that true, and this is the test
+     * that would notice if the documented ladder ever went open again.
+     */
+    public function testTheFrontDoorSendsAStrangerToTheSignInScreen(): void
+    {
+        $this->client->request('GET', '/');
+
+        self::assertResponseRedirects('http://localhost/login');
+    }
+
+    /** And the sign-in screen itself stays reachable with nobody to ask. */
+    public function testTheSignInScreenIsReachableByAStranger(): void
+    {
+        $this->client->request('GET', '/login');
+
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+    }
+
+    /**
+     * THE RECOVERY PATHS STAY OPEN, because the person they are for is by
+     * definition somebody who cannot sign in. Closing either of them with the
+     * catch-all would leave a locked-out colleague with no way back in at all.
+     */
+    public function testTheRecoveryPathsStayReachableByAStranger(): void
+    {
+        $this->client->request('GET', '/reset-password');
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+
+        // An unknown token still renders its own refusal rather than bouncing
+        // to /login: reaching the screen is the public part, not the token.
+        $this->client->request('GET', '/invite/'.str_repeat('f', 64));
+        self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+    }
+
     public function testAnAlreadySignedInVisitorIsNotShownTheFormAgain(): void
     {
         $this->seedWarden();

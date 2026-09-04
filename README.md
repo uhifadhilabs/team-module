@@ -140,6 +140,15 @@ This module's recipe therefore ships only what is unambiguously its own: its
 security file at all, by design and not by limitation — one security file, one
 owner, and that owner is the application.
 
+**The ladder the README hands you is closed, and that is not a contradiction of
+the paragraph above.** A recipe that shut the front door would do it to a
+project that never asked, on the day a `composer require` happened to run, and
+would lock every page of every module already installed in one unattended step.
+The block in [Wire the security](#wire-the-security) is the opposite kind of
+act: you read it, you paste it, and you own the result. Closing the door is correct there precisely because it is your
+hand doing it — an installation of this application is back-of-house, so a
+stranger who asks for any of it belongs at `/login`.
+
 ## Modules point at your people
 
 Nearly every module keeps records with a name on them — who reported the
@@ -659,29 +668,34 @@ security:
 
     # ONLY THE FIRST MATCHING RULE APPLIES.
     #
-    # THIS LADDER IS OPEN, AND CLOSING IT IS YOUR ONGOING JOB. One rule ships
-    # here — the sign-in screen has to be reachable by somebody who is not
-    # signed in — and everything else stays as reachable as it was before this
-    # module arrived. That is deliberate: shutting the front door in a snippet
-    # would lock every page of every module you already have, in one paste.
-    # Add rules as you learn which of your paths are which; the commented lines
-    # are the shape most installations end up with.
+    # THIS LADDER IS CLOSED, AND OPENING A PATH IS THE DELIBERATE ACT. This is
+    # a back-of-house installation: once identity is installed there is no page
+    # of it a stranger is meant to read, so the last rule takes everything and
+    # the rules above it are the exceptions. Adding a public path is a line you
+    # write on purpose, one path at a time — which is the way round that fails
+    # safely, because a path you forgot to name stays shut rather than open.
+    #
     # THREE PATHS MUST STAY PUBLIC and they are the three a stranger reaches
     # with nobody to ask: the sign-in screen, the forgotten-password screen, and
     # the link an invited colleague follows to set their first password. Close
     # any of them and the person it is for has no way in at all.
+    #
+    # IS_AUTHENTICATED_REMEMBERED, not ROLE_USER, on the catch-all: it admits
+    # somebody the remember_me key above signed back in from a cookie, which is
+    # the whole point of having configured it. Use IS_AUTHENTICATED_FULLY on any
+    # path you want a freshly typed password for.
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/reset-password, roles: PUBLIC_ACCESS }
         - { path: ^/invite/, roles: PUBLIC_ACCESS }
         #- { path: ^/team, roles: ROLE_TEAM }        # the umbrella; the row is the voter's
         #- { path: ^/areas, roles: ROLE_AREAS }      # the umbrella; the verb is the voter's
-        #- { path: ^/, roles: ROLE_USER }            # sign in to see anything at all
+        - { path: ^/, roles: IS_AUTHENTICATED_REMEMBERED }
 
     # NOTE ON /team: every action under it already enforces
     # is_granted('team.manage') with an attribute on the controller, so it is
-    # shut whether or not you add the commented rule above. The rule is the
-    # coarse outer gate; the attribute is the one that decides.
+    # shut to the wrong person whether or not you add the commented rule above.
+    # The rule is the coarse outer gate; the attribute is the one that decides.
 
 # Hashing is expensive by design. In tests that cost buys nothing, so it is
 # floored — the documented Symfony practice, and safe because it applies to no
@@ -707,8 +721,9 @@ yours to change freely:
 2. the route names `team_login` / `team_logout` (`config/routes/team.yaml`),
 3. `user_checker: team.user_checker`, without which a deactivated account signs
    in normally, and
-4. the three `PUBLIC_ACCESS` rules, without which the screens a locked-out
-   person needs are locked too.
+4. the three `PUBLIC_ACCESS` rules, without which the catch-all below them
+   locks the screens a locked-out person needs too — including `/login`, which
+   makes the installation unreachable by anybody.
 
 Break the first two and the container says so at compile time rather than at
 3am. The other two fail quietly, which is why they are listed.
@@ -760,10 +775,13 @@ a console command and not a screen.
   [The row in the sidebar](#the-row-in-the-sidebar). Before this module, a fresh
   installation's sidebar was empty and the shell's welcome page said so; now it
   says one true thing.
-- **`/` is unchanged** — still whatever your installation had there (the
-  skeleton's welcome page), and still public: the `access_control` above leaves
-  the front door open, because deciding otherwise is an installation's decision
-  and not a module's.
+- **`/` answers a redirect to `/login` for a stranger**, and whatever your
+  installation had there for somebody signed in. The page itself is unchanged —
+  nothing in this module special-cases `/` — but the `access_control` above
+  shuts it, the way it shuts everything that is not the three public paths.
+  On a fresh installation that page is the shell's welcome screen, which under
+  this posture is simply a signed-in view; installations replace `/` with a
+  real home the day they have one to put there.
 
 ## Configuration
 
