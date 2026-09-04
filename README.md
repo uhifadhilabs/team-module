@@ -574,8 +574,9 @@ put it there.
 Until you do, the module is installed and inert: `/login` renders, and nothing
 authenticates, because the stock configuration still looks users up in memory.
 
-Replace `config/packages/security.yaml` with this. It is the whole file, ready
-to copy:
+Replace `config/packages/security.yaml` with this. **It is the whole file: one
+paste over the stock one, and there is nothing to edit afterward** — the
+commented lines are examples you may want later, not blanks you have to fill.
 
 ```yaml
 security:
