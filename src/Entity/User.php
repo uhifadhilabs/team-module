@@ -40,12 +40,17 @@ use Uhifadhi\Team\Repository\UserRepository;
  * in" — the firewall's business. `Uhifadhi\ModuleContracts\Entity\UserInterface`, imported here
  * aliased because the short names collide, answers "who is this record about": it is the
  * stand-in every other module points its associations at, so that no module has to require this
- * bundle to keep a record with a name on it. An installation closes the loop itself:
+ * bundle to keep a record with a name on it. THIS BUNDLE CLOSES THAT LOOP ITSELF —
+ * {@see \Uhifadhi\Team\UhifadhiTeamBundle::prependExtension()} prepends
  *
  *     doctrine:
  *         orm:
  *             resolve_target_entities:
  *                 Uhifadhi\ModuleContracts\Entity\UserInterface: Uhifadhi\Team\Entity\User
+ *
+ * so an installation writes nothing. It is prepended rather than merged, which
+ * means an installation whose people are its OWN entity names that class in its
+ * doctrine.yaml and overrules this without disabling anything.
  *
  * The contract asks seven questions and this class already answered all seven before it declared
  * them — which is the sign the surface was measured against real modules rather than invented.

@@ -154,30 +154,50 @@ and this module's `User` **is** its answer. Seven questions: `getId()`,
 `getFullName()`, `getRangerCode()`. It implemented all seven before it declared
 the interface, because the surface was measured against the modules that read it.
 
-**One line closes the loop, and it is yours to write** — a bundle cannot know
-what an installation calls its people:
+**Nothing closes that loop by hand — this module closes it.** Registering the
+bundle prepends the resolution, so a fresh installation writes no
+`doctrine.yaml` and `doctrine:migrations:diff` works immediately:
 
 ```yaml
-# config/packages/doctrine.yaml
+# what the bundle prepends for you — you do not write this
 doctrine:
     orm:
         resolve_target_entities:
             Uhifadhi\ModuleContracts\Entity\UserInterface: Uhifadhi\Team\Entity\User
 ```
 
-Write it once. Every module that points at a person resolves through it, and a
-module installed later needs nothing further. **Merge it into the block already
-there** — that file opens with `doctrine:`, and a second `doctrine:` key in the
-same file is not valid YAML; `resolve_target_entities` goes under the existing
-`orm:`, beside `mappings`. **What stops without it is the
-schema, not the boot**: the container compiles and the kernel starts, but
-`doctrine:migrations:diff` reports `Class
-'Uhifadhi\ModuleContracts\Entity\UserInterface' does not exist` — the same
-failure, for the same reason, as the seam's unresolved `AreaInterface`.
+It used to be a documented hand-step and that was the wrong shape. A hand-step
+is for a decision only the installation can make, and this was not one: the line
+says exactly one thing, and for as long as this module is installed it only ever
+had one right value. Its cost was real, because forgetting it fails a long way
+from its cause — the container compiles, the kernel boots, and
+`doctrine:migrations:diff` stops on `Class
+'Uhifadhi\ModuleContracts\Entity\UserInterface' does not exist`, with nothing
+pointing back at the paragraph that was missed.
 
-Nothing above is needed if the only module you have installed is this one: the
-line resolves an interface, and with nothing pointing at it there is nothing to
-resolve.
+**If your people are your own entity, say so and you win.** Prepended
+configuration loses to the application's — that is Symfony's rule, not a switch
+this module invented — so naming your own class in your own config is all it
+takes, with nothing here to disable first:
+
+```yaml
+# config/packages/doctrine.yaml — yours, and it overrules the bundle
+doctrine:
+    orm:
+        resolve_target_entities:
+            Uhifadhi\ModuleContracts\Entity\UserInterface: App\Entity\Person
+```
+
+**Merge it into the block already there** — that file opens with `doctrine:`,
+and a second `doctrine:` key in the same file is not valid YAML;
+`resolve_target_entities` goes under the existing `orm:`, beside `mappings`.
+Your class has to answer the contract's seven questions and be in the mapping
+chain. That the override wins is tested, not assumed
+(`tests/Integration/Identity/ResolveTargetEntitiesTest`).
+
+**The seam's `AreaInterface` is still yours**, and for the opposite reason: only
+your installation knows what it calls an area, so no package can answer that one
+for you. See `config/packages/seam.yaml`.
 
 **It is not Symfony's `UserInterface`.** That one answers "who is signed in" and
 still comes from the token storage; this one answers "who is this record about".
@@ -657,11 +677,15 @@ bin/console doctrine:migrations:migrate
 
 An installation needs a database `DATABASE_URL` points at. The skeleton already
 carries `doctrine.yaml` and that env var (`uhifadhi/seam-module` brings Doctrine
-in); this module adds no database configuration of its own beyond mapping its
-two entities. Note that `doctrine:migrations:diff` walks **all** mapped
-metadata, so the seam's own `resolve_target_entities` step
-(`config/packages/seam.yaml`) has to be done first — otherwise the diff stops on
-`Uhifadhi\Seam\Entity\AreaInterface` before it ever reaches `team_user`.
+in); this module adds no database configuration of its own beyond mapping its three
+entities and answering the user contract, both of which it does for you.
+
+Note that `doctrine:migrations:diff` walks **all** mapped metadata, so the
+**seam's** own `resolve_target_entities` step (`config/packages/seam.yaml`) still
+has to be done first — otherwise the diff stops on
+`Uhifadhi\Seam\Entity\AreaInterface` before it ever reaches `team_user`. That one
+is genuinely yours: only your installation knows what it calls an area, so no
+package can answer it for you. The `UserInterface` half needs nothing.
 
 ## Make the first administrator
 

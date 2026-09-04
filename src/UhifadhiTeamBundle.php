@@ -17,7 +17,9 @@ use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
+use Uhifadhi\ModuleContracts\Entity\UserInterface as ModuleUserInterface;
 use Uhifadhi\Team\DependencyInjection\TeamConfiguration;
+use Uhifadhi\Team\Entity\User;
 
 /**
  * TEAM — who an installation's people are, and how they sign in.
@@ -37,11 +39,17 @@ use Uhifadhi\Team\DependencyInjection\TeamConfiguration;
  * there. One security file, one owner. There is no separate security module and
  * there is nothing for one to hold.
  *
- * ZERO-CONFIG, WITH ONE HAND-STEP. Registering the bundle maps its own entities
- * (no doctrine block for team_user / team_position in the installing project),
- * wires its own services and registers its voter. The recipe adds its options
- * and its routes. The firewall is the hand-step, and it is the one thing a
- * module may not do for you.
+ * ZERO-CONFIG, WITH ONE HAND-STEP, AND THE FIREWALL IS IT. Registering the
+ * bundle maps its own entities (no doctrine block for team_* tables in the
+ * installing project), ANSWERS THE USER CONTRACT (no resolve_target_entities
+ * either — see prependExtension), wires its own services and registers its
+ * voter. The recipe adds its options and its routes.
+ *
+ * The firewall is the one thing left, and it is the one thing a module may not
+ * do for you: only the installation knows which of its paths are public. The
+ * test for whether something belongs here is whether the installation has a
+ * decision to make — the security file is such a decision, and what
+ * `UserInterface` means, while this module is installed, is not.
  */
 final class UhifadhiTeamBundle extends AbstractBundle
 {
@@ -64,6 +72,17 @@ final class UhifadhiTeamBundle extends AbstractBundle
 
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
     {
+        /*
+         * PREPENDED, AND THE FLAG IS LOAD-BEARING. `extension()` APPENDS by
+         * default even when called from prependExtension() — which puts this
+         * config LAST, where it would overrule the installation instead of
+         * deferring to it. With `prepend: true` it goes first and the
+         * application's own doctrine.yaml wins, which is the entire reason
+         * shipping a resolution here is safe rather than presumptuous. It
+         * changes nothing for the mappings below, whose key is this bundle's
+         * alone and which nothing else writes.
+         */
+
         // Zero-config persistence: the bundle maps its own entities, so an
         // installation never writes a doctrine mappings block for team_* tables.
         if ($builder->hasExtension('doctrine')) {
@@ -77,8 +96,45 @@ final class UhifadhiTeamBundle extends AbstractBundle
                             'is_bundle' => false,
                         ],
                     ],
+
+                    /*
+                     * THE PACKAGE THAT PROVIDES THE ANSWER IS THE PACKAGE THAT
+                     * STATES IT.
+                     *
+                     * Nearly every module keeps records with a name on them and
+                     * points at the CONTRACT rather than at this bundle's User,
+                     * because a module that type-hinted the latter would be a
+                     * module no installation could run without this one. So
+                     * something has to say what the interface means, and for as
+                     * long as this module is installed the answer is not in
+                     * doubt: it is this module's User.
+                     *
+                     * IT USED TO BE A DOCUMENTED HAND-STEP, and that was the
+                     * wrong shape. A hand-step is for a decision only the
+                     * installation can make; this was not one — the line said
+                     * exactly one thing and only ever had one right value. Its
+                     * cost was real, because forgetting it fails a long way
+                     * from its cause: the container compiles, the kernel boots,
+                     * and `doctrine:migrations:diff` stops on "Class
+                     * 'Uhifadhi\ModuleContracts\Entity\UserInterface' does not
+                     * exist" with nothing pointing back at the paragraph that
+                     * was missed.
+                     *
+                     * THE ESCAPE HATCH IS SYMFONY'S OWN RULE AND NOT A SWITCH
+                     * INVENTED HERE: prepended configuration LOSES to the
+                     * application's. An installation whose people are its own
+                     * entity names that entity under `doctrine.orm.
+                     * resolve_target_entities` in its own config and its answer
+                     * wins, with nothing to disable first. That property is
+                     * precisely what makes shipping a default safe, so it is
+                     * tested rather than assumed — see
+                     * tests/Integration/Identity/ResolveTargetEntitiesTest.
+                     */
+                    'resolve_target_entities' => [
+                        ModuleUserInterface::class => User::class,
+                    ],
                 ],
-            ]);
+            ], prepend: true);
         }
 
         // The bundle's public/ dir is auto-registered by AssetMapper under the
