@@ -108,6 +108,7 @@
     cursor: pointer;
     padding: 11px 15px;
     font-size: 13px;
+    box-sizing: border-box;
 }
 
 /* A refusal, said out loud in the failure colour — the same shape the rest of
@@ -383,7 +384,7 @@ table.tbl tr.gh + tr.prow td { padding-top: 12px; }
     display: flex; align-items: center; gap: 8px; width: 100%; background: none; cursor: pointer;
     border: 0; border-top: 1px dashed var(--c-ln2); padding: 12px 15px; color: rgb(var(--c-acc));
     font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10.5px; font-weight: 700;
-    letter-spacing: .06em; text-align: left;
+    letter-spacing: .06em; text-align: left; box-sizing: border-box;
 }
 .addpos b { color: rgb(var(--c-tx)); font-weight: 700; }
 .addpos:hover { background: color-mix(in srgb, rgb(var(--c-acc)) 7%, transparent); }
@@ -440,7 +441,7 @@ td.dcell + td { white-space: nowrap; }
 .rail-item {
     display: grid; grid-template-columns: 8px 1fr auto; gap: 0 10px; align-items: center;
     background: none; border: 1px solid transparent; border-radius: 9px; padding: 9px 11px; cursor: pointer;
-    text-align: left; color: rgb(var(--c-fog)); width: 100%;
+    text-align: left; color: rgb(var(--c-fog)); width: 100%; box-sizing: border-box;
 }
 .rail-item:hover { border-color: var(--c-ln2); color: rgb(var(--c-tx)); }
 .rail-item.on { background: rgb(var(--c-raised)); border-color: var(--c-ln2); color: rgb(var(--c-tx)); }
@@ -697,6 +698,19 @@ html.dark .pm-by.roster i { background: #7FA6F0; }
     letter-spacing: .09em; text-transform: uppercase; line-height: 1;
 }
 .pm-all:hover { color: rgb(var(--c-tx)); border-color: rgb(var(--c-fog)); }
+
+/* THE ENHANCEMENT'S TWO HONEST FACES. The server renders this button disabled
+   and the Stimulus controller enables it on connect, so with no JavaScript on
+   the page it stays disabled forever — and it must then look like the count it
+   is, not like a control that is refusing. No border, no pointer, no hover: the
+   plain readout this heading carried before the button existed. */
+.pm-all[disabled] {
+    border-color: transparent; cursor: default; padding-left: 0; padding-right: 0;
+}
+.pm-all[disabled]:hover { color: rgb(var(--c-fog)); border-color: transparent; }
+/* And the verb goes with the behaviour: "all · 1 of 4" is a thing to press, and
+   "1 of 4" — exactly what this heading read before — is a fact. */
+.pm-all[disabled] .a { display: none; }
 .pm-all .c { color: rgb(var(--c-dim)); border: 0; background: none; padding: 0; border-radius: 0; }
 /* `.c` is the design system's PLATE class. Inside this button it is only ever a
    <span> carrying the count, and the reset above stops the plate's own border,
@@ -1009,6 +1023,14 @@ html.dark .pm-mod-roster { --pm-edge: #7FA6F0; }
 .pm-head .hl { display: flex; align-items: center; gap: 11px; flex-wrap: wrap; min-width: 0; }
 .pm-head .hl b { font-size: 16px; font-weight: 700; letter-spacing: -.015em; color: rgb(var(--c-tx)); }
 .pm-head .hr { display: flex; align-items: center; gap: 8px; }
+
+/* THE FIELD THE RENAME BUTTON SUBMITS. `.fld` is tuned for the sign-in card and
+   is far too tall to sit beside a 23px soft button, so the header's copy is the
+   compact one — the same surfaces, at the size this row is. */
+.pm-head .hr .pm-rename {
+    height: 26px; box-sizing: border-box; padding: 0 9px; font-size: 12px; width: 15ch;
+    max-width: 100%; border-radius: 8px;
+}
 
 /* How many people this change reaches. A permission ticked on Ranger reaches
    four people at once, and the editor says four before it saves, not after. */
