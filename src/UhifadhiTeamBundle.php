@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Uhifadhi\Team;
 
+use Symfony\Component\AssetMapper\AssetMapperInterface;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -61,6 +62,24 @@ final class UhifadhiTeamBundle extends AbstractBundle
      * theming the screen has to be able to name it.
      */
     public const string STYLESHEET = 'bundles/uhifadhiteam/team.css';
+
+    /**
+     * The AssetMapper namespace this bundle's assets/ directory is mapped to.
+     *
+     * It is the npm-style form of the composer package name, and it has to be:
+     * Flex keys assets/controllers.json by '@'.<composer package name>, and
+     * StimulusBundle resolves that key back to this directory. A different name
+     * here is a controller the host cannot find.
+     */
+    public const string ASSET_NAMESPACE = '@uhifadhi/team-module';
+
+    /**
+     * The prefix every one of this bundle's Stimulus controllers is addressed
+     * by in a template — StimulusBundle's own normalisation of the namespace
+     * above ('@' dropped, '/' and '_' to '-'), so `permission-group` is reached
+     * as `uhifadhi--team-module--permission-group`.
+     */
+    public const string CONTROLLER_PREFIX = 'uhifadhi--team-module--';
 
     /** Config lives under "team:", not the class-derived "uhifadhi_team:". */
     protected string $extensionAlias = 'team';
@@ -140,6 +159,23 @@ final class UhifadhiTeamBundle extends AbstractBundle
         // The bundle's public/ dir is auto-registered by AssetMapper under the
         // namespace `bundles/uhifadhiteam` and content-versioned — no config
         // here, no assets:install.
+
+        // THE MATRIX'S ONE ENHANCEMENT, SHIPPED WITH THE MATRIX. A bundle
+        // contributes no importmap entry, but it does contribute an AssetMapper
+        // path and a `symfony.controllers` block in assets/package.json, which
+        // is how every symfony/ux package ships a Stimulus controller. Flex
+        // writes the host's assets/controllers.json on install; nothing is
+        // built. The composer keyword `symfony-ux` is what makes Flex look in
+        // here at all — without it everything installs and nothing binds.
+        if ($builder->hasExtension('framework') && interface_exists(AssetMapperInterface::class)) {
+            $container->extension('framework', [
+                'asset_mapper' => [
+                    'paths' => [
+                        \dirname(__DIR__).'/assets' => self::ASSET_NAMESPACE,
+                    ],
+                ],
+            ]);
+        }
     }
 
     /**

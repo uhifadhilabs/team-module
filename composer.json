@@ -3,6 +3,7 @@
     "description": "Team: who an installation's people are and how they sign in — the user account, the sign-in screen, the position that bundles permissions, and the permission catalogue every module's declarations fold into.",
     "type": "symfony-bundle",
     "keywords": [
+        "symfony-ux",
         "identity",
         "authentication",
         "authorization",

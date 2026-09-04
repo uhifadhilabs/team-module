@@ -1,0 +1,15 @@
+{
+    "name": "@uhifadhi/team-module",
+    "description": "Front-end behaviour of the team screens — the permission matrix's per-umbrella select-all, mapped into hosts via AssetMapper.",
+    "license": "AGPL-3.0-or-later",
+    "symfony": {
+        "controllers": {
+            "permission-group": {
+                "main": "controllers/permission_group_controller.js",
+                "fetch": "lazy",
+                "enabled": true
+            }
+        },
+        "importmap": {}
+    }
+}

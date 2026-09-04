@@ -32,7 +32,16 @@
         {% else %}
             <span class="pm-by {{ source }}"><i></i>{{ moduleNames[source]|default(source) }}</span>
         {% endif %}
-        <span class="pm-all" style="margin-left:auto">{{ on }} of {{ permissions|length }}</span>
+        {# SELECT ALL, AS A PROGRESSIVE ENHANCEMENT. The design draws the count
+           as a button that ticks the whole group; it ships DISABLED and the
+           Stimulus controller's connect() is what makes it live, so it is a
+           control exactly when there is behaviour behind it and reads as the
+           plain count it has always been when there is not. Nothing here
+           writes: the boxes change, and Save is still the only thing that
+           saves. See assets/controllers/permission_group_controller.js. #}
+        <button type="button" class="pm-all" style="margin-left:auto" disabled
+                data-uhifadhi--team-module--permission-group-target="all"
+                data-action="uhifadhi--team-module--permission-group#toggle"><span class="a">all</span> <span class="c">{{ on }} of {{ permissions|length }}</span></button>
     </div>
 {% endmacro %}
 
@@ -45,7 +54,8 @@
     {%- set destructive = permission.value ends with '.delete' -%}
     {%- set elevated = permission.value == 'team.manage' -%}
     <label class="pm-row{{ on ? ' on' : '' }}{{ destructive ? ' destructive' : '' }}{{ elevated ? ' elevated' : '' }}">
-        <input type="checkbox" name="permissions[]" value="{{ permission.value }}"{{ on ? ' checked' : '' }} class="pm-check">
+        <input type="checkbox" name="permissions[]" value="{{ permission.value }}"{{ on ? ' checked' : '' }} class="pm-check"
+               data-uhifadhi--team-module--permission-group-target="box">
         <span class="pm-tick">{{ pm.icon_tick() }}</span>
         <span class="pm-t">
             <b>{{ permission.label }}</b>
