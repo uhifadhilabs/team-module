@@ -60,6 +60,37 @@ final class TeamNavigationTest extends TestCase
     }
 
     /**
+     * AND UNMOUNTING IS PER-ADDRESS, which is why the rows are generated one at
+     * a time. An installation that kept the roster and dropped the departments
+     * screen loses ONE row; the section it belongs to survives with what is
+     * still reachable. The whole-section answer above is what happens when
+     * nothing is left, not what happens when something is missing.
+     */
+    public function testUnmountingOneScreenTakesOneRowAndLeavesTheOther(): void
+    {
+        $urls = $this->createStub(UrlGeneratorInterface::class);
+        $urls->method('generate')->willReturnCallback(
+            static fn (string $route): string => TeamNavigation::ROUTE === $route
+                ? '/team'
+                : throw new RouteNotFoundException(),
+        );
+
+        $navigation = new TeamNavigation(
+            $urls,
+            $this->tokenStorageWithAToken(),
+            $this->checkerAnswering(true),
+            new RequestStack(),
+        );
+
+        $sections = iterator_to_array($navigation->sections());
+        self::assertCount(1, $sections);
+
+        $section = $sections[0];
+        self::assertInstanceOf(NavSection::class, $section);
+        self::assertSame(['Team'], array_map(static fn ($item): string => $item->label, $section->items));
+    }
+
+    /**
      * NO TOKEN, NO QUESTION. Asking the authorization checker with no token
      * throws rather than answering false, and a shell renders in places a
      * firewall does not reach.
@@ -77,17 +108,23 @@ final class TeamNavigationTest extends TestCase
     }
 
     /**
-     * AND THE ROW ITSELF IS A VALUE, not a rendering — the section's heading and
-     * declared position are part of what this module promises the shell, so they
-     * are stated somewhere that fails when they change.
+     * AND THE ROWS THEMSELVES ARE VALUES, not renderings — the section's
+     * heading, its declared position and the ORDER of what is in it are part of
+     * what this module promises the shell, so they are stated somewhere that
+     * fails when they change.
+     *
+     * DEPARTMENTS COMES FIRST, and that is the drawing rather than a
+     * preference: the old application's sidebar puts Departments above Team
+     * under Organization, because the org chart is the thing the roster is read
+     * against.
      */
-    public function testTheRowIsOneSectionAtTheDeclaredPosition(): void
+    public function testTheTwoRowsAreOneSectionAtTheDeclaredPosition(): void
     {
         $requests = new RequestStack();
         $requests->push(Request::create('/somewhere-else'));
 
         $navigation = new TeamNavigation(
-            $this->urlsAnsweringTeam(),
+            $this->urlsAnsweringByRoute(),
             $this->tokenStorageWithAToken(),
             $this->checkerAnswering(true),
             $requests,
@@ -100,11 +137,54 @@ final class TeamNavigationTest extends TestCase
         self::assertInstanceOf(NavSection::class, $section);
         self::assertSame('Organization', $section->label);
         self::assertSame(20, $section->position);
-        self::assertCount(1, $section->items);
-        self::assertSame('Team', $section->items[0]->label);
-        self::assertSame('/team', $section->items[0]->url);
-        self::assertSame('lucide:users', $section->items[0]->icon);
+        self::assertCount(2, $section->items);
+
+        self::assertSame('Departments', $section->items[0]->label);
+        self::assertSame('/departments', $section->items[0]->url);
+        self::assertSame('lucide:building-2', $section->items[0]->icon);
         self::assertFalse($section->items[0]->current);
+
+        self::assertSame('Team', $section->items[1]->label);
+        self::assertSame('/team', $section->items[1]->url);
+        self::assertSame('lucide:users', $section->items[1]->icon);
+        self::assertFalse($section->items[1]->current);
+    }
+
+    /**
+     * THE TWO ROWS CANNOT LIGHT EACH OTHER. This is the reason departments is
+     * addressed at `/departments` rather than under the roster: "am I here" is
+     * decided by path prefix, so a `/team/departments` would have lit the Team
+     * row on the departments screen and the sidebar would have answered "where
+     * am I" with two places at once.
+     */
+    public function testStandingOnDepartmentsLightsDepartmentsAndNotTheRoster(): void
+    {
+        $requests = new RequestStack();
+        $requests->push(Request::create('/departments'));
+
+        $navigation = new TeamNavigation(
+            $this->urlsAnsweringByRoute(),
+            $this->tokenStorageWithAToken(),
+            $this->checkerAnswering(true),
+            $requests,
+        );
+
+        $sections = iterator_to_array($navigation->sections());
+        $section = $sections[0];
+        self::assertInstanceOf(NavSection::class, $section);
+
+        self::assertTrue($section->items[0]->current, 'Departments is not lit on the departments screen.');
+        self::assertFalse($section->items[1]->current, 'The roster row is lit on a screen it does not lead to.');
+    }
+
+    private function urlsAnsweringByRoute(): UrlGeneratorInterface
+    {
+        $urls = $this->createStub(UrlGeneratorInterface::class);
+        $urls->method('generate')->willReturnCallback(
+            static fn (string $route): string => TeamNavigation::ROUTE === $route ? '/team' : '/departments',
+        );
+
+        return $urls;
     }
 
     private function urlsAnsweringTeam(): UrlGeneratorInterface

@@ -9,7 +9,8 @@ A [uhifadhi](https://github.com/uhifadhilabs) platform bundle.
 > provides three tables (`team_user`, `team_position`, `team_department`), a
 > **seven-entry** permission catalogue that installed modules extend, a voter
 > that decides it, and the screens: the roster, one person's record, the
-> permission matrix, both ways of adding somebody, and the three a stranger
+> permission matrix, the departments those positions are filed under, both ways
+> of adding somebody, and the three a stranger
 > reaches — sign-in, forgotten password, and accepting an invitation. The first
 > administrator comes from `bin/console team:user:create`. You wire the firewall
 > yourself — the README gives you the file. Needs a database,
@@ -33,7 +34,8 @@ A [uhifadhi](https://github.com/uhifadhilabs) platform bundle.
   - [One installation always keeps one Super Admin](#one-installation-always-keeps-one-super-admin)
   - [Both ways of adding somebody ship](#both-ways-of-adding-somebody-ship)
   - [The self-service screens](#the-self-service-screens)
-- [The row in the sidebar](#the-row-in-the-sidebar)
+  - [Departments: the org chart's home](#departments-the-org-charts-home)
+- [The rows in the sidebar](#the-rows-in-the-sidebar)
 - [The first administrator](#the-first-administrator)
 - [The sign-in screen](#the-sign-in-screen)
 - [The schema](#the-schema)
@@ -110,14 +112,17 @@ either having to know the other.
   exactly its permissions, and a Staff user with none holds nothing at all.
 - **The department** — `Uhifadhi\Team\Entity\Department`, which this module owns
   because a constraint cannot be spelled across a module boundary: the position
-  name's uniqueness is scoped by it.
+  name's uniqueness is scoped by it. **A department grants nothing** — it is an
+  organizational fact, not an authorization one — and since v0.5.0 there is a
+  screen that makes one. See
+  [Departments: the org chart's home](#departments-the-org-charts-home).
 - **The catalogue** — the seven permissions this module owns plus whatever the
   installed modules declared, read live from the container, every entry carrying
   the sentence that says what holding it does.
 - **The voter** — the thing that answers `is_granted('area.create')`.
-- **The screens** — the roster, one person's record, the permission matrix, both
-  ways of adding somebody, and the three a stranger reaches. See
-  [The screens](#the-screens).
+- **The screens** — the roster, one person's record, the permission matrix, the
+  departments screen, both ways of adding somebody, and the three a stranger
+  reaches. See [The screens](#the-screens).
 - **The bootstrap** — `bin/console team:user:create`, which is how the first
   administrator of a fresh installation exists.
 
@@ -328,6 +333,7 @@ grants and revokes, never a tier nobody can audit.
 | `/team/invite` | **Both ways of adding somebody**, side by side |
 | `/team/positions` | **The permission matrix.** A widget surface: thirteen widgets, six adoptable directions, shipping on B — one position at a time. |
 | `/team/positions/widgets` | its widget library |
+| `/departments` | **The org chart's home.** Every department with the positions filed under it, and the three writes that shape them: make one, rename one, move a position between them. |
 | `/login` `/logout` | the sign-in screen |
 | `/reset-password` | forgotten password — **public** |
 | `/reset-password/{token}` | set a new one — **public** |
@@ -396,22 +402,78 @@ With no mailer, that screen says the installation cannot send email yet rather
 than swallowing the request. A silently discarded reset is the worst failure the
 flow has.
 
-## The row in the sidebar
+### Departments: the org chart's home
 
-Screens nobody can find are screens nobody has. Where an installation has
-[`uhifadhi/shell-module`](https://github.com/uhifadhilabs/shell-module), this
-module contributes **one row** to its sidebar and nothing else:
+`/departments` is the screen that closes a loop the model opened two releases
+ago. `Department` shipped in **v0.3.0**: the permission matrix grouped by it, the
+roster banded by it, a position's name became unique only inside it — and
+**nothing in the product could make one**. Departments arrived by whatever seeded
+an installation, so an installation that was never seeded read *Unassigned*
+against every position with no way out of it. A model nothing can write is the
+same defect as a route nothing links.
+
+The screen is **three writes and one reading**:
 
 | | |
 | --- | --- |
-| Section | **Organization**, at position `20` |
-| Row | **Team**, `lucide:users`, linking `team_index` |
-| Lit on | `/team` and everything under it, the permission matrix included |
+| Make one | one field in the page header, because a department is a name and never deserved a form page |
+| Rename one | the compact field its card's head submits |
+| File a position | a select on every position row — the matrix chooses a department when a position is *created* and could never move one afterwards |
+| Read | one card per department, its positions, and the active people those positions reach |
+
+**A department grants nothing, and the page says so rather than leaving it to be
+assumed.** Filing a position under Ecology changes where it is read and never
+what anybody may do; capability still arrives through that position's
+permissions, one screen over. That is also why the screen is gated on
+**`team.manage`** and not on a department permission of its own: reshaping the
+org chart is administering this installation's people, and an eighth core case
+invented to guard a screen that grants nothing would be an eighth core case
+invented for nothing.
+
+**Headcount is reached through the positions**, because that is how the model
+reaches it — a department holds nobody directly. Positions nobody has filed yet
+get a dashed card that says in words that it is **not a department**, the same
+sentence the roster's org chart already carries, because a reader meeting *No
+department yet* for the first time reads it as a department until told
+otherwise.
+
+**It is not a widget surface**, unlike the roster and the matrix. Both of those
+ride the widget framework because five or six directions over one array were
+drawn, and the standing rule is that a drawn direction ships as an adoptable
+preset. Nothing was drawn for this screen; six invented renderings would be a
+design made by the implementation.
+
+**There is no delete.** See [Not here yet](#not-here-yet).
+
+## The rows in the sidebar
+
+Screens nobody can find are screens nobody has. Where an installation has
+[`uhifadhi/shell-module`](https://github.com/uhifadhilabs/shell-module), this
+module contributes **two rows** to its sidebar and nothing else:
+
+| | |
+| --- | --- |
+| Section | **Organization**, at position `20`, and only this one |
+| Row | **Departments**, `lucide:building-2`, linking `team_departments` — lit on `/departments` |
+| Row | **Team**, `lucide:users`, linking `team_index` — lit on `/team` and everything under it, the permission matrix included |
 | Visible to | holders of **`team.manage`**, and nobody else |
 
-**One row for two screens**, because the design settled it that way: `/team` and
-`/team/positions` are one place in the product, so the matrix lights the Team row
-rather than adding a second. What is below that is the page's business.
+**One row for two screens** on the Team side, because the design settled it that
+way: `/team` and `/team/positions` are one place in the product, so the matrix
+lights the Team row rather than adding a third. What is below that is the page's
+business.
+
+**Departments is a second place, not a corner of the first**, which is why it has
+a top-level address. The drawing puts Departments and Team side by side under
+Organization, in that order, because a department is an org-wide fact the roster
+is read against. It is also the mechanical reason the address is `/departments`
+rather than `/team/departments`: "am I here" is decided by path prefix, so a
+departments screen under `/team` would have lit the Team row as well, and the
+sidebar would have answered *where am I* with two places at once.
+
+**Losing a row is per-address.** The rows are generated one at a time, so an
+installation that unmounted one screen loses one row and keeps the other; the
+section disappears only when nothing in it is reachable.
 
 **It is a nav source, not a seam module.** The shell's `NavigationSourceInterface`
 (tagged `shell.nav_section`) is documented to accept exactly this from a bundle —
@@ -522,6 +584,7 @@ src/
   Controller/TeamController.php         the roster, and TeamWidgetsController
   Controller/MemberController.php       one person's record and its writes
   Controller/PositionController.php     the matrix, and PositionWidgetsController
+  Controller/DepartmentController.php   the org chart's home, and its three writes
   Controller/InviteController.php       both ways of adding somebody
   Controller/PasswordResetController.php  forgot / reset / accept
   DependencyInjection/TeamConfiguration.php
@@ -535,11 +598,11 @@ src/
   Security/PermissionVoter.php  Security/ActiveUserChecker.php
   Service/PermissionCatalogue.php  Service/SuperAdminInvariant.php
   Service/TeamOverview.php  Service/Mail.php
-  Shell/TeamNavigation.php              the one row this module puts in the sidebar
+  Shell/TeamNavigation.php              the two rows this module puts in the sidebar
   Widget/TeamWidgets.php  Widget/PositionWidgets.php
   UhifadhiTeamBundle.php
 config/services.php                     explicit wiring, no autowire
-templates/                              login, team/, positions/, auth/, widgets/
+templates/                              login, team/, positions/, departments/, auth/, widgets/
 public/team.css
 ```
 
@@ -779,9 +842,14 @@ a console command and not a screen.
   here and offers the two useful next steps.
 - **`/team/positions` answers 200** for that same person, and its shipped
   direction's empty state is the control that makes the first position.
-- **The sidebar has an Organization section with a Team row in it**, for that
-  same person and for nobody else — see
-  [The row in the sidebar](#the-row-in-the-sidebar). Before this module, a fresh
+- **`/departments` answers 200** for that same person, and on a fresh
+  installation it opens on the state that made it necessary: no departments at
+  all, and the field that makes the first one directly above the sentence saying
+  so. Making one is the whole story — there is nothing to seed and nothing to
+  configure.
+- **The sidebar has an Organization section with a Departments row and a Team
+  row in it**, for that same person and for nobody else — see
+  [The rows in the sidebar](#the-rows-in-the-sidebar). Before this module, a fresh
   installation's sidebar was empty and the shell's welcome page said so; now it
   says one true thing.
 - **`/` answers a redirect to `/login` for a stranger**, and whatever your
@@ -848,10 +916,14 @@ Stated so nobody looks for them:
 - **No recycle bin.** Accounts are deactivated, never deleted, and `deleted_at`
   is reserved for a surface that lists removed records with an explicit purge.
   Nothing draws it and nothing writes it.
-- **No screen that makes a department.** Positions belong to departments and the
-  matrix groups by them, but the three or four rows an organisation needs are
-  currently made by whatever seeds your installation. A department is a name;
-  the screen for it is small and it is not drawn yet.
+- **No way to remove a department.** Making, renaming and filing into one all
+  ship (v0.5.0); removing one does not. The ruled posture everywhere else in
+  this module is deactivation rather than deletion, and it applies here in
+  principle — but what a refusal *says* to somebody removing a department that
+  still owns four positions is a design, and no design has been drawn. A
+  destructive control rendered ahead of its ruling is how the ruling gets made
+  by accident, so there is none. An unwanted department can be emptied: move its
+  positions out and it stands there owning nothing.
 - **No per-person permission, and there will not be one.** Authority lives on
   the position. Giving one person an exception means giving them a position of
   their own, which is a thing you can see and revoke.

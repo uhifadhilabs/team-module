@@ -2445,3 +2445,79 @@ body[data-life="off"] .mb-band .avatar { opacity: .6; }
 /* One card per state, one visible at a time. */
 .auth-state { display: none; }
 .auth-state.on { display: block; }
+
+/* ==================== DEPARTMENTS — THE ORG CHART'S HOME =================
+   The screen that closes the loop the Department entity opened: the model
+   shipped in v0.3.0, the matrix grouped by it, the roster banded by it, and
+   nothing in the product could make one.
+
+   ALMOST NOTHING IS NEW HERE, deliberately. The card, its head, its meta line
+   and its position rows are `.dcard` / `.dhead` / `.dmeta` / `.plist` /
+   `.pitem` — the positions design set's direction C, already in this file,
+   ported with the matrix and until now used by no template because that
+   surface put C on the platform's plate instead. What follows is only the
+   fitting: a card that carries CONTROLS on every row needs room the drawn card
+   never had to give, and two controls in it were never drawn at all.
+
+   NOTHING BELOW REACHES INTO ANOTHER SECTION'S RULES. Everything is scoped to
+   `[data-dp]`, so the matrix and the roster cannot be changed from here by
+   accident — the same discipline the People widget's `.assign` block states.
+   ======================================================================== */
+
+/* THE GRID IS WIDER THAN THE MATRIX'S. 252px was tuned for a card whose rows
+   are a name and a count; every row here also carries a department select and
+   the button that submits it, and at 252px the pair wrapped onto its own line
+   on every single row. */
+[data-dp] .tm-cardgrid { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+@media (max-width: 460px) { [data-dp] .tm-cardgrid { grid-template-columns: 1fr; } }
+
+/* THE FIRST-RUN NOTE SITS ABOVE THE GRID, and a grid's gap is between its own
+   cells — it gives nothing to what came before it. */
+[data-dp] .pm-first { margin-bottom: 18px; }
+
+/* The count line, inside the card's own gutter. A class rather than an inline
+   style: styles live in a stylesheet. */
+[data-dp] .dmeta { padding: 11px 15px 0; }
+
+/* THE RENAME CONTROL IN THE CARD HEAD. `.fld` is tuned for the sign-in card and
+   is far too tall to sit beside a soft button — the same problem the matrix's
+   pane header has, and the same answer. Stated again here rather than widening
+   that rule's selector, because a shared rule between two screens is two
+   screens that can no longer be changed independently. Two classes, so it beats
+   plain `.fld` on specificity without !important. */
+[data-dp] .dh-r { flex: 1 1 auto; min-width: 0; justify-content: flex-end; }
+[data-dp] .dh-r .assign { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; min-width: 0; }
+[data-dp] .dh-r .fld.pm-rename {
+    height: 26px; box-sizing: border-box; padding: 0 9px; font-size: 12px;
+    flex: 0 1 19ch; min-width: 7ch; border-radius: 8px;
+}
+
+/* THE MOVE CONTROL ON A POSITION ROW — the one composition on this screen that
+   nothing drew, because until now nothing could move a position between
+   departments at all.
+
+   ONE ROW, NEVER TWO. A select that wrapped its own button onto the next line
+   would turn a position row into a little stack and the card would stop reading
+   as a list. The select shrinks instead, and the pair shares a height.
+
+   AND IT IS CAPPED, for the reason the People widget's copy is capped at 190px:
+   the card is a grid cell, so a lone department stretches it to the full page
+   and an uncapped select stretches with it — a 1100px-wide control holding
+   three words. It keeps its own size and the row's spare space stays spare. */
+[data-dp] .pacts .assign {
+    display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; min-width: 0;
+}
+[data-dp] .pacts .sel { flex: 0 1 240px; min-width: 0; height: 26px; box-sizing: border-box; }
+[data-dp] .pacts .softbtn { flex: none; }
+
+/* A ROW THAT DOES NOT NAVIGATE MUST NOT CLAIM TO. `.pitem` was drawn as a whole
+   row that opened a position; here the name is the link and the rest of the row
+   is a form, so a hand cursor over the select would be the row lying about
+   itself. */
+[data-dp] .pitem { cursor: default; }
+
+/* THE LOOSE CARD LEADS WITH ITS SENTENCE, before the count, because the
+   sentence is the whole reason the card is dashed: a reader meeting "No
+   department yet" for the first time reads it as a department until told
+   otherwise, and being told otherwise cannot wait until after a number. */
+[data-dp] .dcard.un .dnote { padding-top: 13px; }

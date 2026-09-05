@@ -15,6 +15,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Uhifadhi\Shell\Contract\NavigationSourceInterface;
 use Uhifadhi\Team\Command\CreateUserCommand;
+use Uhifadhi\Team\Controller\DepartmentController;
 use Uhifadhi\Team\Controller\InviteController;
 use Uhifadhi\Team\Controller\MemberController;
 use Uhifadhi\Team\Controller\PasswordResetController;
@@ -286,6 +287,30 @@ return static function (ContainerConfigurator $container): void {
         ])
         ->tag('controller.service_arguments');
     $services->alias(PositionController::class, 'team.controller.position')->public();
+
+    /*
+     * THE ORG CHART'S HOME — departments, and the three writes that shape them.
+     * It is the screen that closes the loop the Department entity opened in
+     * v0.3.0: the model shipped, the matrix grouped by it, the roster banded by
+     * it, and nothing in the product could make one.
+     *
+     * NOT A WIDGET SURFACE, so no widget service and no surface tag. The roster
+     * and the matrix ride the framework because directions were DRAWN for them;
+     * nothing was drawn for this one, and six invented renderings would be a
+     * design made by the implementation.
+     */
+    $services->set('team.controller.department', DepartmentController::class)
+        ->args([
+            service('twig'),
+            service(DepartmentRepository::class),
+            service(PositionRepository::class),
+            service(UserRepository::class),
+            service('doctrine.orm.entity_manager'),
+            service('security.csrf.token_manager'),
+            service('router'),
+        ])
+        ->tag('controller.service_arguments');
+    $services->alias(DepartmentController::class, 'team.controller.department')->public();
 
     $services->set('team.controller.position_widgets', PositionWidgetsController::class)
         ->args([

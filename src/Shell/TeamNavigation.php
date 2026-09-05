@@ -34,10 +34,18 @@ use Uhifadhi\Team\Enum\PermissionEnum;
  * table) and an installation's people are not an area's. A team that had to be
  * switched on per area would be a roster that existed four times.
  *
- * ONE ROW FOR TWO SCREENS, and the design settled it that way: /team and
+ * TWO ROWS, AND THE SECOND ONE IS NOT A SCREEN INSIDE THE FIRST. /team and
  * /team/positions are one place in the product, so the matrix lights the Team
- * row rather than adding a second. Anything below that is the page's own
- * business, not the sidebar's.
+ * row rather than adding a third; anything below that is the page's own
+ * business, not the sidebar's. Departments is different in kind and the drawing
+ * says so — the old application's sidebar puts Departments and Team side by
+ * side under Organization, in that order, because a department is an org-wide
+ * fact the roster reads rather than a corner of the roster. It has its own
+ * top-level address for the same reason.
+ *
+ * ONE SECTION, THOUGH. Both rows are Organization, and a module contributing
+ * two sections for two screens would be a module deciding the shape of somebody
+ * else's sidebar.
  *
  * GATING IS THIS CLASS'S JOB, not the shell's — the shell holds no
  * authorization service and asks nothing about the viewer. So the row is
@@ -70,6 +78,9 @@ final readonly class TeamNavigation implements NavigationSourceInterface
     /** The roster: this module's front door, and the row's destination. */
     public const string ROUTE = 'team_index';
 
+    /** The org chart's home — org-wide, and addressed as such. */
+    public const string DEPARTMENTS_ROUTE = 'team_departments';
+
     public function __construct(
         private UrlGeneratorInterface $urls,
         private TokenStorageInterface $tokens,
@@ -94,20 +105,46 @@ final readonly class TeamNavigation implements NavigationSourceInterface
             return;
         }
 
-        try {
-            $url = $this->urls->generate(self::ROUTE);
-        } catch (RouteNotFoundException) {
+        /*
+         * ROW BY ROW, because unmounting is per-address. An installation that
+         * kept the roster and dropped the departments screen must lose one row
+         * rather than both — and a section with nothing left in it is not a
+         * section, so an empty list yields nothing at all.
+         */
+        $items = array_values(array_filter([
+            $this->row('Departments', self::DEPARTMENTS_ROUTE, 'lucide:building-2'),
+            $this->row('Team', self::ROUTE, 'lucide:users'),
+        ]));
+
+        if ([] === $items) {
             return;
         }
 
-        yield new NavSection(self::SECTION, [
-            new NavItem(
-                label: 'Team',
-                url: $url,
-                icon: 'lucide:users',
-                current: $this->viewerIsHere($url),
-            ),
-        ], position: self::POSITION);
+        yield new NavSection(self::SECTION, $items, position: self::POSITION);
+    }
+
+    /**
+     * ONE ROW, OR NOTHING WHERE ITS ADDRESS IS GONE.
+     *
+     * ROUTE-TOLERANT, as the class comment says: the addresses are mounted by
+     * the APPLICATION, so generating one can fail, and a sidebar that took every
+     * page down because somebody unmounted a route would be the worst possible
+     * way to learn it.
+     */
+    private function row(string $label, string $route, string $icon): ?NavItem
+    {
+        try {
+            $url = $this->urls->generate($route);
+        } catch (RouteNotFoundException) {
+            return null;
+        }
+
+        return new NavItem(
+            label: $label,
+            url: $url,
+            icon: $icon,
+            current: $this->viewerIsHere($url),
+        );
     }
 
     /**

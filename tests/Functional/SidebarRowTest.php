@@ -39,7 +39,7 @@ use Uhifadhi\Team\Enum\TeamRoleEnum;
  */
 final class SidebarRowTest extends WebTestCaseWithSchema
 {
-    public function testTheTeamRowIsInTheSidebarForSomebodyWhoMayAdministerTheTeam(): void
+    public function testBothRowsAreInTheSidebarForSomebodyWhoMayAdministerTheTeam(): void
     {
         $this->administrator();
 
@@ -51,23 +51,32 @@ final class SidebarRowTest extends WebTestCaseWithSchema
             $crawler->filter('nav.nav .nav-hd')->each(static fn ($node): string => $node->text()),
         );
 
-        $row = $crawler->filter('nav.nav a.nav-item');
-        self::assertCount(1, $row);
-        self::assertSame('/team', $row->attr('href'));
-        self::assertSame('Team', $row->filter('span')->text());
+        $rows = $crawler->filter('nav.nav a.nav-item');
+        self::assertCount(2, $rows);
+        self::assertSame(
+            ['/departments', '/team'],
+            $rows->each(static fn ($node): string => (string) $node->attr('href')),
+        );
+        self::assertSame(
+            ['Departments', 'Team'],
+            $rows->each(static fn ($node): string => $node->filter('span')->text()),
+        );
     }
 
     /**
      * NOT LIT FROM SOMEWHERE ELSE. "Where am I" is the sidebar's whole job, and
      * a row lit on a page it does not lead to answers it wrongly.
      */
-    public function testTheRowIsUnlitOnAPageThatIsNotThisModules(): void
+    public function testNeitherRowIsLitOnAPageThatIsNotThisModules(): void
     {
         $this->administrator();
 
         $crawler = $this->client->request('GET', '/_elsewhere');
 
-        self::assertStringNotContainsString('on', (string) $crawler->filter('nav.nav a.nav-item')->attr('class'));
+        self::assertSame(
+            ['nav-item', 'nav-item'],
+            $crawler->filter('nav.nav a.nav-item')->each(static fn ($node): string => (string) $node->attr('class')),
+        );
     }
 
     public function testTheRowIsLitOnTheRoster(): void
@@ -77,7 +86,7 @@ final class SidebarRowTest extends WebTestCaseWithSchema
         $crawler = $this->client->request('GET', '/team');
 
         self::assertResponseIsSuccessful();
-        self::assertSame('nav-item on', $crawler->filter('nav.nav a.nav-item')->attr('class'));
+        self::assertSame(['nav-item', 'nav-item on'], $this->rowClasses($crawler));
     }
 
     /**
@@ -92,7 +101,23 @@ final class SidebarRowTest extends WebTestCaseWithSchema
         $crawler = $this->client->request('GET', '/team/positions');
 
         self::assertResponseIsSuccessful();
-        self::assertSame('nav-item on', $crawler->filter('nav.nav a.nav-item')->attr('class'));
+        self::assertSame(['nav-item', 'nav-item on'], $this->rowClasses($crawler));
+    }
+
+    /**
+     * AND DEPARTMENTS IS A SECOND PLACE, not a screen inside the roster — which
+     * is the whole reason it has a top-level address. Standing on it lights its
+     * own row and leaves Team alone; a `/team/departments` would have lit both,
+     * because "am I here" is decided by path prefix.
+     */
+    public function testTheDepartmentsRowIsLitOnItsOwnScreenAndTheRosterRowIsNot(): void
+    {
+        $this->administrator();
+
+        $crawler = $this->client->request('GET', '/departments');
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(['nav-item on', 'nav-item'], $this->rowClasses($crawler));
     }
 
     /**
@@ -111,7 +136,9 @@ final class SidebarRowTest extends WebTestCaseWithSchema
 
         self::assertResponseIsSuccessful();
         self::assertCount(0, $crawler->filter('nav.nav a.nav-item'));
-        self::assertStringNotContainsString('Organization', (string) $this->client->getResponse()->getContent());
+        $body = (string) $this->client->getResponse()->getContent();
+        self::assertStringNotContainsString('Organization', $body);
+        self::assertStringNotContainsString('Departments', $body);
     }
 
     /**
@@ -127,6 +154,12 @@ final class SidebarRowTest extends WebTestCaseWithSchema
         $this->client->request('GET', '/_elsewhere');
 
         self::assertResponseRedirects('http://localhost/login');
+    }
+
+    /** @return list<string> */
+    private function rowClasses(\Symfony\Component\DomCrawler\Crawler $crawler): array
+    {
+        return $crawler->filter('nav.nav a.nav-item')->each(static fn ($node): string => (string) $node->attr('class'));
     }
 
     /** The sign-in screen still shows no navigation, deliberately. */
