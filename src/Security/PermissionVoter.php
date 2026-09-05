@@ -60,5 +60,38 @@ final class PermissionVoter extends Voter
         $position = $user->getPosition();
 
         return null !== $position && $position->hasPermissionValue($attribute);
+
+        /*
+         * ── PARKED SEAM: THE AREA-AWARE VOTER PLUGS IN HERE ──────────────────
+         *
+         * The area-aware department model is now in place: a department carries a
+         * nullable area ({@see \Uhifadhi\Team\Entity\Department}), a Staff member's
+         * authority-area is the derived chain
+         * `user.getDepartment()?.getArea()` (org-level when null), and
+         * docs/area-scoped-authority.md (module-contracts) rules how a target area
+         * is compared against it. What is NOT built — deliberately, because it has
+         * open verdicts still awaiting a ruling — is this voter becoming area-aware.
+         *
+         * When it is wired, the two returns above become the first steps of the
+         * algorithm in §4 of that document, and the area comparison follows once
+         * the permission is confirmed:
+         *
+         *   1. tier short-circuit (above) — unchanged, area never consulted.
+         *   2. position carries the permission at all (above) — unchanged.
+         *   3. is the permission even area-scoped? A GLOBAL permission grants here
+         *      with no area check — this needs the scope axis on ModulePermission
+         *      / PermissionEnum, which is part of the parked contract work.
+         *   4. area comparison: authority = user.getDepartment()?.getArea();
+         *      null authority (org-level) grants for any target; otherwise grant
+         *      iff the target area (the voter SUBJECT) equals the authority area.
+         *
+         * The blocking forks live in §7 of the same document and MUST be ruled
+         * before this lands: whether the subject is passed vs route-derived (§7.1),
+         * null-subject semantics (§7.3), and above all what an area-scoped
+         * `team.manage` holder may touch (§7.6). Until those are ruled, this voter
+         * stays permission-only and the scope is an organizational fact that gates
+         * nothing — see the Department class banner. Do not wire area logic here
+         * without those verdicts.
+         */
     }
 }

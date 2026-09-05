@@ -156,12 +156,30 @@ final class TestKernel extends Kernel
                 // The skeleton's own choice, mirrored so the bundle's SQL is
                 // exercised against the column names it will actually meet.
                 'naming_strategy' => 'doctrine.orm.naming_strategy.underscore',
-                // NO resolve_target_entities HERE, DELIBERATELY. The bundle
-                // prepends it, and this kernel is the proof: the widget module
-                // keeps a layout per PERSON and points at the contract to do
-                // it, so if the prepend ever stopped happening the schema would
-                // stop before it reached a single team_ table and every test in
-                // this suite would say so at once.
+                // NO resolve_target_entities FOR THE USER CONTRACT HERE,
+                // DELIBERATELY. The bundle prepends it, and this kernel is the
+                // proof: the widget module keeps a layout per PERSON and points
+                // at the contract to do it, so if the prepend ever stopped
+                // happening the schema would stop before it reached a single
+                // team_ table and every test in this suite would say so at once.
+                //
+                // THE AREA CONTRACT IS THE HOST'S TO ANSWER, so this kernel — a
+                // host, minimally — answers it, exactly as a real installation
+                // does through uhifadhi/area-module. A department carries a
+                // nullable area, so its metadata cannot be built until the seam's
+                // AreaInterface resolves to a concrete entity. This module never
+                // resolves it itself; it only points at it.
+                'resolve_target_entities' => [
+                    \Uhifadhi\Seam\Entity\AreaInterface::class => Fixtures\Area\HostArea::class,
+                ],
+                'mappings' => [
+                    'TeamTestArea' => [
+                        'type' => 'attribute',
+                        'dir' => __DIR__.'/Fixtures/Area',
+                        'prefix' => 'Uhifadhi\\Team\\Tests\\Integration\\Fixtures\\Area',
+                        'is_bundle' => false,
+                    ],
+                ],
             ],
         ]);
 
@@ -206,6 +224,7 @@ final class TestKernel extends Kernel
             \Uhifadhi\Team\Repository\UserRepository::class => \Uhifadhi\Team\Repository\UserRepository::class,
             \Uhifadhi\Team\Repository\PositionRepository::class => \Uhifadhi\Team\Repository\PositionRepository::class,
             \Uhifadhi\Team\Repository\DepartmentRepository::class => \Uhifadhi\Team\Repository\DepartmentRepository::class,
+            \Uhifadhi\Team\Repository\DepartmentScopeChangeRepository::class => \Uhifadhi\Team\Repository\DepartmentScopeChangeRepository::class,
             \Uhifadhi\Team\Service\SuperAdminInvariant::class => 'team.super_admin_invariant',
             \Uhifadhi\Team\Service\TeamOverview::class => 'team.overview',
             \Uhifadhi\Widget\Registry\WidgetSurfaceRegistry::class => 'widget.surfaces',

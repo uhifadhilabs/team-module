@@ -6,7 +6,9 @@ permission catalogue every module's declarations fold into.
 A [uhifadhi](https://github.com/uhifadhilabs) platform bundle.
 
 > Installs with `composer require uhifadhi/team-module`, registers via Flex, and
-> provides three tables (`team_user`, `team_position`, `team_department`), a
+> provides four tables (`team_user`, `team_position`, `team_department` — which
+> carries a nullable **area** that makes it org-level or area-level — and
+> `team_department_scope_change`, the audit trail of every scope change), a
 > **seven-entry** permission catalogue that installed modules extend, a voter
 > that decides it, and the screens: the roster, one person's record, the
 > permission matrix, the departments those positions are filed under, both ways
@@ -538,7 +540,8 @@ rule.
 | --- | --- |
 | `team_user` | the account: email, name, `ranger_code`, roles, tier, position, password hash, verification and reset tokens, **`is_active` + `disabled_at`**, a reserved **`deleted_at`**, **`invited_at` + `invited_by_id`**, uuid, timestamps |
 | `team_position` | a named permission bundle: name, **`department_id`**, permissions (JSON), locked, uuid, timestamps — unique on **(department, name)** |
-| `team_department` | the part of the organisation a position belongs to: name (unique), uuid, timestamps |
+| `team_department` | the part of the organisation a position belongs to: name (unique), a nullable **`area_id`** (null = org-level, set = area-level), uuid, timestamps |
+| `team_department_scope_change` | one line of a department's scope history: `department_id`, `from_scope`, `to_scope`, the `area_id` on the area-side of the transition, `changed_by_id`, `reason`, `recorded_at`, uuid — append-only |
 
 **`is_active` is why there is no delete.** "This ranger left in March" and "this
 ranger never existed" are different facts, and a DELETE makes them one operation
@@ -561,6 +564,33 @@ Service / Analyst", never a bare "Analyst", which is not a shorter way of saying
 the same thing but a different and ambiguous thing. The department is nullable:
 a position created before anybody decided which one owns it is a position that
 exists, and its holders appear in the roster's Unassigned band.
+
+**`team_department.area_id` is the whole area-aware model, and the scope is
+derived from it.** Null is org-level — the department spans every area; a set
+area is area-level — it belongs to that one. There is no scope column beside the
+area, because a stored scope and a nullable area drift apart and then one is
+lying; `Department::getScope()` reads it off the area every time. The area is
+referenced through the seam's `AreaInterface` and resolved by
+[`uhifadhi/area-module`](https://github.com/uhifadhilabs/area-module), exactly as
+this module's people are resolved for other modules — so a department points at
+an area without this bundle requiring an area package. **On delete it CASCADEs,
+not SET NULL**: an area-level department dies with its area rather than silently
+becoming org-wide, because a SET NULL would be an unasked privilege change the
+day the area-aware voter lands.
+
+**`team_department_scope_change` is an append-only audit trail.** A scope change
+reaches further than a rename — confining an org-wide department re-scopes
+everything under it — so `Department::changeScopeTo()` is the one door: it
+refuses a change with no reason, moves the area, and writes a row recording who,
+when, why and which way. Nothing there has a setter. The actor and area are
+nulled rather than cascaded, so the history outlives both.
+
+**The scope is an organizational fact and gates nothing — for now.** Once the
+area-aware voter is wired (`docs/area-scoped-authority.md` in module-contracts),
+an area-level department is the unit that will confine a Staff member's authority.
+That voter is deliberately **not** built here — it has open verdicts the design
+leaves for a ruling — so `PermissionVoter` carries the seam where it plugs in and
+decides permissions exactly as before.
 
 Every table is prefixed, as every uhifadhi module's is — including `team_user`,
 which additionally avoids `user`, a reserved word every installation would have
@@ -589,12 +619,15 @@ src/
   Controller/PasswordResetController.php  forgot / reset / accept
   DependencyInjection/TeamConfiguration.php
   Entity/User.php  Entity/Position.php  Entity/Department.php  Entity/Trait/
+  Entity/DepartmentScopeChange.php      the audit line a scope change writes
   Enum/PermissionEnum.php  Enum/TeamRoleEnum.php  Enum/RosterStateEnum.php
+  Enum/DepartmentScopeEnum.php          org-level / area-level, derived from the area
   Exception/LastSuperAdminException.php   the refusal, with its reason
   Exception/UnknownPermissionException.php
+  Exception/MissingScopeChangeReasonException.php  a scope change needs its why
   Model/Permission.php                  one catalogue entry, whoever declared it
   Model/RosterQuery.php  Model/Page.php  Model/RosterOverview.php
-  Repository/                           User, Position, Department
+  Repository/                           User, Position, Department, DepartmentScopeChange
   Security/PermissionVoter.php  Security/ActiveUserChecker.php
   Service/PermissionCatalogue.php  Service/SuperAdminInvariant.php
   Service/TeamOverview.php  Service/Mail.php
@@ -809,7 +842,7 @@ bin/console doctrine:migrations:migrate
 
 An installation needs a database `DATABASE_URL` points at. The skeleton already
 carries `doctrine.yaml` and that env var (`uhifadhi/seam-module` brings Doctrine
-in); this module adds no database configuration of its own beyond mapping its three
+in); this module adds no database configuration of its own beyond mapping its four
 entities and answering the user contract, both of which it does for you.
 
 Note that `doctrine:migrations:diff` walks **all** mapped metadata, so the

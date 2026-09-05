@@ -104,14 +104,28 @@ final class ResolutionKernel extends Kernel
                     'prefix' => __NAMESPACE__,
                     'is_bundle' => false,
                 ],
+                // The host's area, so a department's nullable area association
+                // can be built. This is the seam's contract, answered here the
+                // way a real installation answers it through area-module — never
+                // by this module.
+                'TeamTestArea' => [
+                    'type' => 'attribute',
+                    'dir' => \dirname(__DIR__).'/Area',
+                    'prefix' => 'Uhifadhi\\Team\\Tests\\Integration\\Fixtures\\Area',
+                    'is_bundle' => false,
+                ],
+            ],
+            // The AREA contract is always the host's to answer — a department
+            // carries a nullable area, and its metadata cannot be built until
+            // AreaInterface resolves. The USER contract is added ONLY by the
+            // variant testing the escape hatch (the plain kernel says nothing,
+            // which is the case an installation is in), so the two are kept
+            // apart: one is the host doing its job, the other is the assertion.
+            'resolve_target_entities' => [
+                \Uhifadhi\Seam\Entity\AreaInterface::class => \Uhifadhi\Team\Tests\Integration\Fixtures\Area\HostArea::class,
+                ...$this->override,
             ],
         ];
-
-        // Written ONLY by the variant that is testing the escape hatch. The
-        // plain kernel says nothing, which is the case an installation is in.
-        if ([] !== $this->override) {
-            $orm['resolve_target_entities'] = $this->override;
-        }
 
         $container->extension('doctrine', [
             'dbal' => ['url' => '%env(TEAM_TEST_DATABASE_URL)%'],

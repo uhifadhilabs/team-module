@@ -54,4 +54,42 @@ final class DepartmentRepository extends ServiceEntityRepository
 
         return $departments;
     }
+
+    /**
+     * The area-level departments — those confined to one area — by name. The
+     * register draws these first, grouped by their area; this is the model half
+     * of that grouping. Area-level is `area IS NOT NULL`, because the scope is
+     * derived from the area and never a column of its own.
+     *
+     * @return list<Department>
+     */
+    public function findAreaLevelOrdered(): array
+    {
+        /** @var list<Department> $departments */
+        $departments = $this->createQueryBuilder('d')
+            ->andWhere('d.area IS NOT NULL')
+            ->orderBy('d.name', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $departments;
+    }
+
+    /**
+     * The org-level departments — those with no area, spanning every one — by
+     * name. The register draws these after the area-level ones.
+     *
+     * @return list<Department>
+     */
+    public function findOrgLevelOrdered(): array
+    {
+        /** @var list<Department> $departments */
+        $departments = $this->createQueryBuilder('d')
+            ->andWhere('d.area IS NULL')
+            ->orderBy('d.name', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $departments;
+    }
 }

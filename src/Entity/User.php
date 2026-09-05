@@ -341,6 +341,24 @@ class User implements ModuleUserInterface, PasswordAuthenticatedUserInterface, U
         return $this;
     }
 
+    /**
+     * THE DEPARTMENT THIS PERSON BELONGS TO — reached through their position, and
+     * only through it. There is no `user.department` column: a person holds ONE
+     * position (this is a single association, not a collection — multi-position
+     * was rejected), a position is filed under at most one department, and that
+     * chain is the department. Null all the way down is honest — a person with no
+     * position, or a position filed under nothing, belongs to no department and
+     * reads as Unassigned.
+     *
+     * This is the same chain the area-aware voter will read a Staff member's
+     * authority-area from once it is wired (department → scope → area); today it
+     * only says where on the roster the person is banded.
+     */
+    public function getDepartment(): ?Department
+    {
+        return $this->position?->getDepartment();
+    }
+
     public function isActive(): bool
     {
         return $this->isActive;

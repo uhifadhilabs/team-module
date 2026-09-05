@@ -39,6 +39,7 @@
         "symfony/uid": "^7.3 || ^8.0",
         "twig/twig": "^3.12",
         "uhifadhi/module-contracts": "^0.3",
+        "uhifadhi/seam-module": "^0.1.2 || ^0.2",
         "uhifadhi/widget-module": "^0.1"
     },
     "autoload": {
@@ -89,6 +90,11 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "repositories": [
+        {
+            "name": "seam-module",
+            "type": "vcs",
+            "url": "https://github.com/uhifadhilabs/seam-module"
+        },
         {
             "name": "module-contracts",
             "type": "vcs",

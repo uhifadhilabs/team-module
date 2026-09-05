@@ -25,6 +25,7 @@ use Uhifadhi\Team\Controller\SecurityController;
 use Uhifadhi\Team\Controller\TeamController;
 use Uhifadhi\Team\Controller\TeamWidgetsController;
 use Uhifadhi\Team\Repository\DepartmentRepository;
+use Uhifadhi\Team\Repository\DepartmentScopeChangeRepository;
 use Uhifadhi\Team\Repository\PositionRepository;
 use Uhifadhi\Team\Repository\UserRepository;
 use Uhifadhi\Team\Security\ActiveUserChecker;
@@ -99,6 +100,10 @@ return static function (ContainerConfigurator $container): void {
         ->tag('doctrine.repository_service');
 
     $services->set(DepartmentRepository::class)
+        ->args([service('doctrine')])
+        ->tag('doctrine.repository_service');
+
+    $services->set(DepartmentScopeChangeRepository::class)
         ->args([service('doctrine')])
         ->tag('doctrine.repository_service');
 
