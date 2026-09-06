@@ -62,6 +62,11 @@ class HostArea implements AreaInterface
         return $this->uuid;
     }
 
+    public function getUuidString(): ?string
+    {
+        return $this->uuid?->toRfc4122();
+    }
+
     #[ORM\PrePersist]
     public function generateUuid(): void
     {
