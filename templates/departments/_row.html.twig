@@ -1,0 +1,126 @@
+{# ONE DEPARTMENT IN THE REGISTER — its row, and the write panel it opens.
+
+   THE ROW is the canonical design's `.deptrow`: a fixed-column grid so mark,
+   name, scope and count read as aligned columns. The name and the Lens action
+   both open the department's own page — every department is openable, area-level
+   or org-level, which is the whole point of the register.
+
+   THE PANEL is the design's `.posfile`, rendered PRESENT-BUT-HIDDEN so its forms
+   post with no JavaScript and are only folded away until Rename or Change scope
+   asks for them. It carries three things: the rename form, the scope-change form
+   (promote when area-level, confine when org-level — the audited transition), and
+   the positions filed under this department, each with the move control.
+
+   Expects: department, positions (list), people (int), holders (map),
+   departments (all, for the move select), areas (list), mark, csrfToken. #}
+{% import '@UhifadhiTeam/departments/_bits.html.twig' as di %}
+
+{% set area = department.area %}
+{% set uuid = department.uuidString %}
+
+<div class="deptwrap" data-controller="uhifadhi--team-module--department">
+    <div class="deptrow" data-department="{{ uuid }}">
+        <span class="dr-mk">{{ mark }}</span>
+        <div class="dr-bd">
+            <a class="dr-nm" href="{{ path('team_department_show', {uuid: uuid}) }}"
+               title="Open {{ department.name }}&rsquo;s lens">{{ department.name }}</a>
+            <div class="dr-sub">
+                {{ positions|length }} position{{ positions|length == 1 ? '' : 's' }} &middot;
+                {{ area ? area.name : 'org-level' }}
+            </div>
+        </div>
+        <div class="dr-scope {{ area ? 'area' : '' }}">
+            <span class="sc-l">Scope</span>
+            <span class="sc-v">{{ area ? area.name : 'Org-level' }}</span>
+        </div>
+        <span class="dr-cnt">{{ positions|length }} position{{ positions|length == 1 ? '' : 's' }}</span>
+        <div class="dr-act">
+            <a class="softbtn acc" href="{{ path('team_department_show', {uuid: uuid}) }}"
+               title="Open {{ department.name }}&rsquo;s lens">{{ di.icon_lens() }} Lens</a>
+            <a class="softbtn" href="{{ path('team_positions') }}">{{ di.icon_rename() }} Positions</a>
+            <button class="softbtn" type="button"
+                    data-action="uhifadhi--team-module--department#toggle">{{ di.icon_rename() }} Rename</button>
+            <button class="softbtn" type="button"
+                    data-action="uhifadhi--team-module--department#toggle">{{ di.icon_scope() }} Change scope</button>
+        </div>
+    </div>
+
+    <div class="posfile" data-uhifadhi--team-module--department-target="panel">
+        {# RENAME — the field the button submits; a bare Rename button has nowhere
+           to collect a name. #}
+        <form class="pf-form" method="post" action="{{ path('team_department_rename', {uuid: uuid}) }}">
+            <input type="hidden" name="_token" value="{{ csrfToken }}">
+            <div class="crfield">
+                <span class="crlab">Rename this department</span>
+                <input type="text" name="name" class="fld" value="{{ department.name }}"
+                       aria-label="Rename {{ department.name }}" required>
+            </div>
+            <button class="softbtn" type="submit">{{ di.icon_rename() }} Rename</button>
+        </form>
+
+        {# CHANGE SCOPE — audited both ways. Area-level promotes to org-wide (safe,
+           widens only); org-level confines to an area the picker enumerated
+           (ripples to everything under it). A reason is required either way. #}
+        <form class="pf-form" method="post" action="{{ path('team_department_scope', {uuid: uuid}) }}">
+            <input type="hidden" name="_token" value="{{ csrfToken }}">
+            {% if area %}
+                <span class="pf-lab">Promote to org-wide &mdash; safe, this only widens</span>
+            {% else %}
+                <div class="crfield">
+                    <span class="crlab">Confine to area</span>
+                    <select name="area" aria-label="Confine {{ department.name }} to area" required>
+                        {% for a in areas %}
+                            <option value="{{ a.uuidString }}">{{ a.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            {% endif %}
+            <div class="crfield grow">
+                <span class="crlab">Reason &mdash; recorded to the audit trail (required)</span>
+                <input type="text" name="reason" class="fld"
+                       placeholder="{{ area ? 'Why is ' ~ department.name ~ ' becoming org-wide?' : 'Why is ' ~ department.name ~ ' being confined?' }}"
+                       aria-label="Reason for the scope change" required>
+            </div>
+            {% if area %}
+                <button class="softbtn acc" type="submit">{{ di.icon_scope() }} Promote to org-wide</button>
+            {% else %}
+                <button class="softbtn danger" type="submit">{{ di.icon_scope() }} Confine to area</button>
+            {% endif %}
+        </form>
+
+        {# THE POSITIONS FILED HERE, each with the move control. A position is
+           filed, never a person; moving it is an explicit submit (no auto-submit
+           on change), and the select opens on where it is now. #}
+        {% if positions|length %}
+            {% for position in positions %}
+                {% set held = holders[position.uuidString]|default(0) %}
+                <div class="posline">
+                    <span class="pl-nm"><a href="{{ path('team_positions', {position: position.uuidString}) }}">{{ position.name }}</a></span>
+                    <span class="pl-mem">
+                        {%- if held %}{{ held }} holder{{ held == 1 ? '' : 's' }}
+                        {%- else %}nobody yet{% endif %}
+                        &middot; {{ position.permissionValues|length }} permission{{ position.permissionValues|length == 1 ? '' : 's' }}
+                    </span>
+                    <span class="pl-act">
+                        <form class="moveform" method="post" action="{{ path('team_department_file', {uuid: position.uuidString}) }}">
+                            <input type="hidden" name="_token" value="{{ csrfToken }}">
+                            <span class="mlab">Move to</span>
+                            <select name="department" aria-label="File {{ position.name }} under">
+                                <option value="">No department yet&hellip;</option>
+                                {% for d in departments %}
+                                    <option value="{{ d.uuidString }}"{{ d.id == department.id ? ' selected' : '' }}>{{ d.name }}{{ d.area ? ' · ' ~ d.area.name : '' }}</option>
+                                {% endfor %}
+                            </select>
+                            <button class="softbtn" type="submit">Move</button>
+                        </form>
+                    </span>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="posline">
+                <span class="pl-mem">No positions filed here yet &mdash; make one on
+                    <a href="{{ path('team_positions') }}">the matrix</a>, or move one in from another department.</span>
+            </div>
+        {% endif %}
+    </div>
+</div>

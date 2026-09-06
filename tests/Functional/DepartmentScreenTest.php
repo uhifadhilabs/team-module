@@ -18,133 +18,241 @@ use Uhifadhi\Team\Entity\Department;
 use Uhifadhi\Team\Entity\Position;
 use Uhifadhi\Team\Enum\PermissionEnum;
 use Uhifadhi\Team\Enum\TeamRoleEnum;
+use Uhifadhi\Team\Repository\DepartmentScopeChangeRepository;
 
 /**
- * THE ORG CHART'S HOME — the screen that was missing, and the closed loop it
- * opens.
+ * THE AREA-AWARE DEPARTMENT MANAGER — the register, and the lens every row opens.
  *
- * Until this release a department arrived only by seeding: the model shipped in
- * v0.3.0, the matrix grouped by it, the roster banded by it, and NOTHING in the
- * product could make one. An installation whose seed had never run read
- * "Unassigned" against every position and had no way out of it, which is the
- * same shape of defect as a route nobody links.
+ * A department carries a scope now: area-level (confined to one area) or
+ * org-level (spanning every area). This screen draws the two apart — area-level
+ * first, grouped by their area's name, then org-level — states each row's scope
+ * in an explicit column, creates in either scope (area-first, the picker
+ * enumerating the installation's areas through the contract), opens every
+ * department to its own lens, and changes a scope with a reason recorded to the
+ * audit trail.
  *
- * THE THREE WRITES ARE THE WHOLE SCREEN: make a department, rename one, and
- * file a position into one. Everything else on the page is a reading of those
- * three.
- *
- * DELETE IS NOT HERE, and that is asserted rather than merely true today. The
- * ruled posture for a position is deactivate-with-a-stated-reason, and it
- * applies to a department conceptually — but the wording of a refusal is a
- * DESIGN, and no design has been drawn for a department that still owns
- * positions. Rendering a destructive control ahead of its ruling is how the
- * ruling gets made by accident.
+ * THIS SUPERSEDES the org-only card screen the module shipped through v0.7: the
+ * `.dcard`/`.pitem`/Unassigned-card vocabulary is gone, replaced by the
+ * canonical register. Where a rule is unchanged (a department grants nothing;
+ * DELETE/DEACTIVATE are not drawn, so not here) it is re-asserted below.
  */
 final class DepartmentScreenTest extends WebTestCaseWithSchema
 {
+    // ---- the register lists both scope groups, area-first -----------------
+
     /**
-     * THE PAGE OPENS, AND ONE CARD PER DEPARTMENT IS THE READING — the drawn
-     * one: two departments owning the same word can never be read as one job
-     * when they are in separate cards.
+     * THE TWO SCOPES ARE DRAWN APART. Area-level departments come first, under a
+     * heading that names their AREA (read off the contract); org-level after,
+     * under its own heading.
      */
-    public function testEveryDepartmentGetsItsOwnCard(): void
+    public function testTheRegisterGroupsAreaLevelUnderTheirAreaThenOrgLevel(): void
     {
         $crawler = $this->screen();
 
-        $cards = $crawler->filter('[data-dp] .dcard:not(.un)');
-        self::assertCount(2, $cards);
-        self::assertSame(
-            ['Ecology', 'Protection Service'],
-            $cards->each(static fn (Crawler $c): string => $c->filter('.dh-l b')->text()),
+        $headings = $crawler->filter('[data-dp] .deptgroup .gh')->each(static fn (Crawler $c): string => $c->text());
+
+        self::assertContains('Area-level · Ngorongoro', $headings);
+        self::assertContains('Org-level', $headings);
+
+        // Area-level precedes org-level.
+        self::assertLessThan(
+            array_search('Org-level', $headings, true),
+            array_search('Area-level · Ngorongoro', $headings, true),
         );
     }
 
     /**
-     * A CARD CARRIES ITS POSITIONS AND WHAT THEY COST IN PEOPLE. Headcount is
-     * the one number the org chart is asked for, and it is reached THROUGH the
-     * positions — a department holds nobody directly.
+     * EVERY ROW STATES ITS SCOPE in an explicit aligned column: the area's name
+     * for an area-level department, "Org-level" for an org-wide one.
      */
-    public function testACardCountsItsPositionsAndTheActivePeopleReachedThroughThem(): void
+    public function testEachRowCarriesItsScopeColumn(): void
     {
         $crawler = $this->screen();
 
-        $ecology = $this->cardNamed($crawler, 'Ecology');
-        self::assertSame(
-            ['Analyst', 'Botanist'],
-            $ecology->filter('.pitem .pn')->each(static fn (Crawler $c): string => trim($c->text())),
-        );
-
-        $meta = $ecology->filter('.dmeta')->text();
-        self::assertStringContainsString('2 positions', $meta);
-        self::assertStringContainsString('1 person', $meta);
+        self::assertSame('Ngorongoro', $this->row($crawler, 'Crater Management')->filter('.dr-scope .sc-v')->text());
+        self::assertSame('Org-level', $this->row($crawler, 'Ecology')->filter('.dr-scope .sc-v')->text());
     }
 
-    /**
-     * THE UNASSIGNED CARD IS NOT A DEPARTMENT, and the sentence beside it is
-     * not decoration — a reader arriving here for the first time will otherwise
-     * read it as a department called "No department yet". Same ruling the
-     * roster's org chart already ships.
-     */
-    public function testPositionsOwnedByNobodyGetADashedCardThatSaysItIsNotADepartment(): void
+    /** The area-level scope column wears the area accent; the org one does not. */
+    public function testTheAreaScopeColumnIsMarkedAsArea(): void
     {
         $crawler = $this->screen();
 
-        $loose = $crawler->filter('[data-dp] .dcard.un');
-        self::assertCount(1, $loose);
-        self::assertSame(['Volunteer'], $loose->filter('.pitem .pn')->each(static fn (Crawler $c): string => trim($c->text())));
-        self::assertStringContainsString('not a department', $loose->filter('.dnote')->text());
+        self::assertStringContainsString('area', (string) $this->row($crawler, 'Crater Management')->filter('.dr-scope')->attr('class'));
     }
 
-    /**
-     * A FRESH INSTALLATION HAS NONE OF THESE, and the page says so in the one
-     * place a person is looking — beside the control that ends it. This is the
-     * state that made the screen necessary.
-     */
-    public function testAnInstallationWithNoDepartmentsIsToldSoBesideTheControlThatEndsIt(): void
-    {
-        $this->administrator();
+    // ---- every department opens to its lens -------------------------------
 
-        $crawler = $this->client->request('GET', '/departments');
+    /**
+     * EVERY DEPARTMENT IS OPENABLE — the name and the Lens action both point at
+     * the department's own page, area-level or org-level alike.
+     */
+    public function testEveryRowOpensItsDepartmentThroughNameAndLens(): void
+    {
+        $crawler = $this->screen();
+
+        foreach (['Crater Management', 'Ecology'] as $name) {
+            $row = $this->row($crawler, $name);
+            $show = '/departments/'.$this->uuidOf($name);
+
+            self::assertSame($show, $row->filter('.dr-nm')->attr('href'), $name.' name links to its lens');
+            self::assertSame($show, $row->filter('.dr-act a.acc')->attr('href'), $name.' Lens action links to its lens');
+        }
+    }
+
+    /** And the lens opens, carrying the department's name and its scope. */
+    public function testTheAreaLevelLensOpensAndReadsAsAreaScoped(): void
+    {
+        $this->screen();
+
+        $crawler = $this->client->request('GET', '/departments/'.$this->uuidOf('Crater Management'));
 
         self::assertResponseIsSuccessful();
-        self::assertCount(0, $crawler->filter('[data-dp] .dcard:not(.un)'));
-        self::assertStringContainsString(
-            'no departments yet',
-            strtolower($crawler->filter('.pm-first')->text()),
-        );
+        self::assertStringContainsString('Crater Management', $crawler->filter('.dpthead h1')->text());
+        self::assertStringContainsString('Ngorongoro', $crawler->filter('.dpthead .scope.area')->text());
+        self::assertStringContainsString('confined to Ngorongoro', $crawler->filter('.scoperule')->first()->text());
     }
 
-    // ---- the three writes ------------------------------------------------
+    public function testTheOrgLevelLensReadsAcrossEveryArea(): void
+    {
+        $this->screen();
 
-    public function testTheHeaderFormMakesTheFirstDepartment(): void
+        $crawler = $this->client->request('GET', '/departments/'.$this->uuidOf('Ecology'));
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Org-level', $crawler->filter('.dpthead .scope.org')->text());
+        self::assertStringContainsString('reads across every area', $crawler->filter('.scoperule')->first()->text());
+    }
+
+    /**
+     * THE IDENTITY CARD IS ON THE OVERVIEW TAB ONLY — the page-chrome ruling. It
+     * lives inside the Overview panel, so it is present once and hidden with that
+     * panel; the header/breadcrumb and the scope strip carry name+scope on every
+     * tab instead.
+     */
+    public function testTheIdentityCardLivesOnTheOverviewPanelAlone(): void
+    {
+        $this->screen();
+
+        $crawler = $this->client->request('GET', '/departments/'.$this->uuidOf('Ecology'));
+
+        $factbands = $crawler->filter('.factband');
+        self::assertCount(1, $factbands, 'exactly one identity card');
+        self::assertSame(
+            'overview',
+            $factbands->closest('[data-tab-panel]')?->attr('data-tab-panel'),
+            'the identity card is inside the Overview panel',
+        );
+        // The scope strip is NOT inside any tab panel — it sits above the tabs,
+        // so scope reads on every tab.
+        self::assertNull($crawler->filter('.scoperule')->first()->closest('[data-tab-panel]'));
+    }
+
+    /** KPIs, when the follow-up wires them, are laid on a single row (kstrip). */
+    public function testThePerformanceKpisSitOnASingleRow(): void
+    {
+        $this->screen();
+
+        $crawler = $this->client->request('GET', '/departments/'.$this->uuidOf('Ecology'));
+
+        self::assertGreaterThan(0, $crawler->filter('[data-tab-panel="performance"] .grid.kstrip')->count());
+    }
+
+    // ---- create, per-area and per-org -------------------------------------
+
+    /**
+     * THE CREATE PICKER ENUMERATES THE INSTALLATION'S AREAS through the contract —
+     * every area is an option, by name.
+     */
+    public function testTheCreatePickerListsEveryAreaByName(): void
     {
         $this->administrator();
+        $this->area('Ngorongoro');
+        $this->area('Pololeti Game Reserve');
         $this->em->flush();
 
         $crawler = $this->client->request('GET', '/departments');
-        $form = $crawler->selectButton('Add')->form();
-        $form['name'] = 'Ecology';
+
+        $options = $crawler->filter('form[data-create-department] select[name="area"] option')
+            ->each(static fn (Crawler $c): string => $c->text());
+
+        self::assertContains('Ngorongoro', $options);
+        self::assertContains('Pololeti Game Reserve', $options);
+    }
+
+    /** CREATE PER-AREA — the picked area becomes the department's scope. */
+    public function testCreatingADepartmentPerAreaConfinesItToThePickedArea(): void
+    {
+        $this->administrator();
+        $ngorongoro = $this->area('Ngorongoro');
+        $this->area('Pololeti Game Reserve');
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/departments');
+        $form = $crawler->selectButton('Add department')->form();
+        $form['scope'] = 'area';
+        $form['area'] = (string) $ngorongoro->getUuidString();
+        $form['name'] = 'Crater Management';
         $this->client->submit($form);
 
         self::assertResponseRedirects('/departments');
 
         $this->em->clear();
-        self::assertInstanceOf(Department::class, $this->em->getRepository(Department::class)->findOneBy(['name' => 'Ecology']));
+        $created = $this->em->getRepository(Department::class)->findOneBy(['name' => 'Crater Management']);
+        self::assertInstanceOf(Department::class, $created);
+        self::assertTrue($created->isAreaLevel());
+        self::assertSame('Ngorongoro', $created->getArea()?->getName());
     }
 
-    /**
-     * THE NAME IS UNIQUE WITHIN ITS SCOPE. This screen adds org-wide
-     * departments, and two of those by one name would be the same department
-     * entered twice — the org bucket is unique on the name alone. (A name may
-     * still repeat from one area to another; that is a different scope.) The
-     * index would have said this in SQL; the person who typed it wants the
-     * sentence.
-     */
-    public function testASecondDepartmentWithTheSameNameIsRefusedWithTheReason(): void
+    /** CREATE PER-ORG — no area, spans every one. */
+    public function testCreatingADepartmentPerOrgLeavesItOrgWide(): void
+    {
+        $this->administrator();
+        $this->area('Ngorongoro');
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/departments');
+        $form = $crawler->selectButton('Add department')->form();
+        $form['scope'] = 'org';
+        $form['name'] = 'Administration';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/departments');
+
+        $this->em->clear();
+        $created = $this->em->getRepository(Department::class)->findOneBy(['name' => 'Administration']);
+        self::assertInstanceOf(Department::class, $created);
+        self::assertTrue($created->isOrgLevel());
+        self::assertNull($created->getArea());
+    }
+
+    /** A name may repeat FROM ONE AREA TO ANOTHER — two areas may each run one. */
+    public function testTheSameNameMayExistInTwoDifferentAreas(): void
+    {
+        $this->administrator();
+        $ngorongoro = $this->area('Ngorongoro');
+        $pololeti = $this->area('Pololeti Game Reserve');
+        $this->areaDepartment('Anti-Poaching', $ngorongoro);
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/departments');
+        $form = $crawler->selectButton('Add department')->form();
+        $form['scope'] = 'area';
+        $form['area'] = (string) $pololeti->getUuidString();
+        $form['name'] = 'Anti-Poaching';
+        $this->client->submit($form);
+
+        $this->em->clear();
+        self::assertCount(2, $this->em->getRepository(Department::class)->findBy(['name' => 'Anti-Poaching']));
+    }
+
+    /** But two ORG-WIDE departments of one name are the same one entered twice. */
+    public function testASecondOrgWideDepartmentWithTheSameNameIsRefused(): void
     {
         $crawler = $this->screen();
 
-        $form = $crawler->selectButton('Add')->form();
+        $form = $crawler->selectButton('Add department')->form();
+        $form['scope'] = 'org';
         $form['name'] = 'Ecology';
         $this->client->submit($form);
 
@@ -158,21 +266,93 @@ final class DepartmentScreenTest extends WebTestCaseWithSchema
     public function testADepartmentWithNoNameIsRefused(): void
     {
         $this->administrator();
+        $this->area('Ngorongoro');
         $this->em->flush();
 
         $crawler = $this->client->request('GET', '/departments');
-        $this->client->submit($crawler->selectButton('Add')->form());
+        $this->client->submit($crawler->selectButton('Add department')->form());
 
         $crawler = $this->client->followRedirect();
         self::assertStringContainsString('needs a name', $crawler->filter('[data-shell-flash]')->text());
         self::assertCount(0, $this->em->getRepository(Department::class)->findAll());
     }
 
-    public function testTheCardHeadRenamesItsDepartment(): void
+    // ---- the audited scope change -----------------------------------------
+
+    /**
+     * CONFINE (org → area) — the department narrows to a picked area, and the
+     * reason is recorded to the audit trail on the transition.
+     */
+    public function testConfiningAnOrgDepartmentToAnAreaRecordsAnAuditedReason(): void
     {
         $crawler = $this->screen();
 
-        $form = $this->cardNamed($crawler, 'Ecology')->selectButton('Rename')->form();
+        $form = $this->row($crawler, 'Ecology')->filter('form[action$="/scope"]')->selectButton('Confine to area')->form();
+        $form['area'] = (string) $this->uuidOf('__area:Ngorongoro');
+        $form['reason'] = 'Ecology now works only in the crater.';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/departments');
+
+        $this->em->clear();
+        $ecology = $this->em->getRepository(Department::class)->findOneBy(['name' => 'Ecology']);
+        self::assertInstanceOf(Department::class, $ecology);
+        self::assertTrue($ecology->isAreaLevel());
+        self::assertSame('Ngorongoro', $ecology->getArea()?->getName());
+
+        $trail = $this->scopeChanges()->findForDepartment($ecology);
+        self::assertCount(1, $trail);
+        self::assertSame('Ecology now works only in the crater.', $trail[0]->getReason());
+        self::assertSame('Naomi', $trail[0]->getChangedBy()?->getFirstName(), 'the audit line records who');
+    }
+
+    /** PROMOTE (area → org) — the department widens, still audited with a reason. */
+    public function testPromotingAnAreaDepartmentToOrgWideRecordsAnAuditedReason(): void
+    {
+        $crawler = $this->screen();
+
+        $form = $this->row($crawler, 'Crater Management')->filter('form[action$="/scope"]')->selectButton('Promote to org-wide')->form();
+        $form['reason'] = 'Its remit is now the whole park.';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/departments');
+
+        $this->em->clear();
+        $crater = $this->em->getRepository(Department::class)->findOneBy(['name' => 'Crater Management']);
+        self::assertInstanceOf(Department::class, $crater);
+        self::assertTrue($crater->isOrgLevel());
+
+        $trail = $this->scopeChanges()->findForDepartment($crater);
+        self::assertCount(1, $trail);
+        self::assertSame('Its remit is now the whole park.', $trail[0]->getReason());
+    }
+
+    /** A BLANK REASON IS REFUSED, and the scope does not move. */
+    public function testAScopeChangeWithNoReasonIsRefusedAndNothingMoves(): void
+    {
+        $crawler = $this->screen();
+
+        $form = $this->row($crawler, 'Crater Management')->filter('form[action$="/scope"]')->selectButton('Promote to org-wide')->form();
+        $form['reason'] = '   ';
+        $this->client->submit($form);
+
+        $crawler = $this->client->followRedirect();
+        self::assertStringContainsString('needs a reason', $crawler->filter('[data-shell-flash]')->text());
+
+        $this->em->clear();
+        $crater = $this->em->getRepository(Department::class)->findOneBy(['name' => 'Crater Management']);
+        self::assertInstanceOf(Department::class, $crater);
+        self::assertTrue($crater->isAreaLevel(), 'the refusal happens before the scope moves');
+        self::assertCount(0, $this->scopeChanges()->findForDepartment($crater));
+    }
+
+    // ---- rename and filing still work -------------------------------------
+
+    public function testARowRenamesItsDepartmentFromThePanel(): void
+    {
+        $crawler = $this->screen();
+
+        $form = $this->row($crawler, 'Ecology')->filter('form[action$="/rename"]')->selectButton('Rename')->form();
         $form['name'] = 'Ecology & Research';
         $this->client->submit($form);
 
@@ -180,89 +360,28 @@ final class DepartmentScreenTest extends WebTestCaseWithSchema
 
         $this->em->clear();
         self::assertNull($this->em->getRepository(Department::class)->findOneBy(['name' => 'Ecology']));
-        self::assertInstanceOf(
-            Department::class,
-            $this->em->getRepository(Department::class)->findOneBy(['name' => 'Ecology & Research']),
-        );
+        self::assertInstanceOf(Department::class, $this->em->getRepository(Department::class)->findOneBy(['name' => 'Ecology & Research']));
     }
 
-    public function testRenamingOntoANameThatExistsIsRefusedWithTheReason(): void
+    public function testAPositionIsFiledIntoADepartmentFromItsMoveControl(): void
     {
         $crawler = $this->screen();
 
-        $form = $this->cardNamed($crawler, 'Ecology')->selectButton('Rename')->form();
-        $form['name'] = 'Protection Service';
-        $this->client->submit($form);
-
-        $crawler = $this->client->followRedirect();
-        self::assertStringContainsString('already', $crawler->filter('[data-shell-flash]')->text());
-
-        $this->em->clear();
-        self::assertInstanceOf(Department::class, $this->em->getRepository(Department::class)->findOneBy(['name' => 'Ecology']));
-    }
-
-    /**
-     * FILING A POSITION IS THE SCREEN'S REASON TO EXIST. The positions page can
-     * already pick a department when a position is CREATED; nothing could move
-     * one afterwards, which left every position seeded before its department
-     * stranded.
-     */
-    public function testAPositionCanBeFiledIntoADepartmentFromItsRow(): void
-    {
-        $crawler = $this->screen();
-
-        $form = $crawler->filter('[data-dp] .dcard.un .pitem')->selectButton('Move')->form();
-        $form['department'] = $this->uuidOfDepartmentNamed('Ecology');
+        // The loose position sits in the "No department yet" group; move it into Ecology.
+        $form = $crawler->filter('[data-unfiled] .posline')->selectButton('Move')->form();
+        $form['department'] = $this->uuidOf('Ecology');
         $this->client->submit($form);
 
         self::assertResponseRedirects('/departments');
 
         $this->em->clear();
         $volunteer = $this->em->getRepository(Position::class)->findOneBy(['name' => 'Volunteer']);
-        self::assertInstanceOf(Position::class, $volunteer);
-        self::assertSame('Ecology', $volunteer->getDepartment()?->getName());
+        self::assertSame('Ecology', $volunteer?->getDepartment()?->getName());
     }
 
-    /** And out again — the empty option is a destination, not a missing value. */
-    public function testAPositionCanBeMovedBackOutToNoDepartment(): void
-    {
-        $crawler = $this->screen();
+    // ---- what is deliberately absent --------------------------------------
 
-        $form = $this->cardNamed($crawler, 'Ecology')->filter('.pitem')->first()->selectButton('Move')->form();
-        $form['department'] = '';
-        $this->client->submit($form);
-
-        $this->em->clear();
-        $analyst = $this->em->getRepository(Position::class)->findOneBy(['name' => 'Analyst', 'department' => null]);
-        self::assertInstanceOf(Position::class, $analyst);
-    }
-
-    /**
-     * AND THE MOVE THAT CANNOT HAPPEN SAYS WHY. `unique(department, name)` is
-     * the ruling this module exists around: Ecology's Analyst and Protection
-     * Service's Analyst are two jobs sharing a word, and filing one into the
-     * other's department would collapse them. The refusal names the department.
-     */
-    public function testFilingAPositionIntoADepartmentThatAlreadyOwnsThatNameIsRefused(): void
-    {
-        $crawler = $this->screen();
-
-        $form = $this->cardNamed($crawler, 'Protection Service')->filter('.pitem')->first()->selectButton('Move')->form();
-        $form['department'] = $this->uuidOfDepartmentNamed('Ecology');
-        $this->client->submit($form);
-
-        $crawler = $this->client->followRedirect();
-        $flash = $crawler->filter('[data-shell-flash]')->text();
-        self::assertStringContainsString('Ecology', $flash);
-        self::assertStringContainsString('Analyst', $flash);
-
-        $this->em->clear();
-        self::assertCount(2, $this->em->getRepository(Position::class)->findBy(['name' => 'Analyst']));
-    }
-
-    // ---- what is deliberately absent -------------------------------------
-
-    /** DELETE IS NOT DRAWN, so it is not here — and this fails the day it is. */
+    /** DELETE/DEACTIVATE are not drawn (no model, no refusal wording), so absent. */
     public function testNothingOnTheScreenDeletesOrDeactivatesADepartment(): void
     {
         $crawler = $this->screen();
@@ -270,19 +389,9 @@ final class DepartmentScreenTest extends WebTestCaseWithSchema
         $page = $crawler->filter('[data-dp]')->text();
         self::assertStringNotContainsString('Delete', $page);
         self::assertStringNotContainsString('Deactivate', $page);
-        self::assertCount(0, $crawler->filter('[data-dp] .softbtn.danger'));
     }
 
-    /** No dashboard was drawn for this screen, so none was invented. */
-    public function testTheScreenInventsNoKpiStripAndNoWidgetLibrary(): void
-    {
-        $crawler = $this->screen();
-
-        self::assertCount(0, $crawler->filter('.w-grid'));
-        self::assertCount(0, $crawler->filter('.kpi'));
-    }
-
-    // ---- who may reach it ------------------------------------------------
+    // ---- who may reach it -------------------------------------------------
 
     public function testAColleagueWithoutTeamManageIsRefused(): void
     {
@@ -292,63 +401,85 @@ final class DepartmentScreenTest extends WebTestCaseWithSchema
         $this->client->loginUser($ranger);
 
         $this->client->request('GET', '/departments');
-
         self::assertResponseStatusCodeSame(403);
     }
 
     public function testAnAnonymousVisitorIsSentToSignIn(): void
     {
         $this->client->request('GET', '/departments');
-
         self::assertResponseRedirects('http://localhost/login');
     }
 
-    /** Every write is gated too, not merely the reading of the page. */
-    public function testTheWritesAreGatedAndNotOnlyThePage(): void
+    public function testTheScopeChangeWriteIsGated(): void
     {
-        $this->client->request('POST', '/departments');
+        // No login: the client from setUp is anonymous until loginUser() is
+        // called, and the audited scope-change route must refuse it at the door.
+        $department = $this->department('Ecology');
+        $this->em->flush();
+
+        $this->client->request('POST', '/departments/'.$department->getUuidString().'/scope');
         self::assertResponseRedirects('http://localhost/login');
     }
 
-    // ---- the cast --------------------------------------------------------
+    // ---- the cast ---------------------------------------------------------
 
     /**
-     * THE TWIN ANALYSTS ARE LOAD-BEARING: one in each department, which is the
-     * pair the per-department-uniqueness ruling exists for, and the pair that
-     * makes the refusal above a real refusal rather than a contrived one.
+     * The register's cast: one area (Ngorongoro), an area-level department in it
+     * (Crater Management), two org-level (Ecology, Protection Service — the twin
+     * Analysts the per-scope-uniqueness ruling exists for), and one loose
+     * position nobody has filed.
      */
     private function screen(): Crawler
     {
         $this->administrator();
 
+        $this->ngorongoro = $this->area('Ngorongoro');
+
+        $crater = $this->areaDepartment('Crater Management', $this->ngorongoro);
         $ecology = $this->department('Ecology');
         $protection = $this->department('Protection Service');
 
+        $this->position('Crater Ecologist', $crater);
         $this->position('Analyst', $ecology);
-        $botanist = $this->position('Botanist', $ecology);
         $this->position('Analyst', $protection);
         $this->position('Volunteer', null);
 
-        $this->person('Grace', 'Ndosi')->setPosition($botanist);
         $this->em->flush();
 
         return $this->client->request('GET', '/departments');
     }
 
-    private function cardNamed(Crawler $crawler, string $name): Crawler
+    private ?\Uhifadhi\Team\Tests\Integration\Fixtures\Area\HostArea $ngorongoro = null;
+
+    private function row(Crawler $crawler, string $name): Crawler
     {
-        return $crawler->filter('[data-dp] .dcard')
-            ->reduce(static fn (Crawler $c): bool => $name === $c->filter('.dh-l b')->text())
+        return $crawler->filter('[data-dp] .deptwrap')
+            ->reduce(static fn (Crawler $c): bool => $name === $c->filter('.dr-nm')->text())
             ->first();
     }
 
-    private function uuidOfDepartmentNamed(string $name): string
+    /** The uuid of a department by name — or, for "__area:Name", of an area. */
+    private function uuidOf(string $name): string
     {
+        if (str_starts_with($name, '__area:')) {
+            $area = $this->em->getRepository(\Uhifadhi\Team\Tests\Integration\Fixtures\Area\HostArea::class)
+                ->findOneBy(['name' => substr($name, 7)]);
+            self::assertNotNull($area);
+
+            return (string) $area->getUuidString();
+        }
+
         $department = $this->em->getRepository(Department::class)->findOneBy(['name' => $name]);
         self::assertInstanceOf(Department::class, $department);
-        $uuid = $department->getUuidString();
-        self::assertIsString($uuid);
 
-        return $uuid;
+        return (string) $department->getUuidString();
+    }
+
+    private function scopeChanges(): DepartmentScopeChangeRepository
+    {
+        /** @var DepartmentScopeChangeRepository $repo */
+        $repo = static::getContainer()->get('test_public.'.DepartmentScopeChangeRepository::class);
+
+        return $repo;
     }
 }

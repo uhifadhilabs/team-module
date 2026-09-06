@@ -8,6 +8,11 @@
                 "main": "controllers/permission_group_controller.js",
                 "fetch": "lazy",
                 "enabled": true
+            },
+            "department": {
+                "main": "controllers/department_controller.js",
+                "fetch": "lazy",
+                "enabled": true
             }
         },
         "importmap": {}

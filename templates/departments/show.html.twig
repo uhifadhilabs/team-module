@@ -1,0 +1,197 @@
+{# THE DEPARTMENT LENS — one department's own page, area-aware, openable from
+   every row of the manager.
+
+   PORTED from the canonical design DesignsProjects/uhifadhi-web/departments/
+   department.html, honouring the ruled PAGE-CHROME THEME:
+     · page-level actions live in the header row (the department carries none yet
+       — its widget board is the rich-lens follow-up — so the row holds identity
+       only);
+     · the identity CARD (.factband) lives on the OVERVIEW tab ALONE; the
+       always-there name and scope live in the header and the scope strip above
+       the tabs, so they show on every tab;
+     · KPIs, when the follow-up wires them, sit on a single row.
+
+   WHAT IS THE RICH-LENS FOLLOW-UP, drawn here as its empty state and nothing
+   invented behind it: the module-led overview, the performance KPIs, and the
+   module attachments on Settings. A department computes no numbers of its own —
+   every figure will be a module KPI rolled up through an attachment — so until a
+   module is attached there is honestly nothing to show, and the page says so. #}
+{% extends '@UhifadhiShell/page.html.twig' %}
+{% import '@UhifadhiTeam/departments/_bits.html.twig' as di %}
+{% import '@UhifadhiTeam/positions/_bits.html.twig' as pm %}
+
+{% set area = department.area %}
+{% set isArea = area is not null %}
+
+{% block title %}{{ department.name }} — department{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ include('@UhifadhiTeam/_stylesheets.html.twig') }}
+{% endblock %}
+
+{% block shell_page_tabs %}{% endblock %}
+
+{% block shell_breadcrumbs %}
+    <a href="{{ path('team_index') }}">uhifadhi</a> /
+    <a href="{{ path('team_departments') }}">departments</a> / {{ department.name }}
+{% endblock %}
+
+{# The header carries the mark, the name and — so name+scope read on EVERY tab —
+   the scope badge, beside the one-line description. #}
+{% block shell_page_head %}
+    <div class="dpthead">
+        <span class="mark">{{ mark }}</span>
+        <div>
+            <h1 class="pg">{{ department.name }}
+                {% if isArea %}
+                    <span class="scope area">{{ di.icon_area() }} {{ area.name }}</span>
+                {% else %}
+                    <span class="scope org">{{ di.icon_org() }} Org-level</span>
+                {% endif %}
+            </h1>
+            <p class="pgsub">A department&rsquo;s own dashboard, where the modules it attaches lead the view. It
+                shapes emphasis &mdash; never access.</p>
+        </div>
+    </div>
+{% endblock %}
+
+{% block shell_page %}
+    <div data-dept="{{ department.uuidString }}" data-controller="uhifadhi--team-module--department">
+
+        {# AREA-AWARE READING — set by scope. Above the tabs, so scope reads on
+           every tab. Area-level is fixed to its one area; org-level reads across
+           every area. #}
+        <div class="scoperule">
+            {{ di.icon_org() }}
+            {% if isArea %}
+                <div><b>Area-level lens &mdash; confined to {{ area.name }}.</b> Everything on this page is already
+                    scoped to this one area. Managed at the organisation; inside {{ area.name }} it appears inherited.</div>
+            {% else %}
+                <div><b>Org-level lens &mdash; reads across every area.</b> This department has no single area, so its
+                    view aggregates the whole organisation. Its scope can be confined to one area from
+                    <a href="{{ path('team_departments') }}">the manager</a> &mdash; the change is audited.</div>
+            {% endif %}
+        </div>
+
+        <div class="atabs">
+            <button type="button" class="on" data-tab="overview"
+                    data-uhifadhi--team-module--department-target="tab"
+                    data-action="uhifadhi--team-module--department#tab">Overview</button>
+            <button type="button" data-tab="performance"
+                    data-uhifadhi--team-module--department-target="tab"
+                    data-action="uhifadhi--team-module--department#tab">Performance</button>
+            <button type="button" data-tab="people"
+                    data-uhifadhi--team-module--department-target="tab"
+                    data-action="uhifadhi--team-module--department#tab">People &amp; Positions</button>
+            <button type="button" data-tab="settings"
+                    data-uhifadhi--team-module--department-target="tab"
+                    data-action="uhifadhi--team-module--department#tab">Settings</button>
+        </div>
+
+        {# ── OVERVIEW ── the identity card lives here and ONLY here. ── #}
+        <section data-tab-panel="overview" data-uhifadhi--team-module--department-target="tabpanel">
+            <div class="factband">
+                <span class="f"><span class="k">Scope</span><span class="v">{{ isArea ? 'Area-level' : 'Org-level' }}</span></span>
+                {% if isArea %}
+                    <span class="f"><span class="k">Area</span><span class="v">{{ area.name }}</span></span>
+                {% endif %}
+                <span class="f"><span class="k">Code</span><span class="v uuid">{{ department.uuidString }}</span></span>
+                <span class="f"><span class="k">Positions</span><span class="v">{{ positions|length }}</span></span>
+                <span class="f"><span class="k">People</span><span class="v">{{ headcount }}</span></span>
+                <span class="sp"></span>
+                <button type="button" class="more" data-tab="settings"
+                        data-action="uhifadhi--team-module--department#tab">Department settings &rarr;</button>
+            </div>
+
+            <p class="pgsub" style="margin:0 0 16px">The record, composed &mdash; <b>the modules this department
+                attaches lead</b>. A lens, not a fence: every card is the same shared data, listed first here.</p>
+
+            <div class="c">
+                <span class="tab">Modules<span class="src">&middot; the lens</span></span>
+                <div class="dp-empty">
+                    <b>No modules attached yet</b>
+                    <span>This department leads with nothing until a module is attached. Attaching a module makes it
+                        lead for this department&rsquo;s people &mdash; it grants nothing and hides nothing. The
+                        attachment surface is the rich-lens follow-up.</span>
+                </div>
+            </div>
+        </section>
+
+        {# ── PERFORMANCE ── KPIs on a single row when the follow-up wires them. ── #}
+        <section data-tab-panel="performance" data-uhifadhi--team-module--department-target="tabpanel">
+            <div class="c">
+                <span class="tab">This month<span class="src">&middot; the attached modules&rsquo; KPIs</span></span>
+                <p class="use">A department owns no numbers of its own &mdash; every figure is a module KPI rolled up
+                    through this department&rsquo;s attachment. With no module attached there is nothing to roll up yet.</p>
+                <div class="grid kstrip" style="margin-top:12px">
+                    <div class="dp-empty" style="grid-column:1/-1">
+                        <b>No module KPIs this period</b>
+                        <span>They arrive with the first attached module &mdash; the rich-lens follow-up.</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {# ── PEOPLE & POSITIONS ── the real positions filed under this department. ── #}
+        <section data-tab-panel="people" data-uhifadhi--team-module--department-target="tabpanel">
+            <div class="scoperule">
+                {{ pm.icon_info() }}
+                <div>People are in this department only through the <b>position</b> they hold &mdash; there is no
+                    &ldquo;add person to department&rdquo;, by design. Manage positions on the matrix.</div>
+            </div>
+            <div class="c">
+                <span class="tab">Positions &amp; members<span class="src">&middot; via position</span></span>
+                {% if positions|length %}
+                    <div style="margin-top:6px">
+                        {% for position in positions %}
+                            <div class="posrow">
+                                <span class="pn"><a href="{{ path('team_positions', {position: position.uuidString}) }}">{{ position.name }}</a></span>
+                                <div class="pp">
+                                    {% for value in position.permissionValues %}
+                                        <span class="perm">{{ value }}</span>
+                                    {% else %}
+                                        <span class="pl-mem">no permissions granted</span>
+                                    {% endfor %}
+                                </div>
+                                <div class="hb">
+                                    {% set held = holders[position.uuidString]|default(0) %}
+                                    {{ held }} {{ held == 1 ? 'holder' : 'holders' }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="dp-empty"><b>No positions in this department yet</b>
+                        <span>A position is born in a department on the matrix. Until one is filed here, this
+                            department leads nobody.</span></div>
+                {% endif %}
+                <a class="softbtn" href="{{ path('team_positions') }}" style="margin-top:12px">{{ pm.icon_people() }} Manage positions</a>
+            </div>
+        </section>
+
+        {# ── SETTINGS ── the scope facts (real), and the attachment surface (follow-up). ── #}
+        <section data-tab-panel="settings" data-uhifadhi--team-module--department-target="tabpanel">
+            <div class="grid g2">
+                <div class="c">
+                    <span class="tab">Scope</span>
+                    <div style="margin-top:8px">
+                        <div class="rln"><span class="k">Scope</span><span class="v">{{ isArea ? 'Area-level · ' ~ area.name : 'Org-level' }}</span></div>
+                        <div class="rln"><span class="k">Reads</span><span class="v">{{ isArea ? area.name ~ ' only' : 'every area' }}</span></div>
+                        <div class="rln"><span class="k">Effect on data</span><span class="v acc">none &mdash; emphasis only</span></div>
+                    </div>
+                    <p class="use">Change a department&rsquo;s scope from <a href="{{ path('team_departments') }}">the
+                        manager</a> &mdash; it is audited, and confining an org-wide one ripples to its positions.</p>
+                </div>
+                <div class="c">
+                    <span class="tab">Modules attached<span class="src">&middot; the lens</span></span>
+                    <div class="dp-empty" style="padding:22px 12px">
+                        <b>Nothing attached</b>
+                        <span>Attaching a module makes it lead for this department&rsquo;s people &mdash; it grants
+                            nothing and hides nothing. The attachment surface is the rich-lens follow-up.</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+{% endblock %}

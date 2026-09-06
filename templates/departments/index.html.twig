@@ -1,44 +1,21 @@
-{# DEPARTMENTS — the org chart's home.
+{# DEPARTMENTS — the area-aware manager (the register).
 
-   DESIGN PROVENANCE, STATED BECAUSE IT IS MIXED. The team-module design set
-   draws no standalone departments page: its folder tree is the roster, the
-   member record, the invite flow, the permission matrix and the three document
-   rungs, and a departments screen is not among them. So this page is composed
-   from vocabulary that IS drawn, and every borrowing is named here so the
-   composition can be ruled on retroactively rather than discovered later:
+   PORTED from the canonical design DesignsProjects/uhifadhi-web/departments/
+   index.html: area-linked departments first, grouped under their area's name,
+   then org-wide; an explicit SCOPE column on every row; create per-area (the
+   picker enumerates the installation's areas through the contract) OR per-org,
+   area-first because it is the correctable choice; and the audited scope change
+   — confine to an area, or promote to org-wide, a reason required. Every row
+   opens the department's own lens through its name and its Lens action.
 
-     · THE PAGE HEAD — title, the org-wide sentence, and the one-field create
-       form in the actions slot — is the old application's `/departments` page
-       (DesignsProjects/uhifadhi-web/departments/index.html), adapted. What is
-       NOT taken from it is everything belonging to the retired world in which a
-       department was a module lens with its own dashboard: no widget surface,
-       no performance board, no per-department page. A department grants
-       nothing and now owns nothing but positions.
-
-     · THE BODY is the positions design set's direction C, "a card per
-       department" — `.dcard`, `.dhead`, `.dmeta`, `.plist`, `.pitem`. That
-       vocabulary already ships in public/team.css, ported with the matrix and
-       until now unused by any template, because the matrix put direction C on
-       the platform's plate instead. It is used here for the reason it was drawn:
-       two departments may own the same word, and in separate cards they can
-       never be read as one job.
-
-     · THE UNASSIGNED CARD and its sentence are the roster's org-chart band,
-       which already ships and already had to explain that Unassigned is not a
-       department.
-
-     · THE RENAME CONTROL is the one the permission matrix's pane header ships:
-       a compact field the button submits, because the route needs a name and a
-       bare `Rename` button has nowhere to collect one.
-
-   NOT A WIDGET SURFACE. No directions were drawn for this screen and the
-   standing rule is that a direction ships because it was drawn — six invented
-   renderings would be a design made by the implementation.
-
-   NO KPI STRIP. The workspace rule puts KPI cards at the top of a page that has
-   them; nothing draws KPIs for departments, so there are none. #}
+   WHAT THE DESIGN DRAWS THAT IS THE RICH-LENS FOLLOW-UP, and so not here yet:
+   the Widgets button in the header (the department's widget board). And
+   DEACTIVATE, drawn on the design's inactive row, is absent for the reason
+   Delete always was — the model has no active flag and no refusal wording is
+   drawn, so a control that routes nowhere is not rendered. #}
 {% extends '@UhifadhiShell/page.html.twig' %}
 {% import '@UhifadhiTeam/positions/_bits.html.twig' as pm %}
+{% import '@UhifadhiTeam/departments/_bits.html.twig' as di %}
 
 {% block title %}Departments{% endblock %}
 
@@ -56,132 +33,169 @@
 {% block shell_page_title %}Departments{% endblock %}
 
 {% block shell_page_subtitle %}
-    A <b>department</b> is a part of the organisation that owns positions &mdash; Ecology, Protection Service,
-    Administration. It is <b>org-wide</b>, like the team itself: made once here, and read by every area and every
-    module that groups by it. A position&rsquo;s name is unique only inside its department, which is why
-    <span class="mono">Ecology / Analyst</span> and <span class="mono">Protection Service / Analyst</span> are two
-    different jobs rather than a clash. <b>A department grants nothing</b>: filing a position here changes where
-    it is read and never what anybody may do &mdash; capability arrives through that position&rsquo;s permissions,
-    which live on <a href="{{ path('team_positions') }}">the matrix</a>.
-{% endblock %}
-
-{% block shell_page_actions %}
-    {# ONE FIELD, SO IT IS ONE FIELD — not a screen. Straight from the old
-       application's departments page, which got this right. #}
-    <form class="assign" method="post" action="{{ path('team_department_create') }}">
-        <input type="hidden" name="_token" value="{{ csrfToken }}">
-        <input type="text" name="name" class="fld" placeholder="New department" aria-label="New department name" required>
-        <button class="cta" type="submit">{{ pm.icon_plus() }} Add</button>
-    </form>
-    <a class="tgl" href="{{ path('team_positions') }}">{{ pm.icon_people() }} Positions &amp; permissions</a>
+    Every department the organisation has. Each is either <b>area-linked</b> &mdash; belonging to one area &mdash;
+    or <b>org-wide</b>, spanning every area. Area-linked come first here; each row states its scope. A department
+    shapes emphasis and holds the positions its people fill; <b>it never gates data</b>. Open a department&rsquo;s own
+    <b>lens</b> from its name or the <b>Lens</b> action; the manager itself stays a management list.
 {% endblock %}
 
 {% block shell_page %}
+    {% set hasAreas = areas|length > 0 %}
     <div data-dp>
-        {% if departments is empty %}
-            {# THE STATE THAT MADE THIS SCREEN NECESSARY, and the one a fresh
-               installation is in: the roster bands by a department nothing can
-               create, so every position reads Unassigned forever. The control
-               that ends it is the field in the page header, and this says so
-               rather than leaving an empty page to be interpreted. #}
+        {# CREATE — the scope question first (area-first by default, the narrow
+           correctable choice), then the name, and for an area, which one. #}
+        <form class="crcard" method="post" action="{{ path('team_department_create') }}"
+              data-controller="uhifadhi--team-module--department"
+              data-scope="{{ hasAreas ? 'area' : 'org' }}"
+              data-create-department
+              data-uhifadhi--team-module--department-hint-area-value="<b>Just an area.</b> This department will belong only to the area you pick above and will not appear in the others &mdash; the safer default, and easy to widen later."
+              data-uhifadhi--team-module--department-hint-org-value="<b>Org-wide.</b> This department will belong to the organisation and appear in every area as an inherited department.">
+            <input type="hidden" name="_token" value="{{ csrfToken }}">
+            <input type="hidden" name="scope" value="{{ hasAreas ? 'area' : 'org' }}"
+                   data-uhifadhi--team-module--department-target="scopeField">
+            <div class="crgrid">
+                <div class="crfield">
+                    <span class="crlab">Scope &mdash; just this area, or org-wide?</span>
+                    <div class="seg" role="tablist">
+                        <button type="button" class="{{ hasAreas ? 'on' : '' }}" data-scope-set="area"
+                                {{ hasAreas ? '' : 'disabled' }}
+                                data-uhifadhi--team-module--department-target="segment"
+                                data-action="uhifadhi--team-module--department#setScope">{{ di.icon_area() }} Just an area</button>
+                        <button type="button" class="{{ hasAreas ? '' : 'on' }}" data-scope-set="org"
+                                data-uhifadhi--team-module--department-target="segment"
+                                data-action="uhifadhi--team-module--department#setScope">{{ di.icon_org() }} Org-wide</button>
+                    </div>
+                </div>
+                <div class="crfield crpick">
+                    <span class="crlab">Which area?</span>
+                    <select name="area" aria-label="Area">
+                        {% for area in areas %}
+                            <option value="{{ area.uuidString }}">{{ area.name }}</option>
+                        {% else %}
+                            <option value="">No areas yet</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="crfield grow">
+                    <span class="crlab">Name</span>
+                    <input type="text" class="fld" name="name" placeholder="New department"
+                           aria-label="New department name" required>
+                </div>
+                <button class="cta" type="submit">{{ pm.icon_plus() }} Add department</button>
+            </div>
+            <div class="crhint">
+                {{ pm.icon_info() }}
+                <span data-uhifadhi--team-module--department-target="hint">
+                    {% if hasAreas %}
+                        <b>Just an area.</b> This department will belong only to the area you pick above and will not
+                        appear in the others &mdash; the safer default, and easy to widen later.
+                    {% else %}
+                        <b>Org-wide.</b> There are no areas yet, so a department can only be organisation-wide for now.
+                        It will belong to the organisation and appear in every area.
+                    {% endif %}
+                </span>
+            </div>
+        </form>
+
+        {% set anyDepartments = areaGroups|length > 0 or orgDepartments|length > 0 %}
+
+        {% if not anyDepartments %}
             <div class="pm-first">
                 {{ pm.icon_plus() }}
                 <div class="ft">
                     <h3>There are no departments yet, and the field above is what makes the first one.</h3>
-                    <p>Until one exists, every position on this installation belongs to nobody in particular:
-                    the roster&rsquo;s org chart bands them all as <b>Unassigned</b> and the permission matrix
-                    groups them under <b>No department yet</b>. Neither is a fault and nothing is broken by it
-                    &mdash; a department is an organizational fact, so an installation that has not decided on
-                    one yet is simply an installation that has not decided.</p>
-                    <p>Three or four is usually the whole list. Type the first one above.</p>
+                    <p>Until one exists, every position on this installation belongs to nobody in particular: the
+                    roster&rsquo;s org chart bands them all as <b>Unassigned</b>. A department is an organizational
+                    fact, so an installation that has not decided on one yet is simply an installation that has not
+                    decided. Three or four is usually the whole list.</p>
                 </div>
             </div>
         {% endif %}
 
-        <div class="tm-cardgrid">
-            {% for department in departments %}
-                {% set positions = owned[department.uuidString]|default([]) %}
-                {% set people = headcount[department.uuidString]|default(0) %}
-                <div class="dcard">
-                    <div class="dhead">
-                        <div class="dh-l">
-                            <i class="dot"></i>
-                            <b>{{ department.name }}</b>
-                        </div>
-                        <div class="dh-r">
-                            {# THE RENAME FIELD THE BUTTON SUBMITS — the matrix's
-                               pane header ships exactly this, for the same
-                               reason: the route needs a name and a bare button
-                               has nowhere to collect one. #}
-                            <form class="assign" method="post" action="{{ path('team_department_rename', {uuid: department.uuidString}) }}">
-                                <input type="hidden" name="_token" value="{{ csrfToken }}">
-                                <input type="text" name="name" class="fld pm-rename" value="{{ department.name }}"
-                                       aria-label="Rename {{ department.name }}" required>
-                                <button class="softbtn" type="submit">Rename</button>
-                            </form>
-                        </div>
-                    </div>
-
-                    <div class="dmeta">
-                        {{ positions|length }} position{{ positions|length == 1 ? '' : 's' }} &middot;
-                        {{ people }} {{ people == 1 ? 'person' : 'people' }}
-                    </div>
-
-                    {% if positions|length %}
-                        <div class="plist">
-                            {% for position in positions %}
-                                {{ include('@UhifadhiTeam/departments/_position.html.twig', {
-                                    position: position,
-                                    departments: departments,
-                                    here: department,
-                                    holders: holders,
-                                    csrfToken: csrfToken,
-                                }, with_context: false) }}
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p class="dnote">No positions are filed here yet. Move one in from another card, or make
-                        one on the matrix &mdash; a department with none is a heading waiting for its first job.</p>
-                    {% endif %}
-                </div>
+        {# ── AREA-LEVEL FIRST, grouped by area, then org-level. ── #}
+        {% for group in areaGroups %}
+            <div class="deptgroup">
+                <span class="gh">Area-level &middot; {{ group.area.name }}</span>
+                <span class="gc">{{ group.departments|length }}</span>
+                <span class="gnote">Belong to this one area</span>
+                <span class="gl"></span>
+            </div>
+            {% for department in group.departments %}
+                {{ include('@UhifadhiTeam/departments/_row.html.twig', {
+                    department: department,
+                    positions: owned[department.uuidString]|default([]),
+                    people: headcount[department.uuidString]|default(0),
+                    holders: holders,
+                    departments: departments,
+                    areas: areas,
+                    mark: marks[department.uuidString]|default('—'),
+                    csrfToken: csrfToken,
+                }, with_context: false) }}
             {% endfor %}
+        {% endfor %}
 
-            {# THE LOOSE POSITIONS. Dashed, because it is not a department and
-               the page has to say so in words — a reader meeting it for the
-               first time will otherwise read it as a department called "No
-               department yet". The roster's org chart already carries this
-               sentence for the same reason. #}
-            {% if loose|length %}
-                <div class="dcard un">
-                    <div class="dhead">
-                        <div class="dh-l">
-                            <i class="dot un"></i>
-                            <b>No department yet</b>
-                        </div>
+        {% if orgDepartments|length %}
+            <div class="deptgroup">
+                <span class="gh">Org-level</span>
+                <span class="gc">{{ orgDepartments|length }}</span>
+                <span class="gnote">Belong to the organisation &middot; span every area</span>
+                <span class="gl"></span>
+            </div>
+            {% for department in orgDepartments %}
+                {{ include('@UhifadhiTeam/departments/_row.html.twig', {
+                    department: department,
+                    positions: owned[department.uuidString]|default([]),
+                    people: headcount[department.uuidString]|default(0),
+                    holders: holders,
+                    departments: departments,
+                    areas: areas,
+                    mark: marks[department.uuidString]|default('—'),
+                    csrfToken: csrfToken,
+                }, with_context: false) }}
+            {% endfor %}
+        {% endif %}
+
+        {# THE LOOSE POSITIONS — every position nobody has filed. Not a department:
+           a position may be created before anybody decided which part of the
+           organisation owns it, and its holders read as Unassigned until one is
+           chosen. The register states this in words so it is never read as a
+           department called "No department yet". #}
+        {% if loose|length %}
+            <div class="deptgroup">
+                <span class="gh">No department yet</span>
+                <span class="gc">{{ loose|length }}</span>
+                <span class="gnote">Not a department &mdash; positions nobody has filed</span>
+                <span class="gl"></span>
+            </div>
+            <div class="posfile" data-unfiled style="border-top:1px solid var(--c-ln);border-radius:12px">
+                <p class="aa-prose" style="margin:2px 0 6px">This is <b>not a department</b>. Each position below
+                    reads as <b>Unassigned</b> on the roster until you file it &mdash; pick a department in its Move
+                    control.</p>
+                {% for position in loose %}
+                    {% set held = holders[position.uuidString]|default(0) %}
+                    <div class="posline">
+                        <span class="pl-nm"><a href="{{ path('team_positions', {position: position.uuidString}) }}">{{ position.name }}</a></span>
+                        <span class="pl-mem">
+                            {%- if held %}{{ held }} holder{{ held == 1 ? '' : 's' }}
+                            {%- else %}nobody yet{% endif %}
+                            &middot; {{ position.permissionValues|length }} permission{{ position.permissionValues|length == 1 ? '' : 's' }}
+                        </span>
+                        <span class="pl-act">
+                            <form class="moveform" method="post" action="{{ path('team_department_file', {uuid: position.uuidString}) }}">
+                                <input type="hidden" name="_token" value="{{ csrfToken }}">
+                                <span class="mlab">File under</span>
+                                <select name="department" aria-label="File {{ position.name }} under">
+                                    <option value="" selected>No department yet&hellip;</option>
+                                    {% for d in departments %}
+                                        <option value="{{ d.uuidString }}">{{ d.name }}{{ d.area ? ' · ' ~ d.area.name : '' }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button class="softbtn" type="submit">Move</button>
+                            </form>
+                        </span>
                     </div>
-
-                    <p class="dnote">This is <b>not a department</b> &mdash; it is every position nobody has filed
-                    yet. A position may be created before anybody has decided which part of the organisation owns
-                    it, and its holders read as <b>Unassigned</b> on the roster until one is chosen here.</p>
-
-                    <div class="dmeta">
-                        {{ loose|length }} position{{ loose|length == 1 ? '' : 's' }} &middot;
-                        {{ looseHeadcount }} {{ looseHeadcount == 1 ? 'person' : 'people' }}
-                    </div>
-
-                    <div class="plist">
-                        {% for position in loose %}
-                            {{ include('@UhifadhiTeam/departments/_position.html.twig', {
-                                position: position,
-                                departments: departments,
-                                here: null,
-                                holders: holders,
-                                csrfToken: csrfToken,
-                            }, with_context: false) }}
-                        {% endfor %}
-                    </div>
-                </div>
-            {% endif %}
-        </div>
+                {% endfor %}
+            </div>
+        {% endif %}
     </div>
 {% endblock %}

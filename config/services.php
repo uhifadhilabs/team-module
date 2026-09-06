@@ -313,6 +313,7 @@ return static function (ContainerConfigurator $container): void {
             service('doctrine.orm.entity_manager'),
             service('security.csrf.token_manager'),
             service('router'),
+            service('security.token_storage'),
         ])
         ->tag('controller.service_arguments');
     $services->alias(DepartmentController::class, 'team.controller.department')->public();

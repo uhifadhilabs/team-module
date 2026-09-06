@@ -2521,3 +2521,299 @@ body[data-life="off"] .mb-band .avatar { opacity: .6; }
    department yet" for the first time reads it as a department until told
    otherwise, and being told otherwise cannot wait until after a number. */
 [data-dp] .dcard.un .dnote { padding-top: 13px; }
+
+/* ============================================================================
+   AREA-AWARE DEPARTMENTS — the manager register and the per-department lens.
+   ----------------------------------------------------------------------------
+   Ported from the canonical design (DesignsProjects/uhifadhi-web/departments/):
+   area-aware/area-aware.css (the register, the scope badge, the create flow, the
+   house select, the move control) and department-detail.css (the lens: dpthead,
+   atabs buttons, posrow, setrow, conseq, scoperule). The design's tokens
+   (var(--acc), --ln, --card, …) are translated to the shell's palette the rest
+   of this sheet already speaks (rgb(var(--c-acc)), var(--c-ln), rgb(var(--c-cv))
+   …), so both light and dark come for free with no html.dark override.
+
+   NOT PORTED, and why: the design's `.idx` accent label and its `DP·`-style tab
+   prefixes — the NoWorkshopLabels rule forbids both in shipped markup, so the
+   card tabs here wear the shell's `.tab`/`.src` only. `.softbtn`, `.perm`,
+   `.kpi`, `.c`/`.tab`, `h2.zone`, `.atabs` (as <a>) already ship (shell / this
+   sheet) and are reused, not redefined — only the pieces missing are added.
+   ========================================================================== */
+
+/* ── THE SCOPE BADGE ─────────────────────────────────────────────────────── */
+.scope {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 8.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    border-radius: 6px; padding: 4px 8px 3px; line-height: 1; white-space: nowrap; flex: none;
+}
+.scope svg { width: 10px; height: 10px; flex: none; }
+.scope.org { color: rgb(var(--c-fog)); border: 1px solid var(--c-ln2); background: rgb(var(--c-raised)); }
+.scope.area {
+    color: rgb(var(--c-acc)); border: 1px solid color-mix(in srgb, rgb(var(--c-acc)) 45%, transparent);
+    background: color-mix(in srgb, rgb(var(--c-acc)) 8%, transparent);
+}
+.scope.inherit { color: rgb(var(--c-dim)); border: 1px dashed var(--c-ln2); background: none; }
+
+/* ── THE REGISTER GROUP HEADER ───────────────────────────────────────────── */
+.deptgroup { display: flex; align-items: center; gap: 10px; margin: 24px 0 11px; }
+.deptgroup:first-of-type { margin-top: 6px; }
+.deptgroup .gh {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9px; font-weight: 700;
+    letter-spacing: .15em; text-transform: uppercase; color: rgb(var(--c-dim));
+}
+.deptgroup .gc {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9px; color: rgb(var(--c-dim));
+    border: 1px solid var(--c-ln2); border-radius: 999px; padding: 2px 8px; font-variant-numeric: tabular-nums;
+}
+.deptgroup .gl { flex: 1; height: 1px; background: var(--c-ln); }
+.deptgroup .gnote { font-size: 11.5px; color: rgb(var(--c-fog)); }
+
+/* ── THE REGISTER ROW ─────────────────────────────────────────────────────
+   A fixed-column grid so the scope reads as a real aligned COLUMN, not a
+   floating pill: mark, name, scope, count line up across rows because every
+   non-action track is a fixed px width. The last track (1fr) carries the
+   actions, right-aligned. */
+.deptwrap + .deptwrap { margin-top: 8px; }
+.c + .deptwrap, .c + .deptgroup { margin-top: 20px; }
+.deptrow {
+    display: grid; grid-template-columns: 34px 236px 152px 96px 1fr; align-items: center; gap: 13px;
+    padding: 13px 16px; border: 1px solid var(--c-ln); border-radius: 12px; background: rgb(var(--c-cv));
+    box-sizing: border-box;
+}
+@media (max-width: 1080px) {
+    .deptrow { display: flex; flex-wrap: wrap; }
+    .deptrow .dr-scope { margin-left: auto; }
+}
+.deptrow .dr-mk {
+    width: 34px; height: 34px; border-radius: 10px; flex: none; display: grid; place-items: center;
+    background: rgb(var(--c-raised)); border: 1px solid var(--c-ln2); color: rgb(var(--c-fog));
+    font: 700 11px "JetBrains Mono", ui-monospace, monospace;
+}
+.deptrow .dr-bd { min-width: 0; }
+.deptrow .dr-nm {
+    font-size: 14px; font-weight: 700; color: rgb(var(--c-tx)); line-height: 1.2; text-decoration: none;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;
+}
+.deptrow .dr-nm:hover { color: rgb(var(--c-acc)); }
+.deptrow .dr-sub {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px; color: rgb(var(--c-dim));
+    margin-top: 3px; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* THE SCOPE COLUMN — an explicit labelled value in its own aligned column. The
+   label rides every row so a row read out of context still states its scope. */
+.deptrow .dr-scope { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.deptrow .dr-scope .sc-l {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 8px; font-weight: 700;
+    letter-spacing: .14em; text-transform: uppercase; color: rgb(var(--c-dim)); line-height: 1;
+}
+.deptrow .dr-scope .sc-v {
+    font-size: 12.5px; font-weight: 600; color: rgb(var(--c-fog)); line-height: 1.15;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.deptrow .dr-scope.area .sc-v { color: rgb(var(--c-acc)); }
+.deptrow .dr-cnt {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: rgb(var(--c-fog));
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.deptrow .dr-act { display: flex; align-items: center; gap: 7px; justify-self: end; flex-wrap: wrap; justify-content: flex-end; }
+
+/* The quiet button's danger variant the register and the lens use. */
+.softbtn.danger { color: rgb(var(--c-fail)); border-color: color-mix(in srgb, rgb(var(--c-fail)) 40%, transparent); }
+.softbtn.danger:hover { color: rgb(var(--c-fail)); border-color: rgb(var(--c-fail)); }
+
+/* ── POSITIONS FILED UNDER A DEPARTMENT, and the row's write panel ─────────
+   The expanded body of a register row: the department's rename and scope-change
+   forms, then the positions filed under it with the move control. Indented so
+   the filing is unmistakable. */
+.posfile {
+    border: 1px solid var(--c-ln); border-top: 0; border-radius: 0 0 12px 12px;
+    margin: -9px 0 0; padding: 12px 14px 10px 22px;
+    background: color-mix(in srgb, rgb(var(--c-fog)) 3%, transparent);
+}
+.posfile[hidden] { display: none; }
+.posline {
+    display: flex; align-items: center; gap: 11px; padding: 9px 0; flex-wrap: wrap;
+    border-bottom: 1px dashed color-mix(in srgb, rgb(var(--c-fog)) 16%, transparent);
+}
+.posline:last-child { border-bottom: 0; }
+.posline .pl-nm { font-size: 13px; font-weight: 600; color: rgb(var(--c-tx)); min-width: 150px; }
+.posline .pl-nm a { color: inherit; text-decoration: none; }
+.posline .pl-nm a:hover { color: rgb(var(--c-acc)); }
+.posline .pl-mem {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px; color: rgb(var(--c-dim)); white-space: nowrap;
+}
+.posline .pl-act { margin-left: auto; display: flex; align-items: center; gap: 8px; flex: none; flex-wrap: wrap; }
+/* The write forms the panel opens with — rename, then scope-change. */
+.pf-form { display: flex; align-items: flex-end; gap: 9px; flex-wrap: wrap; padding: 4px 0 12px; border-bottom: 1px dashed color-mix(in srgb, rgb(var(--c-fog)) 16%, transparent); }
+.pf-form .crfield { min-width: 160px; }
+.pf-form .crlab { margin: 0 0 5px; }
+.pf-lab {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 8.5px; font-weight: 700;
+    letter-spacing: .13em; text-transform: uppercase; color: rgb(var(--c-dim)); align-self: center;
+}
+
+/* ── THE MOVE CONTROL — reassigning where a position is filed ─────────────── */
+.moveform { display: inline-flex; align-items: center; gap: 7px; flex-wrap: wrap; margin: 0; }
+.moveform .mlab {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 8.5px; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase; color: rgb(var(--c-dim));
+}
+
+/* ── HOUSE SELECT — no raw OS control on these pages ───────────────────────
+   Every native select (the create card's area picker, the confine-to picker,
+   the move control) wears one treatment: token surface, custom chevron, focus
+   ring. Scoped to selects inside the department surfaces so it never reaches
+   the rest of the module. */
+[data-dp] select, [data-dept] select {
+    -webkit-appearance: none; appearance: none;
+    background: rgb(var(--c-raised)) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2396A89C' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 11px center;
+    background-size: 12px; border: 1px solid var(--c-ln2); border-radius: 9px; color: rgb(var(--c-tx));
+    font-family: inherit; font-size: 13px; font-weight: 600; height: 38px; box-sizing: border-box;
+    padding: 0 32px 0 12px; cursor: pointer; max-width: 100%;
+}
+html.light [data-dp] select, html.light [data-dept] select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2357645A' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+[data-dp] select:focus, [data-dept] select:focus {
+    outline: none; border-color: color-mix(in srgb, rgb(var(--c-acc)) 55%, transparent);
+    box-shadow: 0 0 0 3px var(--accGlow);
+}
+
+/* ── THE CREATE FLOW — the scope question makes it more than one field ─────── */
+.crcard {
+    border: 1px solid var(--c-ln2); border-radius: 14px; padding: 18px 18px 16px;
+    background: linear-gradient(180deg, rgb(var(--c-p1)), rgb(var(--c-p2))); box-shadow: var(--shadow);
+    box-sizing: border-box; margin-bottom: 22px;
+}
+.crgrid { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
+.crfield { display: flex; flex-direction: column; gap: 6px; min-width: 200px; }
+.crfield.grow { flex: 1; min-width: 230px; }
+.crlab {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 8.5px; font-weight: 700;
+    letter-spacing: .13em; text-transform: uppercase; color: rgb(var(--c-dim));
+}
+.crcard .fld { width: auto; }
+.seg { display: inline-flex; border: 1px solid var(--c-ln2); border-radius: 9px; overflow: hidden; height: 38px; }
+.seg button {
+    background: none; border: 0; border-right: 1px solid var(--c-ln); color: rgb(var(--c-fog)); cursor: pointer;
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px; font-weight: 700;
+    letter-spacing: .06em; text-transform: uppercase; padding: 0 14px; display: inline-flex; align-items: center; gap: 7px;
+}
+.seg button:last-child { border-right: 0; }
+.seg button svg { width: 13px; height: 13px; }
+.seg button.on { background: rgb(var(--c-acc)); color: rgb(var(--c-accT)); }
+.seg button[disabled] { opacity: .4; cursor: not-allowed; }
+.crhint { display: flex; align-items: flex-start; gap: 9px; margin-top: 13px; font-size: 12px; line-height: 1.55; color: rgb(var(--c-fog)); }
+.crhint svg { flex: none; color: rgb(var(--c-acc)); margin-top: 1px; width: 15px; height: 15px; }
+.crhint b { color: rgb(var(--c-tx)); }
+/* the area picker, hidden until "just an area" is chosen */
+[data-scope="org"] .crpick { display: none; }
+
+/* ── THE LENS: the tabbed record ──────────────────────────────────────────
+   The department's tab strip is the shell's .atabs; the shell styles it as <a>,
+   here each tab is a <button> that switches a panel in place, so the buttons
+   restate the same underline. */
+.atabs button {
+    font: inherit; font-size: 13.5px; font-weight: 600; color: rgb(var(--c-fog));
+    background: none; border: 0; border-bottom: 2px solid transparent;
+    padding: 9px 1px 12px; margin-bottom: -1px; cursor: pointer;
+}
+.atabs button:hover { color: rgb(var(--c-tx)); }
+.atabs button.on { color: rgb(var(--c-tx)); border-bottom-color: rgb(var(--c-acc)); }
+
+/* The department mark beside the page title. */
+.dpthead { display: flex; align-items: center; gap: 14px; }
+.dpthead .mark {
+    width: 42px; height: 42px; border-radius: 12px; flex: none; display: grid; place-items: center;
+    background: rgb(var(--c-raised)); border: 1px solid var(--c-ln2); color: rgb(var(--c-fog));
+    font: 700 13px "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* The identity band — labelled facts, mirroring the area overview's .factband. */
+.factband {
+    display: flex; align-items: center; gap: 0; flex-wrap: wrap;
+    border: 1px solid var(--c-ln); border-radius: 12px; background: rgb(var(--c-cv));
+    padding: 2px 4px; margin: 0 0 20px; box-sizing: border-box;
+}
+.factband .f { display: flex; flex-direction: column; gap: 2px; padding: 9px 16px; position: relative; }
+.factband .f + .f::before { content: ""; position: absolute; left: 0; top: 11px; bottom: 11px; width: 1px; background: var(--c-ln); }
+.factband .f .k {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 8.5px; font-weight: 600;
+    letter-spacing: .15em; text-transform: uppercase; color: rgb(var(--c-dim));
+}
+.factband .f .v { font-size: 13px; font-weight: 600; color: rgb(var(--c-tx)); font-variant-numeric: tabular-nums; }
+.factband .f .v.uuid { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: rgb(var(--c-fog)); font-weight: 500; }
+.factband .sp { flex: 1; }
+.factband .more {
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9.5px; font-weight: 600;
+    letter-spacing: .1em; text-transform: uppercase; color: rgb(var(--c-fog)); text-decoration: none;
+    padding: 9px 15px; background: none; border: 0; cursor: pointer;
+}
+.factband .more:hover { color: rgb(var(--c-acc)); }
+@media (max-width: 900px) { .factband .f + .f::before { display: none; } }
+
+/* The scope-reading strip above the tabs — one rule, said with the accent (not
+   a warning), because it states the model, not a risk. */
+.scoperule {
+    display: flex; gap: 12px; align-items: flex-start;
+    border: 1px solid color-mix(in srgb, rgb(var(--c-acc)) 35%, transparent); border-radius: 12px;
+    padding: 13px 16px; background: color-mix(in srgb, rgb(var(--c-acc)) 5%, transparent);
+    font-size: 12.5px; color: rgb(var(--c-fog)); line-height: 1.6; margin: 0 0 20px; box-sizing: border-box;
+}
+.scoperule svg { flex: none; color: rgb(var(--c-acc)); margin-top: 2px; }
+.scoperule b { color: rgb(var(--c-tx)); }
+
+/* People & Positions tab — the position rows. */
+.posrow {
+    display: flex; align-items: center; gap: 12px; padding: 11px 2px; flex-wrap: wrap;
+    border-bottom: 1px dashed color-mix(in srgb, rgb(var(--c-fog)) 18%, transparent);
+}
+.posrow:last-child { border-bottom: 0; }
+.posrow .pn { font-size: 13.5px; font-weight: 600; color: rgb(var(--c-tx)); min-width: 118px; }
+.posrow .pn a { color: inherit; text-decoration: none; }
+.posrow .pn a:hover { color: rgb(var(--c-acc)); }
+.posrow .pp { display: flex; gap: 3px; flex-wrap: wrap; }
+.posrow .hb { margin-left: auto; display: flex; align-items: center; gap: 8px; flex: none; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: rgb(var(--c-fog)); }
+
+/* Settings tab — the labelled scope lines, and the module-attachment rows. */
+.setrow {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 13px 2px;
+    border-bottom: 1px solid var(--c-ln);
+}
+.setrow:last-child { border-bottom: 0; }
+.setrow .sn { display: flex; flex-direction: column; gap: 3px; min-width: 190px; }
+.setrow .sn b { font-size: 13.5px; font-weight: 600; color: rgb(var(--c-tx)); }
+.setrow .sx { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+/* The consequence list on the confine card — the honest answer set as prose. */
+.conseq { margin: 8px 0 0; padding: 0; list-style: none; font-size: 12.5px; color: rgb(var(--c-fog)); line-height: 1.6; }
+.conseq li { padding: 6px 0 6px 22px; position: relative; }
+.conseq li::before {
+    content: ""; position: absolute; left: 6px; top: 14px; width: 6px; height: 6px; border-radius: 50%;
+    background: color-mix(in srgb, rgb(var(--c-fog)) 55%, transparent);
+}
+.conseq li b { color: rgb(var(--c-tx)); }
+
+/* Reading prose used on the lens. */
+.aa-prose { font-size: 13.5px; line-height: 1.7; color: rgb(var(--c-fog)); max-width: 92ch; margin: 0 0 14px; }
+.aa-prose b { color: rgb(var(--c-tx)); }
+
+/* The empty-state plate the follow-up surfaces (modules, KPIs, attachments) wear
+   until the rich lens is wired — drawn, not hidden, so the page says what is not
+   there yet rather than looking finished. */
+.dp-empty { text-align: center; padding: 34px 16px; }
+.dp-empty b { display: block; margin-bottom: 6px; color: rgb(var(--c-tx)); }
+.dp-empty span { font-size: 13px; color: rgb(var(--c-fog)); }
+
+/* The labelled row-line used inside the lens's Settings cards — a key on the
+   left, a value on the right, dashed between (from the design's base vocabulary,
+   which the shell does not ship). */
+.rln {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 12px;
+    padding: 8px 2px; border-bottom: 1px dashed color-mix(in srgb, rgb(var(--c-fog)) 18%, transparent);
+}
+.rln:last-child { border: 0; }
+.rln .k { color: rgb(var(--c-fog)); }
+.rln .v { color: rgb(var(--c-tx)); font-weight: 600; }
+.rln .v.acc { color: rgb(var(--c-acc)); }

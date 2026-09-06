@@ -22,6 +22,7 @@ use Uhifadhi\Team\Entity\Position;
 use Uhifadhi\Team\Entity\User;
 use Uhifadhi\Team\Enum\PermissionEnum;
 use Uhifadhi\Team\Enum\TeamRoleEnum;
+use Uhifadhi\Team\Tests\Integration\Fixtures\Area\HostArea;
 
 /**
  * A browser and a real database, with the schema rebuilt per test, plus the
@@ -83,6 +84,28 @@ abstract class WebTestCaseWithSchema extends WebTestCase
     protected function department(string $name): Department
     {
         $department = (new Department())->setName($name);
+        $this->em->persist($department);
+
+        return $department;
+    }
+
+    /**
+     * A host area, played by the integration fixture the kernel resolves
+     * {@see \Uhifadhi\ModuleContracts\Entity\AreaInterface} to — the area an
+     * area-level department is confined to.
+     */
+    protected function area(string $name): HostArea
+    {
+        $area = (new HostArea())->setName($name);
+        $this->em->persist($area);
+
+        return $area;
+    }
+
+    /** A department confined to one area — area-level, the scope derived from it. */
+    protected function areaDepartment(string $name, HostArea $area): Department
+    {
+        $department = (new Department())->setName($name)->setArea($area);
         $this->em->persist($department);
 
         return $department;
