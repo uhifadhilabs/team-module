@@ -576,7 +576,13 @@ referenced through the platform's `AreaInterface` (published by
 `uhifadhi/module-contracts`) and resolved by
 [`uhifadhi/area-module`](https://github.com/uhifadhilabs/area-module), exactly as
 this module's people are resolved for other modules — so a department points at
-an area without this bundle requiring an area package. **On delete it CASCADEs,
+an area without this bundle requiring an area package. This is the mirror image of
+the user contract this module answers: team resolves `UserInterface` for everyone
+else and consumes `AreaInterface` from area, both through Doctrine's
+`resolve_target_entities`, neither creating a module-to-module dependency. The
+mechanism and the interface's three questions are in
+[`docs/area-contract.md` in module-contracts](https://github.com/uhifadhilabs/module-contracts/blob/main/docs/area-contract.md).
+**On delete it CASCADEs,
 not SET NULL**: an area-level department dies with its area rather than silently
 becoming org-wide, because a SET NULL would be an unasked privilege change the
 day the area-aware voter lands.
