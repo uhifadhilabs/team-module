@@ -133,10 +133,12 @@ final class DepartmentScreenTest extends WebTestCaseWithSchema
     }
 
     /**
-     * THE NAME IS UNIQUE ACROSS THE INSTALLATION and here that IS the right
-     * scope: there is one organisation, and two departments with one name would
-     * be the same department entered twice. The index would have said this in
-     * SQL; the person who typed it wants the sentence.
+     * THE NAME IS UNIQUE WITHIN ITS SCOPE. This screen adds org-wide
+     * departments, and two of those by one name would be the same department
+     * entered twice — the org bucket is unique on the name alone. (A name may
+     * still repeat from one area to another; that is a different scope.) The
+     * index would have said this in SQL; the person who typed it wants the
+     * sentence.
      */
     public function testASecondDepartmentWithTheSameNameIsRefusedWithTheReason(): void
     {

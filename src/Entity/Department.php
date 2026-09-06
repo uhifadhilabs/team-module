@@ -16,7 +16,7 @@ namespace Uhifadhi\Team\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Uhifadhi\Seam\Entity\AreaInterface;
+use Uhifadhi\ModuleContracts\Entity\AreaInterface;
 use Uhifadhi\Team\Entity\Trait\TimestampableTrait;
 use Uhifadhi\Team\Entity\Trait\UuidTrait;
 use Uhifadhi\Team\Enum\DepartmentScopeEnum;
@@ -44,6 +44,12 @@ use Uhifadhi\Team\Repository\DepartmentRepository;
  * departments as a lens over its own records points at this entity the way it
  * points at a person, through the contract, and nothing here has to know.
  *
+ * A DEPARTMENT NAME IS UNIQUE PER SCOPE, NOT ORG-WIDE. Two protected areas each
+ * run their own Anti-Poaching unit — two units that share a word, the way two
+ * departments each carry an Analyst — so a name is unique WITHIN one area, and
+ * within the org-wide bucket (a null area), and the two are independent. See the
+ * two partial unique indexes on the table below.
+ *
  * A DEPARTMENT GRANTS NOTHING TODAY. It is an organizational fact and not an
  * authorization one: every capability an installation has still arrives through
  * a position's permissions. Banding the roster by department re-orders a page;
@@ -55,7 +61,8 @@ use Uhifadhi\Team\Repository\DepartmentRepository;
  * area-level, belonging to that area alone). The scope is DERIVED from the
  * nullable area and never stored beside it ({@see getScope()}), because a stored
  * scope and a nullable area are two facts that drift apart and then one is lying.
- * The area is referenced through the seam's {@see AreaInterface} contract and
+ * The area is referenced through the platform's {@see AreaInterface} contract
+ * (published by uhifadhi/module-contracts) and
  * resolved by whichever package provides the installation's area entity
  * (uhifadhi/area-module), so this module points at an area without ever requiring
  * an area package — the same arrangement by which a module points at a person.
@@ -77,7 +84,13 @@ use Uhifadhi\Team\Repository\DepartmentRepository;
  */
 #[ORM\Entity(repositoryClass: DepartmentRepository::class)]
 #[ORM\Table(name: 'team_department')]
-#[ORM\UniqueConstraint(name: 'uniq_team_department_name', fields: ['name'])]
+// A DEPARTMENT NAME IS UNIQUE PER SCOPE, NOT ACROSS THE INSTALLATION. Two
+// partial unique indexes, not one — a plain unique(name, area_id) would let two
+// org-level rows share a name, because in SQL two NULLs are distinct. The org
+// bucket (area_id IS NULL) is unique on the name alone; each area (area_id IS
+// NOT NULL) is unique on the name within it; the two buckets are independent.
+#[ORM\UniqueConstraint(name: 'uniq_team_department_name_org', fields: ['name'], options: ['where' => '(area_id IS NULL)'])]
+#[ORM\UniqueConstraint(name: 'uniq_team_department_name_area', fields: ['name', 'area'], options: ['where' => '(area_id IS NOT NULL)'])]
 #[ORM\HasLifecycleCallbacks]
 class Department
 {
@@ -90,9 +103,10 @@ class Department
     private ?int $id = null; // @phpstan-ignore property.unusedType (assigned by Doctrine via reflection)
 
     /**
-     * Unique across the installation, and here that IS the right scope: there
-     * is one organisation, and two departments with one name would be the same
-     * department entered twice.
+     * Unique within its scope — its area, or the org-wide bucket if it has none.
+     * Two areas may each own a department of one name; two departments in one
+     * area, or two org-wide, may not, because there the pair would be the same
+     * department entered twice. Enforced by the two partial indexes on the table.
      */
     #[ORM\Column(length: 120)]
     private ?string $name = null;

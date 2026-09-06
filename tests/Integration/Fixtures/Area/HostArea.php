@@ -15,7 +15,7 @@ namespace Uhifadhi\Team\Tests\Integration\Fixtures\Area;
 
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
-use Uhifadhi\Seam\Entity\AreaInterface;
+use Uhifadhi\ModuleContracts\Entity\AreaInterface;
 
 /**
  * THE HOST'S AREA, PLAYED BY A STAND-IN — the area an area-level department is

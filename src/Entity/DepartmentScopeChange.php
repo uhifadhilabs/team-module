@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace Uhifadhi\Team\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Uhifadhi\Seam\Entity\AreaInterface;
+use Uhifadhi\ModuleContracts\Entity\AreaInterface;
 use Uhifadhi\Team\Entity\Trait\UuidTrait;
 use Uhifadhi\Team\Enum\DepartmentScopeEnum;
 use Uhifadhi\Team\Repository\DepartmentScopeChangeRepository;
@@ -72,7 +72,7 @@ class DepartmentScopeChange
     /**
      * The area on the area-side of the transition — the one it was confined to
      * when going org→area, or the one it left behind when going area→org. Null
-     * only if the area has since been removed. Mapped to the seam's contract, so
+     * only if the area has since been removed. Mapped to the platform's area contract (module-contracts), so
      * this module points at an area without ever requiring an area package.
      */
     #[ORM\ManyToOne(targetEntity: AreaInterface::class)]

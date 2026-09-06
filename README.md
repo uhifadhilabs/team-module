@@ -214,10 +214,12 @@ Your class has to answer the contract's seven questions and be in the mapping
 chain. That the override wins is tested, not assumed
 (`tests/Integration/Identity/ResolveTargetEntitiesTest`).
 
-**The seam's `AreaInterface` works the same way, and it is answered by
+**The area contract `AreaInterface` works the same way, and it is answered by
 [`uhifadhi/area-module`](https://github.com/uhifadhilabs/area-module)** — the same
 rule, the other live instance of it: team knows its `User`, area knows its
-`AreaOfInterest`, and each prepends its own. With both installed, a bare
+`AreaOfInterest`, and each prepends its own. It lives beside the user contract in
+`uhifadhi/module-contracts` (the seam keeps `Uhifadhi\Seam\Entity\AreaInterface`
+as a deprecated alias of it). With both installed, a bare
 installation reaches `doctrine:migrations:diff` with **zero doctrine edits**. It
 used to be the fleet's oldest hand-step, and it is gone.
 
@@ -570,13 +572,21 @@ derived from it.** Null is org-level — the department spans every area; a set
 area is area-level — it belongs to that one. There is no scope column beside the
 area, because a stored scope and a nullable area drift apart and then one is
 lying; `Department::getScope()` reads it off the area every time. The area is
-referenced through the seam's `AreaInterface` and resolved by
+referenced through the platform's `AreaInterface` (published by
+`uhifadhi/module-contracts`) and resolved by
 [`uhifadhi/area-module`](https://github.com/uhifadhilabs/area-module), exactly as
 this module's people are resolved for other modules — so a department points at
 an area without this bundle requiring an area package. **On delete it CASCADEs,
 not SET NULL**: an area-level department dies with its area rather than silently
 becoming org-wide, because a SET NULL would be an unasked privilege change the
 day the area-aware voter lands.
+
+**A department name is unique per scope, not org-wide.** Two protected areas may
+each run an Anti-Poaching unit — the same word for two units — so a name is
+unique within one area, and within the org-wide bucket (a null area), and the two
+buckets are independent. It is two partial unique indexes rather than one
+`unique(name, area_id)`, because in SQL two NULLs are distinct and a plain
+composite would let two org-wide departments share a name.
 
 **`team_department_scope_change` is an append-only audit trail.** A scope change
 reaches further than a rename — confining an org-wide department re-scopes
@@ -846,8 +856,8 @@ in); this module adds no database configuration of its own beyond mapping its fo
 entities and answering the user contract, both of which it does for you.
 
 Note that `doctrine:migrations:diff` walks **all** mapped metadata, so the
-**seam's** `AreaInterface` has to be answered too — otherwise the diff stops on
-`Uhifadhi\Seam\Entity\AreaInterface` before it ever reaches `team_user`. That is
+**area** contract `AreaInterface` has to be answered too — otherwise the diff stops on
+`Uhifadhi\ModuleContracts\Entity\AreaInterface` before it ever reaches `team_user`. That is
 not your homework either: install
 [`uhifadhi/area-module`](https://github.com/uhifadhilabs/area-module) and it
 prepends that resolution the same way this module prepends the user one. Neither

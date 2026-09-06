@@ -122,7 +122,7 @@ final class ResolutionKernel extends Kernel
             // which is the case an installation is in), so the two are kept
             // apart: one is the host doing its job, the other is the assertion.
             'resolve_target_entities' => [
-                \Uhifadhi\Seam\Entity\AreaInterface::class => \Uhifadhi\Team\Tests\Integration\Fixtures\Area\HostArea::class,
+                \Uhifadhi\ModuleContracts\Entity\AreaInterface::class => \Uhifadhi\Team\Tests\Integration\Fixtures\Area\HostArea::class,
                 ...$this->override,
             ],
         ];

@@ -166,11 +166,11 @@ final class TestKernel extends Kernel
                 // THE AREA CONTRACT IS THE HOST'S TO ANSWER, so this kernel — a
                 // host, minimally — answers it, exactly as a real installation
                 // does through uhifadhi/area-module. A department carries a
-                // nullable area, so its metadata cannot be built until the seam's
-                // AreaInterface resolves to a concrete entity. This module never
+                // nullable area, so its metadata cannot be built until the
+                // platform's AreaInterface (module-contracts) resolves to a concrete entity. This module never
                 // resolves it itself; it only points at it.
                 'resolve_target_entities' => [
-                    \Uhifadhi\Seam\Entity\AreaInterface::class => Fixtures\Area\HostArea::class,
+                    \Uhifadhi\ModuleContracts\Entity\AreaInterface::class => Fixtures\Area\HostArea::class,
                 ],
                 'mappings' => [
                     'TeamTestArea' => [

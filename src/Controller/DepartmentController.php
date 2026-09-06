@@ -161,12 +161,13 @@ final readonly class DepartmentController
         try {
             $this->entityManager->flush();
         } catch (UniqueConstraintViolationException) {
-            // UNIQUE ACROSS THE INSTALLATION, and here that IS the right scope:
-            // there is one organisation, and two departments with one name
-            // would be the same department entered twice. Unlike a position,
-            // whose name is unique only inside its department.
+            // UNIQUE WITHIN ITS SCOPE. This screen creates an org-wide
+            // department, and two of those by one name would be the same
+            // department entered twice. A name may still repeat across areas —
+            // two areas may each run an Anti-Poaching unit — the way a position
+            // name repeats across departments.
             return $this->back($request, \sprintf(
-                'There is already a department called “%s”. A department name is unique across this installation — there is one organisation, and two of them by one name would be the same department entered twice.',
+                'There is already an organisation-wide department called “%s”. A name may repeat from one area to another, but the organisation-wide ones each stand alone.',
                 $name,
             ), 'error');
         }
@@ -195,7 +196,7 @@ final readonly class DepartmentController
         try {
             $this->entityManager->flush();
         } catch (UniqueConstraintViolationException) {
-            return $this->back($request, \sprintf('There is already a department called “%s”.', $name), 'error');
+            return $this->back($request, \sprintf('There is already a department called “%s” in that scope.', $name), 'error');
         }
 
         return $this->back($request, \sprintf('“%s” is now “%s”. Every position it owns is named after it, so they all read differently now.', $was, $name));

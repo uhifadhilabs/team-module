@@ -38,8 +38,8 @@
         "symfony/security-csrf": "^7.3 || ^8.0",
         "symfony/uid": "^7.3 || ^8.0",
         "twig/twig": "^3.12",
-        "uhifadhi/module-contracts": "^0.3",
-        "uhifadhi/seam-module": "^0.1.2 || ^0.2",
+        "uhifadhi/module-contracts": "^0.4",
+        "uhifadhi/seam-module": "^0.3",
         "uhifadhi/widget-module": "^0.1"
     },
     "autoload": {

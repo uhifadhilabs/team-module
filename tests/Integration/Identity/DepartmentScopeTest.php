@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Uhifadhi\Team\Tests\Integration\Identity;
 
-use Uhifadhi\Seam\Entity\AreaInterface;
+use Uhifadhi\ModuleContracts\Entity\AreaInterface;
 use Uhifadhi\Team\Entity\Department;
 use Uhifadhi\Team\Enum\DepartmentScopeEnum;
 use Uhifadhi\Team\Repository\DepartmentRepository;
@@ -24,7 +24,7 @@ use Uhifadhi\Team\Tests\Integration\IntegrationTestCase;
  * A DEPARTMENT IS ORG-LEVEL OR AREA-LEVEL, AND THE SCOPE IS DERIVED FROM ONE
  * NULLABLE AREA.
  *
- * The area is referenced through the seam's {@see AreaInterface} contract and
+ * The area is referenced through the platform's {@see AreaInterface} contract (module-contracts) and
  * resolved to a host entity by the kernel — never by this module — exactly as a
  * real installation resolves it through uhifadhi/area-module. So these tests are
  * also the proof that a department can point at an area without this bundle
