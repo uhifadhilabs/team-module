@@ -74,13 +74,16 @@ use Uhifadhi\Team\Repository\DepartmentRepository;
  * re-scopes everything under it — so the transition leaves a record the current
  * state could never reconstruct.
  *
- * THE SCOPE WILL BECOME AUTHORITY, BUT NOT HERE YET. docs/area-scoped-authority.md
+ * THE SCOPE IS ALSO AUTHORITY NOW. docs/area-scoped-authority.md
  * (module-contracts) rules that an area-level department is the unit that confines
- * a Staff member's authority once the area-aware voter is wired. That voter is
- * NOT built in this module — see {@see \Uhifadhi\Team\Security\PermissionVoter}
- * for the seam. Until it lands the scope shapes emphasis and reach on a screen and
- * gates nothing, which is why "grants nothing today" is stated in the present
- * tense.
+ * a Staff member's authority, and the area-aware
+ * {@see \Uhifadhi\Team\Security\PermissionVoter} reads exactly this chain:
+ * `authority-area(person) = person.position.department.scope`, org-level (null)
+ * meaning every area. So confining a department, or promoting one, now moves the
+ * authority of everyone filed under it — which is what makes the scope-change
+ * audit ({@see changeScopeTo()}) load-bearing rather than cosmetic. A department
+ * still GRANTS nothing directly: capability arrives through a position's
+ * permissions; the department only says WHERE those permissions reach.
  */
 #[ORM\Entity(repositoryClass: DepartmentRepository::class)]
 #[ORM\Table(name: 'team_department')]

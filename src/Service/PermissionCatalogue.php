@@ -143,6 +143,28 @@ final readonly class PermissionCatalogue
         return $names;
     }
 
+    /**
+     * WHETHER A PERMISSION IS AREA-SCOPED — the axis the area-aware voter reads
+     * (docs/area-scoped-authority.md §2/§3 in module-contracts).
+     *
+     * A CORE permission answers from its own enum ({@see PermissionEnum::isAreaScoped()});
+     * only `area.create` is global. A MODULE-DECLARED permission answers with the
+     * ruled DEFAULT — **area-scoped** — because the operational act a module
+     * gates almost always names an area, and area-scoped is the safe default (a
+     * mis-declared global would grant across every area). A module opts a
+     * permission into global explicitly; that opt-out is a `ModulePermission`
+     * scope axis the contracts package does not yet carry, so until it does every
+     * module permission is area-scoped here. An attribute outside the catalogue
+     * is nobody's here — the voter abstains on it before this is ever asked — so
+     * an unknown value conservatively reads area-scoped too.
+     */
+    public function isAreaScoped(string $value): bool
+    {
+        $core = PermissionEnum::tryFrom($value);
+
+        return null === $core || $core->isAreaScoped();
+    }
+
     public function has(string $value): bool
     {
         foreach ($this->all() as $permission) {

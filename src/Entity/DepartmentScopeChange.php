@@ -24,10 +24,11 @@ use Uhifadhi\Team\Repository\DepartmentScopeChangeRepository;
  * and which way it went.
  *
  * Changing a department's scope is not like renaming it. Confining an org-wide
- * department to a single area re-scopes everything filed under it, and — once the
- * area-aware voter is wired (docs/area-scoped-authority.md) — promoting an
- * area-level department to org-wide will hand every one of its people authority
- * in every area. A change with that reach is not something the current state can
+ * department to a single area re-scopes everything filed under it, and — now the
+ * area-aware voter reads the department's scope as authority
+ * (docs/area-scoped-authority.md) — promoting an area-level department to
+ * org-wide hands every one of its people authority in every area. A change with
+ * that reach is not something the current state can
  * explain after the fact: the department ends up org-wide either way, and the row
  * itself cannot say it used to be Ngorongoro's, who widened it, or why. This
  * entity is that record, written on the transition and never edited afterwards.

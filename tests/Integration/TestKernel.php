@@ -221,6 +221,7 @@ final class TestKernel extends Kernel
         foreach ([
             \Uhifadhi\Team\Service\PermissionCatalogue::class => 'team.permissions',
             \Uhifadhi\Team\Security\PermissionVoter::class => 'team.permission_voter',
+            \Uhifadhi\Team\ArgumentResolver\AreaValueResolver::class => 'team.area_value_resolver',
             \Uhifadhi\Team\Repository\UserRepository::class => \Uhifadhi\Team\Repository\UserRepository::class,
             \Uhifadhi\Team\Repository\PositionRepository::class => \Uhifadhi\Team\Repository\PositionRepository::class,
             \Uhifadhi\Team\Repository\DepartmentRepository::class => \Uhifadhi\Team\Repository\DepartmentRepository::class,

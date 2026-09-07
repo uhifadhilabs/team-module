@@ -86,6 +86,28 @@ enum PermissionEnum: string
     }
 
     /**
+     * WHETHER THIS PERMISSION CARRIES AN AREA — the scope axis the area-aware
+     * voter reads ({@see \Uhifadhi\Team\Security\PermissionVoter}, and
+     * docs/area-scoped-authority.md §2 in module-contracts).
+     *
+     * An AREA-SCOPED permission answers "may this person do X *here*?" — the
+     * voter compares the target area against the actor's authority-area (their
+     * department's scope). An INHERENTLY GLOBAL one has no area to compare
+     * against and is granted on the permission alone.
+     *
+     * Only `area.create` is global among the core seven, and structurally so: a
+     * new area has no area yet, so there is nothing to scope the check against —
+     * creating areas is a fleet act. Everything else operational is area-scoped;
+     * `area.delete` is area-scoped by ruling (DECISIONS §5.2), for consistency
+     * with the other area permissions. The asymmetry is deliberate: operational
+     * power is local by default, only fleet-shaping acts are global.
+     */
+    public function isAreaScoped(): bool
+    {
+        return self::AreaCreate !== $this;
+    }
+
+    /**
      * The whole catalogue in declaration order, for the /team/positions permission matrix.
      *
      * @return list<self>

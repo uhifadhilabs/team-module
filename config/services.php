@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use Uhifadhi\Shell\Contract\NavigationSourceInterface;
+use Uhifadhi\Team\ArgumentResolver\AreaValueResolver;
 use Uhifadhi\Team\Command\CreateUserCommand;
 use Uhifadhi\Team\Controller\DepartmentController;
 use Uhifadhi\Team\Controller\InviteController;
@@ -128,6 +129,18 @@ return static function (ContainerConfigurator $container): void {
     $services->set('team.permission_voter', PermissionVoter::class)
         ->args([service('team.permissions')])
         ->tag('security.voter');
+
+    /*
+     * THE CONVENIENCE ARGUMENT RESOLVER — turns a `{uuid}` route param into the
+     * platform's area so a controller can pass it to the voter
+     * (isGranted('patrols.record', $area)). Tagged by hand like everything here;
+     * a reusable bundle is not autoconfigured. Priority above the default
+     * resolvers so an AreaInterface-typed argument is filled from the route
+     * before a generic resolver tries and fails.
+     */
+    $services->set('team.area_value_resolver', AreaValueResolver::class)
+        ->args([service('doctrine.orm.entity_manager')])
+        ->tag('controller.argument_value_resolver', ['priority' => 150]);
 
     /*
      * THE ROW IN THE SIDEBAR — the half of "a module registers with the seam and
