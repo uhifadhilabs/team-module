@@ -24,6 +24,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -37,6 +38,7 @@ use Uhifadhi\Team\Exception\MissingScopeChangeReasonException;
 use Uhifadhi\Team\Repository\DepartmentRepository;
 use Uhifadhi\Team\Repository\PositionRepository;
 use Uhifadhi\Team\Repository\UserRepository;
+use Uhifadhi\Team\Security\AreaAuthority;
 
 /**
  * THE ORG CHART'S HOME — the area-aware department manager, the per-department
@@ -56,14 +58,20 @@ use Uhifadhi\Team\Repository\UserRepository;
  * `doctrine.orm.resolve_target_entities`. This module points at an area exactly
  * as it points at a person, and requires neither package to do it.
  *
- * A DEPARTMENT GRANTS NOTHING, scope or no scope. Filing a position into a
- * department changes where it is READ; confining a department to an area changes
- * where it is read; neither changes what anybody may do. Capability still
- * arrives through a position's permissions, composed one screen over. The scope
- * WILL become authority once the area-aware voter is wired
- * (docs/area-scoped-authority.md), but not in this module and not today, which is
- * why `team.manage` — "administer this installation's people" — is the honest
- * gate on every route here rather than an invented per-area permission.
+ * A DEPARTMENT GRANTS NOTHING DIRECTLY, scope or no scope. Filing a position
+ * into a department changes where it is READ; confining a department to an area
+ * changes where its people's authority reaches; neither is itself a grant.
+ * Capability arrives through a position's permissions, composed one screen over.
+ *
+ * team.manage IS AREA-SCOPED NOW (docs/area-scoped-authority.md §7.6, DECISIONS
+ * §5.6), so `#[IsGranted(team.manage)]` on every route here is the coarse gate,
+ * and the controller REFINES it against the escalation ruling: an area-X admin
+ * (a team.manage holder confined to one area) may create, rename and deactivate
+ * area-level departments in X, but may NOT mint an org-level department, change
+ * any department's scope, or reach an org-level or other-area department — each
+ * of those widens power past their own boundary. {@see AreaAuthority} computes
+ * the boundary; the write methods refuse anything past it (a 403). Tiers and
+ * org-level holders are unbounded and pass every guard.
  *
  * CHANGING A SCOPE IS AUDITED, both directions. Confining an org-wide department
  * to one area, or promoting an area-level one to org-wide, goes through
@@ -95,6 +103,7 @@ final readonly class DepartmentController
         private CsrfTokenManagerInterface $csrf,
         private UrlGeneratorInterface $router,
         private TokenStorageInterface $tokens,
+        private AreaAuthority $authority,
     ) {
     }
 
@@ -219,6 +228,12 @@ final readonly class DepartmentController
             }
         }
 
+        // §5.6: minting an ORG-LEVEL department is unbounded; an AREA-LEVEL one
+        // must land in an area the administrator's authority reaches. An area-X
+        // admin creating an org department, or a department in another area, is
+        // escalation.
+        $this->assertMayCreate($department->getArea());
+
         $this->entityManager->persist($department);
 
         try {
@@ -246,6 +261,7 @@ final readonly class DepartmentController
     {
         $department = $this->department($uuid);
         $this->assertCsrf($request);
+        $this->assertMayManage($department);
 
         $name = trim((string) $request->request->get('name'));
         if ('' === $name) {
@@ -282,6 +298,13 @@ final readonly class DepartmentController
         $department = $this->department($uuid);
         $this->assertCsrf($request);
 
+        // §5.6: changing a scope is an UNBOUNDED act — promoting to org grants
+        // org-wide authority, confining or moving re-scopes people. An area-X
+        // admin may not; only a tier or an org-level holder may.
+        if (!$this->authority->isUnbounded()) {
+            throw new AccessDeniedException('Changing a department’s scope is an organisation-wide act; an area administrator may not.');
+        }
+
         $reason = trim((string) $request->request->get('reason'));
         $areaUuid = trim((string) $request->request->get('area'));
 
@@ -294,6 +317,9 @@ final readonly class DepartmentController
         }
 
         $wasOrg = $department->isOrgLevel();
+        // Captured BEFORE the change, for the §5.7 privilege notice: a scope
+        // change now moves the authority of everyone filed under the department.
+        $people = $this->footprint($department)['people'];
 
         try {
             $department->changeScopeTo($newArea, $this->signedIn(), $reason);
@@ -313,15 +339,29 @@ final readonly class DepartmentController
             ), 'error');
         }
 
+        // §5.7: scope is authority now, so the notice INFORMS what the change did
+        // to it — a promotion is a privilege GAIN, a demotion is authority LOST
+        // outside the new area. It informs; it never guards (the change is done).
         if (null === $newArea) {
-            return $this->back($request, \sprintf('“%s” is org-wide now — it spans every area. The change is recorded with your reason.', (string) $department->getName()));
+            return $this->back($request, \sprintf(
+                '“%s” is org-wide now — it spans every area. %s The change is recorded with your reason.',
+                (string) $department->getName(),
+                0 === $people
+                    ? 'It has no people yet, so nothing gained authority.'
+                    : \sprintf('Its %d %s now hold their permissions in EVERY area — a real widening of authority.',
+                        $people, 1 === $people ? 'person' : 'people'),
+            ));
         }
 
         return $this->back($request, \sprintf(
-            '“%s” is confined to %s now%s. The change is recorded with your reason.',
+            '“%s” is confined to %s now%s. %s The change is recorded with your reason.',
             (string) $department->getName(),
             (string) $newArea->getName(),
             $wasOrg ? ', and everything filed under it moves with it' : '',
+            0 === $people
+                ? 'It has no people yet, so no authority moved.'
+                : \sprintf('Its %d %s now hold their permissions in %s ONLY — authority they had elsewhere is lost.',
+                    $people, 1 === $people ? 'person' : 'people', (string) $newArea->getName()),
         ));
     }
 
@@ -340,6 +380,7 @@ final readonly class DepartmentController
     {
         $department = $this->department($uuid);
         $this->assertCsrf($request);
+        $this->assertMayManage($department);
 
         $footprint = $this->footprint($department);
         $department->deactivate();
@@ -366,6 +407,7 @@ final readonly class DepartmentController
     {
         $department = $this->department($uuid);
         $this->assertCsrf($request);
+        $this->assertMayManage($department);
 
         $department->reactivate();
         $this->entityManager->flush();
@@ -392,6 +434,19 @@ final readonly class DepartmentController
         // THE EMPTY OPTION IS A DESTINATION, not a missing value — a position
         // whose department was a mistake has to be able to leave it.
         $department = '' === $target ? null : $this->department($target);
+
+        // §5.6: filing is department management. An area-X admin may move a
+        // position only between departments their authority reaches — the one it
+        // is leaving and the one it is joining must both be within it. A tier or
+        // org-level holder is unbounded and passes.
+        $from = $position->getDepartment();
+        if (null !== $from) {
+            $this->assertMayManage($from);
+        }
+        if (null !== $department) {
+            $this->assertMayManage($department);
+        }
+
         $position->setDepartment($department);
 
         try {
@@ -541,6 +596,43 @@ final readonly class DepartmentController
     {
         return (Uuid::isValid($uuid) ? $this->departments->findOneByUuid(Uuid::fromString($uuid)) : null)
             ?? throw new NotFoundHttpException('No such department on this installation.');
+    }
+
+    /**
+     * REFUSE AN ESCALATION on an existing department (§5.6). A tier or org-level
+     * administrator is unbounded and may manage anything; a bounded (area-X)
+     * administrator may manage only AREA-LEVEL departments in their own area —
+     * never an org-level one, never another area's.
+     */
+    private function assertMayManage(Department $department): void
+    {
+        if ($this->authority->isUnbounded()) {
+            return;
+        }
+
+        if ($department->isAreaLevel() && $this->authority->covers($department->getArea())) {
+            return;
+        }
+
+        throw new AccessDeniedException('An area administrator may manage only the area-level departments in their own area.');
+    }
+
+    /**
+     * REFUSE AN ESCALATION at creation (§5.6). Minting an org-level department
+     * (null area) is unbounded; an area-level one must land in an area the
+     * administrator's authority reaches.
+     */
+    private function assertMayCreate(?AreaInterface $area): void
+    {
+        if ($this->authority->isUnbounded()) {
+            return;
+        }
+
+        if (null !== $area && $this->authority->covers($area)) {
+            return;
+        }
+
+        throw new AccessDeniedException('An area administrator may create area-level departments in their own area only — not an organisation-wide one, and not in another area.');
     }
 
     private function signedIn(): ?User

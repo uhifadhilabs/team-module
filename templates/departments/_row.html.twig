@@ -82,8 +82,11 @@
         <form class="pf-form" method="post" action="{{ path('team_department_scope', {uuid: uuid}) }}">
             <input type="hidden" name="_token" value="{{ csrfToken }}">
             {% if area %}
-                <span class="pf-lab">Promote to org-wide &mdash; safe, this only widens</span>
+                <span class="pf-lab">Promote to org-wide &mdash; this only widens, but it is a privilege
+                    change: everyone filed under this department gains their permissions in EVERY area.</span>
             {% else %}
+                <span class="pf-lab">Confine to an area &mdash; everyone filed under this department will hold
+                    their permissions in that area ONLY, losing authority they had elsewhere.</span>
                 <div class="crfield">
                     <span class="crlab">Confine to area</span>
                     <select name="area" aria-label="Confine {{ department.name }} to area" required>

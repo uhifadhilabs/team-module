@@ -462,6 +462,147 @@ final class DepartmentScreenTest extends WebTestCaseWithSchema
         self::assertResponseRedirects('http://localhost/login');
     }
 
+    // ---- §5.7: a scope change is a privilege change -----------------------
+
+    /** PROMOTION informs that everyone filed under it gains authority everywhere. */
+    public function testPromotingNoticesThatAuthorityWidensToEveryArea(): void
+    {
+        $this->administrator();
+        $ng = $this->area('Ngorongoro');
+        $crater = $this->areaDepartment('Crater Management', $ng);
+        $position = $this->position('Crater Ecologist', $crater, [PermissionEnum::AreaView->value]);
+        $this->person('Zawadi', 'Kimaro', TeamRoleEnum::Staff)->setPosition($position);
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/departments');
+        $form = $this->row($crawler, 'Crater Management')->filter('form[action$="/scope"]')->selectButton('Promote to org-wide')->form();
+        $form['reason'] = 'Its remit is now the whole park.';
+        $this->client->submit($form);
+
+        $crawler = $this->client->followRedirect();
+        self::assertStringContainsStringIgnoringCase('every area', $crawler->filter('[data-shell-flash]')->text());
+    }
+
+    /** DEMOTION (confine) informs that authority elsewhere is lost. */
+    public function testConfiningNoticesThatAuthorityElsewhereIsLost(): void
+    {
+        $this->administrator();
+        $ng = $this->area('Ngorongoro');
+        $ecology = $this->department('Ecology');
+        $position = $this->position('Analyst', $ecology, [PermissionEnum::AreaView->value]);
+        $this->person('Zawadi', 'Kimaro', TeamRoleEnum::Staff)->setPosition($position);
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/departments');
+        $form = $this->row($crawler, 'Ecology')->filter('form[action$="/scope"]')->selectButton('Confine to area')->form();
+        $form['area'] = (string) $ng->getUuidString();
+        $form['reason'] = 'Ecology now works only in the crater.';
+        $this->client->submit($form);
+
+        $crawler = $this->client->followRedirect();
+        self::assertStringContainsStringIgnoringCase('lost', $crawler->filter('[data-shell-flash]')->text());
+    }
+
+    /** The promote form carries the §5.7 privilege-gain notice (informs, never guards). */
+    public function testThePromoteFormStatesThePrivilegeGain(): void
+    {
+        $crawler = $this->screen();
+
+        $form = $this->row($crawler, 'Crater Management')->filter('form[action$="/scope"]');
+        self::assertStringContainsStringIgnoringCase('every area', $form->text());
+    }
+
+    // ---- §5.6: what an area administrator may touch -----------------------
+
+    /** An area-X admin CREATES an area-level department in their own area. */
+    public function testAnAreaAdminCreatesAnAreaDepartmentInTheirOwnArea(): void
+    {
+        $ngorongoro = $this->area('Ngorongoro');
+        $this->areaAdminIn($ngorongoro);
+
+        $crawler = $this->client->request('GET', '/departments');
+        $form = $crawler->selectButton('Add department')->form();
+        $form['scope'] = 'area';
+        $form['area'] = (string) $ngorongoro->getUuidString();
+        $form['name'] = 'Crater Ecology';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/departments');
+        $this->em->clear();
+        $created = $this->em->getRepository(Department::class)->findOneBy(['name' => 'Crater Ecology']);
+        self::assertInstanceOf(Department::class, $created);
+        self::assertTrue($created->isAreaLevel());
+    }
+
+    /** But NOT an org-level one — minting an org department is escalation. */
+    public function testAnAreaAdminCannotCreateAnOrgDepartment(): void
+    {
+        $ngorongoro = $this->area('Ngorongoro');
+        $this->areaAdminIn($ngorongoro);
+
+        $crawler = $this->client->request('GET', '/departments');
+        $form = $crawler->selectButton('Add department')->form();
+        $form['scope'] = 'org';
+        $form['name'] = 'Administration';
+        $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(403);
+        $this->em->clear();
+        self::assertNull($this->em->getRepository(Department::class)->findOneBy(['name' => 'Administration']));
+    }
+
+    /** And NOT a department in another area. */
+    public function testAnAreaAdminCannotCreateADepartmentInAnotherArea(): void
+    {
+        $ngorongoro = $this->area('Ngorongoro');
+        $pololeti = $this->area('Pololeti Game Reserve');
+        $this->areaAdminIn($ngorongoro);
+
+        $crawler = $this->client->request('GET', '/departments');
+        $form = $crawler->selectButton('Add department')->form();
+        $form['scope'] = 'area';
+        $form['area'] = (string) $pololeti->getUuidString();
+        $form['name'] = 'Anti-Poaching';
+        $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(403);
+    }
+
+    /** An area admin may NOT change any department's scope. */
+    public function testAnAreaAdminCannotChangeScope(): void
+    {
+        $ngorongoro = $this->area('Ngorongoro');
+        $this->areaAdminIn($ngorongoro);
+
+        // Their own area-level department — even so, scope change is unbounded.
+        $crawler = $this->client->request('GET', '/departments');
+        $form = $this->row($crawler, 'Warden Office')->filter('form[action$="/scope"]')->selectButton('Promote to org-wide')->form();
+        $form['reason'] = 'trying to widen';
+        $this->client->submit($form);
+
+        self::assertResponseStatusCodeSame(403);
+    }
+
+    /** An area admin may deactivate their OWN area department, not an org one. */
+    public function testAnAreaAdminDeactivatesTheirOwnAreaDepartmentButNotAnOrgOne(): void
+    {
+        $ngorongoro = $this->area('Ngorongoro');
+        $this->areaAdminIn($ngorongoro);
+        $ecology = $this->department('Ecology'); // org-level
+        $this->em->flush();
+
+        // Own area department: allowed.
+        $crawler = $this->client->request('GET', '/departments');
+        $this->client->submit($this->row($crawler, 'Warden Office')->filter('form[action$="/deactivate"]')->selectButton('Deactivate anyway')->form());
+        self::assertResponseRedirects('/departments');
+
+        // Org department: refused.
+        $this->client->request('POST', '/departments/'.$ecology->getUuidString().'/deactivate', [
+            '_token' => $this->tokenFrom('/departments'),
+        ]);
+        self::assertResponseStatusCodeSame(403);
+    }
+
     // ---- who may reach it -------------------------------------------------
 
     public function testAColleagueWithoutTeamManageIsRefused(): void
@@ -518,6 +659,23 @@ final class DepartmentScreenTest extends WebTestCaseWithSchema
         $this->em->flush();
 
         return $this->client->request('GET', '/departments');
+    }
+
+    /**
+     * Sign in as an AREA-X administrator — a Staff member whose team.manage
+     * comes through a position in an AREA-LEVEL department confined to $area, so
+     * their authority-area is $area. They own a "Warden Office" department there
+     * to act on.
+     */
+    private function areaAdminIn(\Uhifadhi\Team\Tests\Integration\Fixtures\Area\HostArea $area): \Uhifadhi\Team\Entity\User
+    {
+        $office = $this->areaDepartment('Warden Office', $area);
+        $admin = $this->person('Amina', 'Salehe', TeamRoleEnum::Staff);
+        $admin->setPosition($this->position('Warden', $office, [PermissionEnum::TeamManage->value]));
+        $this->em->flush();
+        $this->client->loginUser($admin);
+
+        return $admin;
     }
 
     private ?\Uhifadhi\Team\Tests\Integration\Fixtures\Area\HostArea $ngorongoro = null;

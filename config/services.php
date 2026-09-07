@@ -30,6 +30,7 @@ use Uhifadhi\Team\Repository\DepartmentScopeChangeRepository;
 use Uhifadhi\Team\Repository\PositionRepository;
 use Uhifadhi\Team\Repository\UserRepository;
 use Uhifadhi\Team\Security\ActiveUserChecker;
+use Uhifadhi\Team\Security\AreaAuthority;
 use Uhifadhi\Team\Security\PermissionVoter;
 use Uhifadhi\Team\Service\Mail;
 use Uhifadhi\Team\Service\PermissionCatalogue;
@@ -141,6 +142,15 @@ return static function (ContainerConfigurator $container): void {
     $services->set('team.area_value_resolver', AreaValueResolver::class)
         ->args([service('doctrine.orm.entity_manager')])
         ->tag('controller.argument_value_resolver', ['priority' => 150]);
+
+    /*
+     * THE READ SIDE OF AREA-SCOPED team.manage — whether the signed-in
+     * administrator is unbounded (a tier or org-level holder) or confined to one
+     * area. The department controller refuses the escalation acts (minting an org
+     * department, changing scope, reaching another area) by asking this.
+     */
+    $services->set('team.area_authority', AreaAuthority::class)
+        ->args([service('security.token_storage')]);
 
     /*
      * THE ROW IN THE SIDEBAR — the half of "a module registers with the seam and
@@ -327,6 +337,7 @@ return static function (ContainerConfigurator $container): void {
             service('security.csrf.token_manager'),
             service('router'),
             service('security.token_storage'),
+            service('team.area_authority'),
         ])
         ->tag('controller.service_arguments');
     $services->alias(DepartmentController::class, 'team.controller.department')->public();
