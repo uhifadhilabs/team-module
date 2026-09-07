@@ -38,9 +38,9 @@
         "symfony/security-csrf": "^7.3 || ^8.0",
         "symfony/uid": "^7.3 || ^8.0",
         "twig/twig": "^3.12",
-        "uhifadhi/module-contracts": "^0.5 || dev-main",
-        "uhifadhi/seam-module": "^0.3 || dev-main",
-        "uhifadhi/widget-module": "^0.1 || dev-main"
+        "uhifadhi/module-contracts": "^0.5",
+        "uhifadhi/seam-module": "^0.3",
+        "uhifadhi/widget-module": "^0.1"
     },
     "autoload": {
         "psr-4": {
