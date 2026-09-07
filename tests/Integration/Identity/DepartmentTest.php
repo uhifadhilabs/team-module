@@ -138,4 +138,55 @@ final class DepartmentTest extends IntegrationTestCase
 
         self::assertCount(2, $stored->getPositions());
     }
+
+    /**
+     * DEACTIVATE, NEVER DELETE. A wound-down department stays a row: the flag
+     * flips, the moment is recorded, and reactivation clears it. Deactivate is
+     * idempotent — a department already inactive keeps its first moment.
+     */
+    public function testADepartmentDeactivatesAndReactivatesWithoutBeingDeleted(): void
+    {
+        $department = (new Department())->setName('Tourism Concessions');
+        self::assertTrue($department->isActive());
+        self::assertNull($department->getDeactivatedAt());
+
+        $first = new \DateTimeImmutable('2026-01-01 09:00:00');
+        $department->deactivate($first);
+        self::assertFalse($department->isActive());
+        self::assertEquals($first, $department->getDeactivatedAt());
+
+        // Idempotent: pressing it again keeps the first moment.
+        $department->deactivate(new \DateTimeImmutable('2026-02-02 09:00:00'));
+        self::assertEquals($first, $department->getDeactivatedAt());
+
+        $this->em->persist($department);
+        $this->em->flush();
+        $this->em->clear();
+
+        $stored = $this->service(DepartmentRepository::class)->findOneByName('Tourism Concessions');
+        self::assertInstanceOf(Department::class, $stored);
+        self::assertFalse($stored->isActive(), 'the row survives, deactivated');
+
+        $stored->reactivate();
+        self::assertTrue($stored->isActive());
+        self::assertNull($stored->getDeactivatedAt(), 'a live department carries no stale deactivated-at');
+    }
+
+    /** The pickers read active departments only; the register reads them all. */
+    public function testFindAllActiveOrderedExcludesDeactivated(): void
+    {
+        $live = (new Department())->setName('Ecology');
+        $gone = (new Department())->setName('Tourism Concessions')->deactivate();
+        $this->em->persist($live);
+        $this->em->persist($gone);
+        $this->em->flush();
+
+        $repo = $this->service(DepartmentRepository::class);
+        $activeNames = array_map(static fn (Department $d): ?string => $d->getName(), $repo->findAllActiveOrdered());
+        $allNames = array_map(static fn (Department $d): ?string => $d->getName(), $repo->findAllOrdered());
+
+        self::assertContains('Ecology', $activeNames);
+        self::assertNotContains('Tourism Concessions', $activeNames);
+        self::assertContains('Tourism Concessions', $allNames, 'the register still draws it, greyed');
+    }
 }

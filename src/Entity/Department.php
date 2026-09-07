@@ -137,6 +137,30 @@ class Department
     private Collection $positions;
 
     /**
+     * WHETHER THIS DEPARTMENT IS STILL IN PLAY, and the reason there is no delete.
+     *
+     * "This unit was folded into another last year" and "this unit never
+     * existed" are different facts, and a DELETE makes them one operation — it
+     * would take a scope-change history off the ledger and strand the positions
+     * filed under it. So a department that is no longer run is DEACTIVATED, not
+     * removed: the flag goes false, {@see $deactivatedAt} records when, the row
+     * stays in the register greyed under an inactive treatment, and
+     * {@see reactivate()} is one click. This is the standing fleet rule
+     * (deactivate, never delete), the same one {@see User} keeps.
+     *
+     * Deactivation HIDES a department from the pickers — the create/confine area
+     * pickers and the position move control — so nothing new is filed into a
+     * unit that is winding down; it never removes what is already there, and it
+     * never gates data. The footprint ("N positions hold this") is shown before
+     * the act and INFORMS, never guards: the administrator may proceed.
+     */
+    #[ORM\Column(options: ['default' => true])]
+    private bool $active = true;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $deactivatedAt = null;
+
+    /**
      * THE APPEND-ONLY HISTORY OF THIS DEPARTMENT'S SCOPE CHANGES, newest last.
      * Cascade-persist so a change written by {@see changeScopeTo()} is saved with
      * the department in one flush; no orphanRemoval, because an audit line is
@@ -260,6 +284,44 @@ class Department
     public function getScopeChanges(): Collection
     {
         return $this->scopeChanges;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->active;
+    }
+
+    /**
+     * The way a department winds down. Not a delete, and there is no delete:
+     * its scope history stays on the ledger, the positions filed under it keep
+     * their filing, and {@see reactivate()} is one click. Idempotent — a
+     * department already inactive keeps the moment it first went so, because the
+     * "when" of a deactivation is when it happened, not the last time somebody
+     * pressed the button.
+     */
+    public function deactivate(?\DateTimeImmutable $at = null): static
+    {
+        if ($this->active) {
+            $this->active = false;
+            $this->deactivatedAt = $at ?? new \DateTimeImmutable();
+        }
+
+        return $this;
+    }
+
+    public function reactivate(): static
+    {
+        $this->active = true;
+        // Cleared rather than kept: a stale "deactivated at" on a live
+        // department is a fact that reads as true and is not.
+        $this->deactivatedAt = null;
+
+        return $this;
+    }
+
+    public function getDeactivatedAt(): ?\DateTimeImmutable
+    {
+        return $this->deactivatedAt;
     }
 
     public function __toString(): string

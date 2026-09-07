@@ -8,11 +8,12 @@
    — confine to an area, or promote to org-wide, a reason required. Every row
    opens the department's own lens through its name and its Lens action.
 
+   DEACTIVATE is drawn as the design's per-row danger action: it flips the
+   department's active flag (deactivate, never delete), the footprint informs
+   without guarding, and a deactivated row reads greyed with a Reactivate action.
+
    WHAT THE DESIGN DRAWS THAT IS THE RICH-LENS FOLLOW-UP, and so not here yet:
-   the Widgets button in the header (the department's widget board). And
-   DEACTIVATE, drawn on the design's inactive row, is absent for the reason
-   Delete always was — the model has no active flag and no refusal wording is
-   drawn, so a control that routes nowhere is not rendered. #}
+   the Widgets button in the header (the department's widget board). #}
 {% extends '@UhifadhiShell/page.html.twig' %}
 {% import '@UhifadhiTeam/positions/_bits.html.twig' as pm %}
 {% import '@UhifadhiTeam/departments/_bits.html.twig' as di %}
@@ -126,7 +127,7 @@
                     positions: owned[department.uuidString]|default([]),
                     people: headcount[department.uuidString]|default(0),
                     holders: holders,
-                    departments: departments,
+                    fileTargets: fileTargets,
                     areas: areas,
                     mark: marks[department.uuidString]|default('—'),
                     csrfToken: csrfToken,
@@ -147,7 +148,7 @@
                     positions: owned[department.uuidString]|default([]),
                     people: headcount[department.uuidString]|default(0),
                     holders: holders,
-                    departments: departments,
+                    fileTargets: fileTargets,
                     areas: areas,
                     mark: marks[department.uuidString]|default('—'),
                     csrfToken: csrfToken,
@@ -186,7 +187,7 @@
                                 <span class="mlab">File under</span>
                                 <select name="department" aria-label="File {{ position.name }} under">
                                     <option value="" selected>No department yet&hellip;</option>
-                                    {% for d in departments %}
+                                    {% for d in fileTargets %}
                                         <option value="{{ d.uuidString }}">{{ d.name }}{{ d.area ? ' · ' ~ d.area.name : '' }}</option>
                                     {% endfor %}
                                 </select>

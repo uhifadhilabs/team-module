@@ -379,16 +379,87 @@ final class DepartmentScreenTest extends WebTestCaseWithSchema
         self::assertSame('Ecology', $volunteer?->getDepartment()?->getName());
     }
 
-    // ---- what is deliberately absent --------------------------------------
+    // ---- deactivate, never delete -----------------------------------------
 
-    /** DELETE/DEACTIVATE are not drawn (no model, no refusal wording), so absent. */
-    public function testNothingOnTheScreenDeletesOrDeactivatesADepartment(): void
+    /** DELETE is never drawn; DEACTIVATE is — the standing fleet rule. */
+    public function testTheScreenDeactivatesButNeverDeletesADepartment(): void
     {
         $crawler = $this->screen();
 
         $page = $crawler->filter('[data-dp]')->text();
         self::assertStringNotContainsString('Delete', $page);
-        self::assertStringNotContainsString('Deactivate', $page);
+        self::assertStringContainsString('Deactivate', $page);
+    }
+
+    /**
+     * DEACTIVATING flips the flag without deleting: the row stays (greyed), its
+     * positions keep their filing, and the footprint informs in the flash.
+     */
+    public function testDeactivatingADepartmentGreysItAndKeepsEverythingFiled(): void
+    {
+        $crawler = $this->screen();
+
+        $form = $this->row($crawler, 'Ecology')->filter('form[action$="/deactivate"]')->selectButton('Deactivate anyway')->form();
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/departments');
+        $crawler = $this->client->followRedirect();
+        self::assertStringContainsString('deactivated', $crawler->filter('[data-shell-flash]')->text());
+
+        $this->em->clear();
+        $ecology = $this->em->getRepository(Department::class)->findOneBy(['name' => 'Ecology']);
+        self::assertInstanceOf(Department::class, $ecology);
+        self::assertFalse($ecology->isActive());
+        self::assertNotNull($ecology->getDeactivatedAt());
+
+        // The position filed under it keeps its filing — deactivate, never delete.
+        $analyst = $this->em->getRepository(Position::class)->findOneBy(['name' => 'Analyst', 'department' => $ecology->getId()]);
+        self::assertInstanceOf(Position::class, $analyst);
+
+        // Greyed in the register.
+        self::assertStringContainsString('inactive', (string) $this->row($crawler, 'Ecology')->attr('class'));
+    }
+
+    /** A DEACTIVATED department is dropped from the position move control. */
+    public function testADeactivatedDepartmentIsHiddenFromTheMoveControl(): void
+    {
+        $crawler = $this->screen();
+        $form = $this->row($crawler, 'Ecology')->filter('form[action$="/deactivate"]')->selectButton('Deactivate anyway')->form();
+        $this->client->submit($form);
+
+        $crawler = $this->client->request('GET', '/departments');
+        $options = $crawler->filter('[data-unfiled] .moveform select[name="department"] option')
+            ->each(static fn (Crawler $c): string => $c->text());
+
+        self::assertNotContains('Ecology', $options, 'a wound-down department takes no new filings');
+    }
+
+    /** REACTIVATE brings it back into the register and the pickers. */
+    public function testReactivatingADepartmentBringsItBack(): void
+    {
+        $crawler = $this->screen();
+        $this->client->submit($this->row($crawler, 'Ecology')->filter('form[action$="/deactivate"]')->selectButton('Deactivate anyway')->form());
+
+        $crawler = $this->client->request('GET', '/departments');
+        $this->client->submit($this->row($crawler, 'Ecology')->filter('form[action$="/reactivate"]')->selectButton('Reactivate')->form());
+
+        self::assertResponseRedirects('/departments');
+
+        $this->em->clear();
+        $ecology = $this->em->getRepository(Department::class)->findOneBy(['name' => 'Ecology']);
+        self::assertInstanceOf(Department::class, $ecology);
+        self::assertTrue($ecology->isActive());
+        self::assertNull($ecology->getDeactivatedAt());
+    }
+
+    /** The deactivate write is gated like every other. */
+    public function testTheDeactivateWriteIsGated(): void
+    {
+        $department = $this->department('Ecology');
+        $this->em->flush();
+
+        $this->client->request('POST', '/departments/'.$department->getUuidString().'/deactivate');
+        self::assertResponseRedirects('http://localhost/login');
     }
 
     // ---- who may reach it -------------------------------------------------

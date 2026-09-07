@@ -12,19 +12,28 @@
    the positions filed under this department, each with the move control.
 
    Expects: department, positions (list), people (int), holders (map),
-   departments (all, for the move select), areas (list), mark, csrfToken. #}
+   fileTargets (active departments, for the move select), areas (list), mark,
+   csrfToken.
+
+   A DEACTIVATED department reads greyed (the .inactive treatment), states
+   "deactivated" in its sub-line, and swaps its write actions for a single
+   Reactivate — the standing rule is deactivate, never delete. An active row
+   carries Deactivate, whose footprint (positions + people) is shown in the
+   panel and INFORMS, never guards. #}
 {% import '@UhifadhiTeam/departments/_bits.html.twig' as di %}
 
 {% set area = department.area %}
 {% set uuid = department.uuidString %}
+{% set inactive = not department.active %}
 
-<div class="deptwrap" data-controller="uhifadhi--team-module--department">
+<div class="deptwrap{{ inactive ? ' inactive' : '' }}" data-controller="uhifadhi--team-module--department">
     <div class="deptrow" data-department="{{ uuid }}">
         <span class="dr-mk">{{ mark }}</span>
         <div class="dr-bd">
             <a class="dr-nm" href="{{ path('team_department_show', {uuid: uuid}) }}"
                title="Open {{ department.name }}&rsquo;s lens">{{ department.name }}</a>
             <div class="dr-sub">
+                {% if inactive %}deactivated &middot; {% endif %}
                 {{ positions|length }} position{{ positions|length == 1 ? '' : 's' }} &middot;
                 {{ area ? area.name : 'org-level' }}
             </div>
@@ -37,11 +46,20 @@
         <div class="dr-act">
             <a class="softbtn acc" href="{{ path('team_department_show', {uuid: uuid}) }}"
                title="Open {{ department.name }}&rsquo;s lens">{{ di.icon_lens() }} Lens</a>
-            <a class="softbtn" href="{{ path('team_positions') }}">{{ di.icon_rename() }} Positions</a>
-            <button class="softbtn" type="button"
-                    data-action="uhifadhi--team-module--department#toggle">{{ di.icon_rename() }} Rename</button>
-            <button class="softbtn" type="button"
-                    data-action="uhifadhi--team-module--department#toggle">{{ di.icon_scope() }} Change scope</button>
+            {% if inactive %}
+                <form class="pf-inline" method="post" action="{{ path('team_department_reactivate', {uuid: uuid}) }}">
+                    <input type="hidden" name="_token" value="{{ csrfToken }}">
+                    <button class="softbtn" type="submit">{{ di.icon_reactivate() }} Reactivate</button>
+                </form>
+            {% else %}
+                <a class="softbtn" href="{{ path('team_positions') }}">{{ di.icon_rename() }} Positions</a>
+                <button class="softbtn" type="button"
+                        data-action="uhifadhi--team-module--department#toggle">{{ di.icon_rename() }} Rename</button>
+                <button class="softbtn" type="button"
+                        data-action="uhifadhi--team-module--department#toggle">{{ di.icon_scope() }} Change scope</button>
+                <button class="softbtn danger" type="button"
+                        data-action="uhifadhi--team-module--department#toggle">{{ di.icon_deactivate() }} Deactivate</button>
+            {% endif %}
         </div>
     </div>
 
@@ -88,6 +106,26 @@
             {% endif %}
         </form>
 
+        {# DEACTIVATE — the footprint INFORMS, never guards: it states how much is
+           filed under the department, then lets the administrator proceed.
+           Deactivate, never delete — the history and the filings stay. #}
+        <form class="pf-form" method="post" action="{{ path('team_department_deactivate', {uuid: uuid}) }}"
+              data-deactivate>
+            <input type="hidden" name="_token" value="{{ csrfToken }}">
+            <p class="aa-prose" style="margin:2px 0 8px">
+                {% if positions|length %}
+                    <b>{{ positions|length }} position{{ positions|length == 1 ? '' : 's' }}</b>
+                    ({{ people }} {{ people == 1 ? 'person' : 'people' }}) stay filed under
+                    &ldquo;{{ department.name }}&rdquo; and keep what they grant.
+                {% else %}
+                    Nothing is filed under &ldquo;{{ department.name }}&rdquo; &mdash; an empty footprint.
+                {% endif %}
+                It is hidden from the pickers and greyed in the register; <b>nothing is deleted</b>, and it is
+                one click from coming back.
+            </p>
+            <button class="softbtn danger" type="submit">{{ di.icon_deactivate() }} Deactivate anyway</button>
+        </form>
+
         {# THE POSITIONS FILED HERE, each with the move control. A position is
            filed, never a person; moving it is an explicit submit (no auto-submit
            on change), and the select opens on where it is now. #}
@@ -107,7 +145,7 @@
                             <span class="mlab">Move to</span>
                             <select name="department" aria-label="File {{ position.name }} under">
                                 <option value="">No department yet&hellip;</option>
-                                {% for d in departments %}
+                                {% for d in fileTargets %}
                                     <option value="{{ d.uuidString }}"{{ d.id == department.id ? ' selected' : '' }}>{{ d.name }}{{ d.area ? ' · ' ~ d.area.name : '' }}</option>
                                 {% endfor %}
                             </select>

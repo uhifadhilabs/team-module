@@ -71,12 +71,16 @@ use Uhifadhi\Team\Repository\UserRepository;
  * reason and appends a {@see \Uhifadhi\Team\Entity\DepartmentScopeChange}. The
  * controller only supplies who and why; the entity records the transition.
  *
+ * A DEPARTMENT DEACTIVATES, IT NEVER DELETES (the standing fleet rule). Winding
+ * one down flips its active flag; the register draws it greyed, the pickers drop
+ * it, and its scope history and filed positions are untouched. The footprint —
+ * how many positions and people it touches — is stated on the act and INFORMS,
+ * never guards; {@see reactivate()} brings it back.
+ *
  * WHAT IS DELIBERATELY NOT HERE YET. The rich lens surface — a department's
  * widget board, its attached modules and their rolled-up KPIs — is the canonical
  * detail page's follow-up: the Overview and Settings tabs draw the DRAWN empty
- * states for it and nothing is invented behind them. DEACTIVATE is absent for
- * the same reason it always was: the model has no active flag and no refusal
- * wording has been drawn, so a control that routes nowhere is not rendered.
+ * states for it and nothing is invented behind them.
  */
 final readonly class DepartmentController
 {
@@ -136,6 +140,10 @@ final readonly class DepartmentController
             'orgDepartments' => $this->departments->findOrgLevelOrdered(),
             'departments' => $departments,
             'areas' => $this->areas(),
+            // The move control and the confine picker file INTO a department, so
+            // they offer only the active ones; the register above draws the
+            // inactive rows greyed from the all-inclusive groups.
+            'fileTargets' => $this->departments->findAllActiveOrdered(),
             'owned' => $owned,
             'headcount' => $headcount,
             'holders' => $this->holders(),
@@ -318,6 +326,54 @@ final readonly class DepartmentController
     }
 
     /**
+     * DEACTIVATE — wind a department down without deleting it (the standing
+     * fleet rule). The footprint ("N positions hold this") is stated in the
+     * flash that confirms the act; it INFORMS, never guards, so the write goes
+     * through regardless of how much is filed under the department. Its scope
+     * history stays on the ledger and its positions keep their filing — a
+     * deactivated department is hidden from the pickers, greyed in the register,
+     * and one click from coming back.
+     */
+    #[Route('/departments/{uuid}/deactivate', name: 'team_department_deactivate', requirements: ['uuid' => Requirement::UUID], methods: ['POST'])]
+    #[IsGranted(PermissionEnum::TeamManage->value)]
+    public function deactivate(Request $request, string $uuid): Response
+    {
+        $department = $this->department($uuid);
+        $this->assertCsrf($request);
+
+        $footprint = $this->footprint($department);
+        $department->deactivate();
+        $this->entityManager->flush();
+
+        return $this->back($request, \sprintf(
+            '“%s” is deactivated — hidden from the pickers and greyed in the register, %s. Nothing is deleted: its history stays, and it is one click from coming back.',
+            (string) $department->getName(),
+            0 === $footprint['positions']
+                ? 'and nothing was filed under it'
+                : \sprintf('%d position%s (%d %s) stay filed under it and keep what they grant',
+                    $footprint['positions'], 1 === $footprint['positions'] ? '' : 's',
+                    $footprint['people'], 1 === $footprint['people'] ? 'person' : 'people'),
+        ));
+    }
+
+    /**
+     * REACTIVATE — bring a wound-down department back. No footprint: widening
+     * availability strands nothing, the same way promoting a scope does not.
+     */
+    #[Route('/departments/{uuid}/reactivate', name: 'team_department_reactivate', requirements: ['uuid' => Requirement::UUID], methods: ['POST'])]
+    #[IsGranted(PermissionEnum::TeamManage->value)]
+    public function reactivate(Request $request, string $uuid): Response
+    {
+        $department = $this->department($uuid);
+        $this->assertCsrf($request);
+
+        $department->reactivate();
+        $this->entityManager->flush();
+
+        return $this->back($request, \sprintf('“%s” is active again — back in the pickers and the register.', (string) $department->getName()));
+    }
+
+    /**
      * FILING A POSITION — moving one between departments (or out to none). The
      * positions page chooses a department when a position is CREATED; this is the
      * only thing that moves one afterwards, which is why a position seeded before
@@ -444,6 +500,28 @@ final readonly class DepartmentController
         }
 
         return $marks;
+    }
+
+    /**
+     * WHAT DEACTIVATING THIS DEPARTMENT TOUCHES — the positions filed under it
+     * and the active people who hold them. Informs the confirming flash; it is
+     * never a gate.
+     *
+     * @return array{positions: int, people: int}
+     */
+    private function footprint(Department $department): array
+    {
+        $positions = [];
+        foreach ($this->positions->findAllOrdered() as $position) {
+            if ($position->getDepartment()?->getId() === $department->getId()) {
+                $positions[] = $position;
+            }
+        }
+
+        return [
+            'positions' => \count($positions),
+            'people' => $this->users->countActiveHoldingAnyPosition($positions),
+        ];
     }
 
     private function mark(string $name): string
